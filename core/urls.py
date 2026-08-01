@@ -1,0 +1,13 @@
+from django.contrib.auth.views import LogoutView
+from django.urls import path
+from . import views
+urlpatterns = [
+ path("", views.DashboardView.as_view(), name="dashboard"), path("login/", views.UserLoginView.as_view(), name="login"), path("logout/", LogoutView.as_view(), name="logout"),
+ path("clientes/", views.ClienteListView.as_view(), name="cliente-list"), path("clientes/novo/", views.ClienteCreateView.as_view(), name="cliente-create"), path("clientes/<int:pk>/editar/", views.ClienteUpdateView.as_view(), name="cliente-update"),
+ path("ordens/", views.OrdemListView.as_view(), name="ordem-list"), path("ordens/nova/", views.OrdemCreateView.as_view(), name="ordem-create"), path("ordens/<int:pk>/", views.OrdemDetailView.as_view(), name="ordem-detail"), path("ordens/<int:pk>/editar/", views.OrdemUpdateView.as_view(), name="ordem-update"), path("ordens/<int:pk>/finalizar/", views.FinalizarOSView.as_view(), name="ordem-finalizar"), path("ordens/<int:pk>/confirmar/", views.ConfirmarOSView.as_view(), name="ordem-confirmar"),
+ path("orcamentos/", views.OrcamentoListView.as_view(), name="orcamento-list"), path("orcamentos/novo/", views.OrcamentoCreateView.as_view(), name="orcamento-create"), path("orcamentos/<int:pk>/editar/", views.OrcamentoUpdateView.as_view(), name="orcamento-update"),
+ path("financeiro/", views.FinanceiroView.as_view(), name="financeiro"), path("financeiro/novo/", views.LancamentoCreateView.as_view(), name="lancamento-create"), path("relatorios/", views.RelatorioView.as_view(), name="relatorios"),
+ path("financeiro/fechar/", views.FecharFinanceiroView.as_view(), name="financeiro-fechar"),
+ path("usuarios/", views.UsuarioListView.as_view(), name="usuario-list"), path("usuarios/novo/", views.UsuarioCreateView.as_view(), name="usuario-create"),
+ path("senha/", views.MinhaSenhaView.as_view(), name="minha-senha"), path("usuarios/<int:pk>/senha/", views.UsuarioSenhaView.as_view(), name="usuario-senha"),
+]
