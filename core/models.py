@@ -21,6 +21,17 @@ class Cliente(TimeStampedModel):
         ordering = ["nome"]
     def __str__(self): return self.nome
 
+class TipoServico(models.Model):
+    nome = models.CharField("Nome", max_length=100, unique=True)
+    ativo = models.BooleanField(default=True)
+    
+    class Meta:
+        ordering = ["nome"]
+        verbose_name = "Tipo de Serviço"
+        verbose_name_plural = "Tipos de Serviço"
+        
+    def __str__(self): return self.nome
+
 class Orcamento(TimeStampedModel):
     class Status(models.TextChoices):
         RASCUNHO = "RASCUNHO", "Rascunho"; ENVIADO = "ENVIADO", "Enviado"; APROVADO = "APROVADO", "Aprovado"; RECUSADO = "RECUSADO", "Recusado"
@@ -38,19 +49,28 @@ class Orcamento(TimeStampedModel):
         super().save(*args, **kwargs)
     def __str__(self): return f"ORC-{self.numero:05d}"
 
+class ClienteFinal(TimeStampedModel):
+    provedor = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name="clientes_finais")
+    nome = models.CharField(max_length=150)
+    telefone = models.CharField(max_length=20, blank=True, null=True)
+    endereco = models.TextField(blank=True, null=True)
+    class Meta: ordering = ["nome"]
+    def __str__(self): return f"{self.nome} ({self.provedor.nome})"
+
 class OrdemServico(TimeStampedModel):
-    class Tipo(models.TextChoices):
-        INSTALACAO = "INSTALACAO", "Instalação fibra"; MANUTENCAO = "MANUTENCAO", "Manutenção"; REDE = "REDE", "Rede / pontos"; VISITA = "VISITA", "Visita técnica"
     class Status(models.TextChoices):
         ABERTA = "ABERTA", "Aberta"; AGENDADA = "AGENDADA", "Agendada"; EM_ANDAMENTO = "EM_ANDAMENTO", "Em andamento"; AGUARDANDO_CONFIRMACAO = "AGUARDANDO_CONFIRMACAO", "Aguardando confirmação"; CONCLUIDA = "CONCLUIDA", "Concluída"; CANCELADA = "CANCELADA", "Cancelada"
     numero = models.PositiveIntegerField(unique=True, editable=False)
     cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, related_name="ordens")
-    tipo = models.CharField(max_length=15, choices=Tipo.choices)
+    cliente_final = models.ForeignKey(ClienteFinal, on_delete=models.SET_NULL, blank=True, null=True)
+    tipo = models.ForeignKey(TipoServico, on_delete=models.PROTECT, verbose_name="Tipo de Serviço")
     cliente_instalado = models.BooleanField(default=False)
     nome_cliente_instalado = models.CharField(max_length=150, blank=True)
     status = models.CharField(max_length=25, choices=Status.choices, default=Status.ABERTA)
     tecnico = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="ordens_tecnicas")
     agendamento = models.DateTimeField(null=True, blank=True)
+    iniciado_em = models.DateTimeField(null=True, blank=True)
+    finalizado_em = models.DateTimeField(null=True, blank=True)
     descricao = models.TextField()
     anexo_inicial = models.FileField(upload_to="ordens/anexos/%Y/%m/", blank=True, null=True, validators=[FileExtensionValidator(allowed_extensions=["pdf", "jpg", "jpeg", "png", "webp"])])
     comprovante_pagamento = models.FileField(upload_to="ordens/pagamentos/%Y/%m/", blank=True, null=True, validators=[FileExtensionValidator(allowed_extensions=["pdf", "jpg", "jpeg", "png", "webp"])])
@@ -61,6 +81,18 @@ class OrdemServico(TimeStampedModel):
     foto_3 = models.ImageField(upload_to="ordens/%Y/%m/", blank=True, null=True)
     valor = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
     class Meta: ordering = ["-criado_em"]
+    
+    @property
+    def tempo_gasto(self):
+        if self.iniciado_em and self.finalizado_em:
+            diff = self.finalizado_em - self.iniciado_em
+            total_seconds = int(diff.total_seconds())
+            hours, remainder = divmod(total_seconds, 3600)
+            minutes, _ = divmod(remainder, 60)
+            if hours > 0: return f"{hours}h {minutes}m"
+            return f"{minutes} min"
+        return ""
+
     def save(self, *args, **kwargs):
         if not self.numero:
             self.numero = (OrdemServico.objects.order_by("-numero").first().numero + 1) if OrdemServico.objects.exists() else 1
@@ -75,6 +107,7 @@ class Lancamento(TimeStampedModel):
     categoria = models.CharField(max_length=80)
     valor = models.DecimalField(max_digits=12, decimal_places=2)
     ordem_servico = models.ForeignKey(OrdemServico, on_delete=models.SET_NULL, null=True, blank=True, related_name="lancamentos")
+    tecnico = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="lancamentos")
     class Meta: ordering = ["-data", "-criado_em"]
     def __str__(self): return self.descricao
 
@@ -86,3 +119,27 @@ class FechamentoCaixa(models.Model):
     class Meta: ordering = ["-fechado_em"]
     @property
     def saldo(self): return self.entradas - self.saidas
+
+class Produto(TimeStampedModel):
+    nome = models.CharField(max_length=150, unique=True)
+    unidade = models.CharField("Unidade de medida", max_length=20, default="UN")
+    estoque_base = models.IntegerField("Estoque na Sede", default=0)
+    class Meta: ordering = ["nome"]
+    def __str__(self): return f"{self.nome} ({self.unidade})"
+
+class EstoqueTecnico(TimeStampedModel):
+    tecnico = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="estoque")
+    produto = models.ForeignKey(Produto, on_delete=models.CASCADE)
+    quantidade = models.IntegerField(default=0)
+    class Meta: 
+        unique_together = ("tecnico", "produto")
+        ordering = ["tecnico__username", "produto__nome"]
+    def __str__(self): return f"{self.quantidade}x {self.produto.nome} com {self.tecnico.username}"
+
+class ProdutoOS(models.Model):
+    ordem_servico = models.ForeignKey(OrdemServico, on_delete=models.CASCADE, related_name="materiais_utilizados")
+    produto = models.ForeignKey(Produto, on_delete=models.PROTECT)
+    quantidade = models.IntegerField()
+    registrado_em = models.DateTimeField(auto_now_add=True)
+    class Meta: ordering = ["registrado_em"]
+    def __str__(self): return f"{self.quantidade}x {self.produto.nome}"

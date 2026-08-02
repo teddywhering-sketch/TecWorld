@@ -1,1 +1,120 @@
-{% extends 'base.html' %}{% block content %}<div class="d-flex justify-content-between mb-4"><div><span class="text-secondary">Ordem de serviço</span><h2 class="page-title mb-0">{{ object }}</h2></div>{% if is_operacional %}<a class="btn btn-primary" href="{% url 'ordem-update' object.pk %}"><i class="bi bi-pencil me-1"></i>Editar OS</a>{% endif %}</div>{% if object.status == 'CONCLUIDA' and object.comprovante_pagamento %}<div class="alert alert-success d-flex justify-content-between align-items-center"><div><i class="bi bi-check-circle-fill fs-3 me-2"></i><b>OS confirmada e paga</b><br><span>O pagamento e o atendimento foram confirmados pela equipe.</span></div><a href="{{ object.comprovante_pagamento.url }}" target="_blank" class="btn btn-success"><i class="bi bi-receipt me-1"></i>Ver comprovante</a></div>{% endif %}<div class="row g-3"><div class="col-lg-8"><div class="card p-4"><h5>Atendimento</h5><p class="mb-1"><b>Cliente:</b> {{ object.cliente }}</p><p class="mb-1"><b>Tipo:</b> {{ object.get_tipo_display }}</p><p class="mb-3"><b>Agendamento:</b> {{ object.agendamento|date:'d/m/Y H:i'|default:'A definir' }}</p><h6>Descrição</h6><p>{{ object.descricao|linebreaksbr }}</p>{% if object.anexo_inicial %}<div class="alert alert-primary d-flex justify-content-between align-items-center"><span><i class="bi bi-paperclip me-2"></i><b>Instrução anexada pelo administrador</b></span><a href="{{ object.anexo_inicial.url }}" target="_blank" class="btn btn-sm btn-primary">Abrir anexo</a></div>{% endif %}{% if object.solucao %}<h6 class="mt-4">Serviço executado</h6><p>{{ object.solucao|linebreaksbr }}</p>{% endif %}{% if object.foto_1 or object.foto_2 or object.foto_3 %}<h6 class="mt-4">Evidências técnicas</h6><div class="row g-2">{% if object.foto_1 %}<div class="col-md-4"><small class="fw-semibold d-block mb-1">CTO</small><a href="{{ object.foto_1.url }}" target="_blank"><img src="{{ object.foto_1.url }}" class="img-fluid rounded" alt="CTO"></a></div>{% endif %}{% if object.foto_2 %}<div class="col-md-4"><small class="fw-semibold d-block mb-1">ONT</small><a href="{{ object.foto_2.url }}" target="_blank"><img src="{{ object.foto_2.url }}" class="img-fluid rounded" alt="ONT"></a></div>{% endif %}{% if object.foto_3 %}<div class="col-md-4"><small class="fw-semibold d-block mb-1">Sinal da fibra no cliente</small><a href="{{ object.foto_3.url }}" target="_blank"><img src="{{ object.foto_3.url }}" class="img-fluid rounded" alt="Sinal da fibra no cliente"></a></div>{% endif %}</div>{% endif %}</div></div><div class="col-lg-4"><div class="card p-4"><p><b>Status</b><br><span class="badge {% if object.status == 'CONCLUIDA' %}text-bg-success{% else %}text-bg-primary{% endif %}">{{ object.get_status_display }}</span></p><p><b>Técnico</b><br>{{ object.tecnico|default:'Não atribuído' }}</p><p><b>Valor</b><br>R$ {{ object.valor|floatformat:2 }}</p>{% if not is_operacional and object.status != 'AGUARDANDO_CONFIRMACAO' and object.status != 'CONCLUIDA' and object.status != 'CANCELADA' %}<a class="btn btn-success w-100" href="{% url 'ordem-finalizar' object.pk %}"><i class="bi bi-check2-circle me-1"></i>Finalizar atendimento</a>{% elif is_operacional and object.status == 'AGUARDANDO_CONFIRMACAO' %}<a class="btn btn-success w-100" href="{% url 'ordem-confirmar' object.pk %}"><i class="bi bi-cash-coin me-1"></i>Confirmar pagamento</a>{% endif %}</div></div></div>{% endblock %}
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between mb-4">
+    <div>
+        <span class="text-secondary">Ordem de serviço</span>
+        <h2 class="page-title mb-0">{{ object }}</h2>
+    </div>
+    {% if is_operacional %}
+    <a class="btn btn-primary" href="{% url 'ordem-update' object.pk %}"><i class="bi bi-pencil me-1"></i>Editar OS</a>
+    {% endif %}
+</div>
+
+{% if object.status == 'CONCLUIDA' and object.comprovante_pagamento %}
+<div class="alert alert-success d-flex justify-content-between align-items-center">
+    <div>
+        <i class="bi bi-check-circle-fill fs-3 me-2"></i>
+        <b>OS confirmada e paga</b><br>
+        <span>O pagamento e o atendimento foram confirmados pela equipe.</span>
+    </div>
+    <a href="{{ object.comprovante_pagamento.url }}" target="_blank" class="btn btn-success"><i class="bi bi-receipt me-1"></i>Ver comprovante</a>
+</div>
+{% endif %}
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card p-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <h5>Atendimento</h5>
+                {% if object.cliente_final and object.cliente_final.telefone %}
+                    <a href="https://wa.me/55{{ object.cliente_final.telefone|cut:' '|cut:'-'|cut:'('|cut:')' }}?text=Ol%C3%A1%20{{ object.cliente_final.nome|urlencode }},%20somos%20da%20{{ object.cliente.nome|urlencode }}.%20O%20t%C3%A9cnico%20est%C3%A1%20a%20caminho%20para%20realizar%20o%20seu%20atendimento!" target="_blank" class="btn btn-success btn-sm rounded-pill"><i class="bi bi-whatsapp me-1"></i> Avisar Cliente Final no WhatsApp</a>
+                {% elif object.cliente.telefone %}
+                    <a href="https://wa.me/55{{ object.cliente.telefone|cut:' '|cut:'-'|cut:'('|cut:')' }}?text=Ol%C3%A1%20{{ object.cliente.nome|urlencode }},%20somos%20da%20TecWorld.%20O%20t%C3%A9cnico%20est%C3%A1%20a%20caminho!" target="_blank" class="btn btn-success btn-sm rounded-pill"><i class="bi bi-whatsapp me-1"></i> Avisar Provedor no WhatsApp</a>
+                {% endif %}
+            </div>
+            <p class="mb-1"><b>Provedor (Cliente):</b> {{ object.cliente }}</p>
+            {% if object.cliente_final %}
+                <p class="mb-1"><b>Cliente Final:</b> <span class="fw-semibold text-primary">{{ object.cliente_final.nome }}</span></p>
+                <p class="mb-1"><b>Telefone:</b> {{ object.cliente_final.telefone }}</p>
+                <p class="mb-1"><b>Endereço da Instalação:</b> {{ object.cliente_final.endereco }}</p>
+            {% else %}
+                <p class="mb-1"><b>Telefone:</b> {{ object.cliente.telefone }}</p>
+                <p class="mb-1"><b>Endereço:</b> {{ object.cliente.endereco }}</p>
+            {% endif %}
+            <p class="mb-1 mt-2"><b>Tipo:</b> {{ object.tipo.nome }}</p>
+            <p class="mb-3"><b>Agendamento:</b> {{ object.agendamento|date:'d/m/Y H:i'|default:'A definir' }}</p>
+            
+            <h6>Descrição</h6>
+            <p>{{ object.descricao|linebreaksbr }}</p>
+            
+            {% if object.anexo_inicial %}
+            <div class="alert alert-primary d-flex justify-content-between align-items-center mt-3">
+                <span><i class="bi bi-paperclip me-2"></i><b>Instrução anexada pelo administrador</b></span>
+                <a href="{{ object.anexo_inicial.url }}" target="_blank" class="btn btn-sm btn-primary">Abrir anexo</a>
+            </div>
+            {% endif %}
+            
+            {% if object.solucao %}
+            <hr>
+            <h6 class="mt-4">Serviço executado</h6>
+            <p>{{ object.solucao|linebreaksbr }}</p>
+            {% endif %}
+            
+            {% if object.materiais_utilizados.exists %}
+            <h6 class="mt-4">Materiais utilizados</h6>
+            <ul class="list-group mb-3">
+                {% for mat in object.materiais_utilizados.all %}
+                <li class="list-group-item d-flex justify-content-between align-items-center bg-light">
+                    {{ mat.produto.nome }}
+                    <span class="badge bg-secondary rounded-pill">{{ mat.quantidade }} {{ mat.produto.unidade }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            
+            {% if object.foto_1 or object.foto_2 or object.foto_3 %}
+            <h6 class="mt-4">Evidências técnicas</h6>
+            <div class="row g-2">
+                {% if object.foto_1 %}<div class="col-md-4"><small class="fw-semibold d-block mb-1">CTO</small><a href="{{ object.foto_1.url }}" target="_blank"><img src="{{ object.foto_1.url }}" class="img-fluid rounded shadow-sm" alt="CTO"></a></div>{% endif %}
+                {% if object.foto_2 %}<div class="col-md-4"><small class="fw-semibold d-block mb-1">ONT</small><a href="{{ object.foto_2.url }}" target="_blank"><img src="{{ object.foto_2.url }}" class="img-fluid rounded shadow-sm" alt="ONT"></a></div>{% endif %}
+                {% if object.foto_3 %}<div class="col-md-4"><small class="fw-semibold d-block mb-1">Sinal</small><a href="{{ object.foto_3.url }}" target="_blank"><img src="{{ object.foto_3.url }}" class="img-fluid rounded shadow-sm" alt="Sinal"></a></div>{% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card p-4">
+            <p><b>Status</b><br><span class="badge {% if object.status == 'CONCLUIDA' %}text-bg-success{% else %}text-bg-primary{% endif %}">{{ object.get_status_display }}</span></p>
+            
+            {% if object.iniciado_em %}
+                <p><b>Início:</b><br>{{ object.iniciado_em|date:'d/m/Y H:i' }}</p>
+                {% if object.finalizado_em %}
+                    <p><b>Fim:</b><br>{{ object.finalizado_em|date:'d/m/Y H:i' }}</p>
+                    <p><b>Tempo gasto:</b><br>
+                        <span class="badge text-bg-info"><i class="bi bi-stopwatch"></i> {{ object.tempo_gasto }}</span>
+                    </p>
+                {% else %}
+                    <p><b>Tempo gasto:</b><br><span class="badge text-bg-warning"><i class="bi bi-stopwatch"></i> Cronômetro rodando...</span></p>
+                {% endif %}
+            {% endif %}
+            
+            <p><b>Técnico</b><br>{{ object.tecnico|default:'Não atribuído' }}</p>
+            <p><b>Valor</b><br>R$ {{ object.valor|floatformat:2 }}</p>
+            
+            {% if not is_operacional and object.status != 'AGUARDANDO_CONFIRMACAO' and object.status != 'CONCLUIDA' and object.status != 'CANCELADA' %}
+                {% if object.status == 'ABERTA' or object.status == 'AGENDADA' %}
+                    <form method="post" action="{% url 'ordem-iniciar' object.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary w-100 mb-2"><i class="bi bi-play-circle me-1"></i>Iniciar Atendimento</button>
+                    </form>
+                {% elif object.status == 'EM_ANDAMENTO' %}
+                    <a class="btn btn-outline-primary w-100 mb-2" href="{% url 'ordem-baixa-material' object.pk %}"><i class="bi bi-box-seam me-1"></i>Registrar Material Gasto</a>
+                    <a class="btn btn-success w-100" href="{% url 'ordem-finalizar' object.pk %}"><i class="bi bi-check2-circle me-1"></i>Finalizar atendimento</a>
+                {% endif %}
+            {% elif is_operacional and object.status == 'AGUARDANDO_CONFIRMACAO' %}
+                <a class="btn btn-success w-100" href="{% url 'ordem-confirmar' object.pk %}"><i class="bi bi-cash-coin me-1"></i>Confirmar pagamento</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

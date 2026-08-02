@@ -1,7 +1,23 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import Group, User
-from .models import Cliente, Lancamento, Orcamento, OrdemServico
+from .models import (
+    Cliente, ClienteFinal, FechamentoCaixa, Lancamento, Orcamento, 
+    OrdemServico, TipoServico, Produto, ProdutoOS
+)
+
+class TipoServicoForm(forms.ModelForm):
+    class Meta:
+        model = TipoServico
+        fields = ["nome", "ativo"]
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            if not isinstance(field.widget, forms.CheckboxInput):
+                field.widget.attrs["class"] = "form-control"
+            else:
+                field.widget.attrs["class"] = "form-check-input"
 
 class BaseForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
@@ -16,12 +32,18 @@ class ClienteForm(BaseForm):
         model = Cliente
         fields = ["nome", "documento", "telefone", "email", "endereco", "observacoes"]
 
+class ClienteFinalForm(BaseForm):
+    class Meta:
+        model = ClienteFinal
+        fields = ["provedor", "nome", "telefone", "endereco"]
+        labels = {"provedor": "Provedor (Cliente)"}
+
 class OrdemServicoForm(BaseForm):
     class Meta:
         model = OrdemServico
-        fields = ["cliente", "tipo", "status", "tecnico", "agendamento", "descricao", "anexo_inicial", "valor"]
-        labels = {"anexo_inicial": "Anexo para o técnico (PDF ou foto)"}
-        widgets = {"agendamento": forms.DateTimeInput(attrs={"type": "datetime-local"}), "descricao": forms.Textarea(attrs={"rows": 3}), "solucao": forms.Textarea(attrs={"rows": 3})}
+        fields = ["cliente", "cliente_final", "tipo", "tecnico", "agendamento", "valor", "descricao", "anexo_inicial"]
+        widgets = {"agendamento": forms.DateTimeInput(attrs={"type": "datetime-local"}), "descricao": forms.Textarea(attrs={"rows": 4})}
+        labels = {"cliente": "Provedor", "cliente_final": "Cliente do Provedor (Opcional)"}
 
 class OrcamentoForm(BaseForm):
     class Meta:
@@ -32,8 +54,45 @@ class OrcamentoForm(BaseForm):
 class LancamentoForm(BaseForm):
     class Meta:
         model = Lancamento
-        fields = ["data", "descricao", "tipo", "categoria", "valor", "ordem_servico"]
+        fields = ["data", "descricao", "tipo", "categoria", "valor", "ordem_servico", "tecnico"]
         widgets = {"data": forms.DateInput(attrs={"type": "date"})}
+
+class CombustivelForm(BaseForm):
+    class Meta:
+        model = Lancamento
+        fields = ["data", "tecnico", "valor", "descricao"]
+        widgets = {"data": forms.DateInput(attrs={"type": "date"})}
+        labels = {"tecnico": "Técnico", "valor": "Valor Gasto (R$)", "descricao": "Observação (Posto, KM, etc)"}
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["tecnico"].required = True
+
+class ProdutoForm(BaseForm):
+    class Meta:
+        model = Produto
+        fields = ["nome", "unidade", "estoque_base"]
+        labels = {"estoque_base": "Quantidade no Estoque (Sede)"}
+
+class TransferenciaEstoqueForm(forms.Form):
+    tecnico = forms.ModelChoiceField(queryset=User.objects.filter(groups__name__isnull=True), label="Técnico Destino")
+    produto = forms.ModelChoiceField(queryset=Produto.objects.all(), label="Produto")
+    quantidade = forms.IntegerField(min_value=1, label="Quantidade a transferir")
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Assuming technicians might not be in the Secretaria group or just all users are fine
+        self.fields["tecnico"].queryset = User.objects.all()
+        for field in self.fields.values():
+            field.widget.attrs["class"] = "form-control"
+        self.fields["tecnico"].widget.attrs["class"] = "form-select"
+        self.fields["produto"].widget.attrs["class"] = "form-select"
+
+class ProdutoOSForm(BaseForm):
+    class Meta:
+        model = ProdutoOS
+        fields = ["produto", "quantidade"]
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["produto"].widget.attrs["class"] = "form-select"
 
 class FinalizarOSForm(BaseForm):
     class Meta:
@@ -45,6 +104,9 @@ class FinalizarOSForm(BaseForm):
         super().__init__(*args, **kwargs)
         self.fields["nome_cliente_instalado"].required = True
         self.fields["solucao"].required = True
+        self.fields["foto_1"].required = True
+        self.fields["foto_2"].required = True
+        self.fields["foto_3"].required = True
 
 class ConfirmarOSForm(BaseForm):
     class Meta:

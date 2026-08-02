@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between mb-4">
+    <div>
+        <h2 class="page-title mb-1">Tipos de Serviço</h2>
+        <p class="text-secondary mb-0">Gerencie os tipos de serviço disponíveis para ordens de serviço.</p>
+    </div>
+    <a href="{% url 'tipo-servico-create' %}" class="btn btn-primary"><i class="bi bi-plus me-1"></i>Novo Tipo</a>
+</div>
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Ativo</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tipo in object_list %}
+                    <tr>
+                        <td class="fw-semibold">{{ tipo.nome }}</td>
+                        <td>{% if tipo.ativo %}<span class="badge bg-success">Sim</span>{% else %}<span class="badge bg-danger">Não</span>{% endif %}</td>
+                        <td><a href="{% url 'tipo-servico-update' tipo.pk %}" class="btn btn-sm btn-light"><i class="bi bi-pencil"></i></a></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center py-4 text-secondary">Nenhum tipo de serviço encontrado.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}Baixa de Material | OS {{ object.pk }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 mt-4">
+        <div class="card p-4 shadow-sm border-0" style="border-radius: 16px;">
+            <div class="text-center mb-4">
+                <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                    <i class="bi bi-box-seam fs-3"></i>
+                </div>
+                <h4>Registrar Material Gasto</h4>
+                <p class="text-secondary">Ordem de Serviço: <b>{{ object }}</b></p>
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Produto utilizado</label>
+                    {{ form.produto }}
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Quantidade gasta</label>
+                    <input type="number" name="quantidade" class="form-control" min="1" required value="1">
+                </div>
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary py-2 fw-semibold">Confirmar Baixa na OS</button>
+                    <a href="{% url 'ordem-detail' object.pk %}" class="btn btn-outline-secondary py-2">Voltar para a OS</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

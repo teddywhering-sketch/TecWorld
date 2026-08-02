@@ -1,5 +1,241 @@
-{% extends 'base.html' %}{% block title %}Painel | TecWorld{% endblock %}{% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4"><div><h2 class="page-title mb-1">Olá, {{ user.first_name|default:user.username }}!</h2><p class="text-secondary mb-0">{% if user.is_staff %}Visão geral da sua operação.{% else %}Suas ordens de serviço atribuídas.{% endif %}</p></div>{% if is_operacional %}<a class="btn btn-primary" href="{% url 'ordem-create' %}"><i class="bi bi-plus-lg me-1"></i>Nova OS</a>{% endif %}</div>
-{% if user.is_staff %}<div class="row g-3 mb-4"><div class="col-md-6 col-xl-3"><div class="card p-3"><small class="text-secondary">OS em aberto</small><h3 class="mt-2 mb-0">{{ os_abertas }}</h3></div></div><div class="col-md-6 col-xl-3"><div class="card p-3"><small class="text-secondary">Agendadas hoje</small><h3 class="mt-2 mb-0">{{ os_hoje }}</h3></div></div><div class="col-md-6 col-xl-3"><div class="card p-3"><small class="text-secondary">Entradas</small><h3 class="mt-2 mb-0">R$ {{ entradas|floatformat:2 }}</h3></div></div><div class="col-md-6 col-xl-3"><div class="card p-3 border border-warning"><small class="text-secondary">Aguardando confirmação</small><h3 class="mt-2 mb-0 text-warning">{{ aguardando_confirmacao }}</h3></div></div></div>{% endif %}
-<div class="card"><div class="card-body p-0"><div class="p-4 border-bottom"><h5 class="mb-0">{% if user.is_staff %}Ordens recentes{% else %}Minhas ordens{% endif %}</h5></div><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>OS</th><th>Cliente</th><th>Tipo</th>{% if user.is_staff %}<th>Técnico</th>{% endif %}<th>Status</th></tr></thead><tbody>{% for os in recentes %}<tr><td><a href="{% url 'ordem-detail' os.pk %}" class="fw-semibold">{{ os }}</a></td><td>{{ os.cliente }}</td><td>{{ os.get_tipo_display }}</td>{% if user.is_staff %}<td>{{ os.tecnico|default:'Não atribuído' }}</td>{% endif %}<td><span class="badge text-bg-light">{{ os.get_status_display }}</span></td></tr>{% empty %}<tr><td colspan="5" class="text-center text-secondary py-4">Nenhuma ordem cadastrada.</td></tr>{% endfor %}</tbody></table></div></div></div>
+{% extends 'base.html' %}
+{% block title %}Painel | TecWorld{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="page-title mb-1" style="font-weight: 800;">Olá, {{ user.first_name|default:user.username }}!</h2>
+        <p class="text-secondary mb-0">{% if is_operacional %}Visão geral da sua operação.{% else %}Suas ordens de serviço atribuídas.{% endif %}</p>
+    </div>
+    {% if is_operacional %}
+    <a class="btn btn-primary shadow-sm rounded-pill px-4" href="{% url 'ordem-create' %}"><i class="bi bi-plus-lg me-1"></i>Nova OS</a>
+    {% endif %}
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4 col-xl-3">
+        <div class="card p-3 border-0 shadow-sm h-100" style="border-radius: 16px;">
+            <div class="d-flex align-items-center">
+                <div class="text-primary bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; flex-shrink: 0;">
+                    <i class="bi bi-clipboard-data fs-5"></i>
+                </div>
+                <div class="ms-2">
+                    <small class="text-secondary fw-semibold" style="font-size: 0.8rem;">OS em aberto</small>
+                    <h4 class="mt-1 mb-0 fw-bold">{{ os_abertas }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-xl-3">
+        <div class="card p-3 border-0 shadow-sm h-100" style="border-radius: 16px;">
+            <div class="d-flex align-items-center">
+                <div class="text-info bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; flex-shrink: 0;">
+                    <i class="bi bi-calendar2-check fs-5"></i>
+                </div>
+                <div class="ms-2">
+                    <small class="text-secondary fw-semibold" style="font-size: 0.8rem;">Agendadas hoje</small>
+                    <h4 class="mt-1 mb-0 fw-bold">{{ os_hoje }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-xl-3">
+        <div class="card p-3 border-0 shadow-sm h-100" style="border-radius: 16px;">
+            <div class="d-flex align-items-center">
+                <div class="text-success bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; flex-shrink: 0;">
+                    <i class="bi bi-cash-stack fs-5"></i>
+                </div>
+                <div class="ms-2">
+                    <small class="text-secondary fw-semibold" style="font-size: 0.8rem;">{% if is_operacional %}Faturamento{% else %}OS Concluídas{% endif %}</small>
+                    <h4 class="mt-1 mb-0 fw-bold">R$ {{ entradas|floatformat:2 }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-xl-3">
+        <div class="card p-3 border-0 shadow-sm h-100" style="border-radius: 16px;">
+            <div class="d-flex align-items-center">
+                <div class="text-danger bg-danger bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; flex-shrink: 0;">
+                    <i class="bi bi-graph-down-arrow fs-5"></i>
+                </div>
+                <div class="ms-2">
+                    <small class="text-secondary fw-semibold" style="font-size: 0.8rem;">Saídas (Gastos)</small>
+                    <h4 class="mt-1 mb-0 fw-bold">R$ {{ saidas|floatformat:2 }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-xl-3">
+        <div class="card p-3 border-0 shadow-sm h-100" style="border-radius: 16px;">
+            <div class="d-flex align-items-center">
+                <div class="text-danger bg-danger bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; flex-shrink: 0;">
+                    <i class="bi bi-fuel-pump fs-5"></i>
+                </div>
+                <div class="ms-2">
+                    <small class="text-secondary fw-semibold" style="font-size: 0.8rem;">Combustível</small>
+                    <h4 class="mt-1 mb-0 fw-bold">R$ {{ combustivel|floatformat:2 }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-xl-3">
+        <div class="card p-3 border-0 shadow-sm h-100" style="border-radius: 16px;">
+            <div class="d-flex align-items-center">
+                <div class="text-warning bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; flex-shrink: 0;">
+                    <i class="bi bi-hourglass-split fs-5"></i>
+                </div>
+                <div class="ms-2">
+                    <small class="text-secondary fw-semibold" style="font-size: 0.8rem;">Aguardando</small>
+                    <h4 class="mt-1 mb-0 fw-bold">{{ aguardando_confirmacao }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-xl-3">
+        <div class="card p-3 border-0 shadow-sm h-100 bg-primary bg-opacity-10" style="border-radius: 16px;">
+            <div class="d-flex align-items-center">
+                <div class="text-primary bg-white bg-opacity-75 rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; flex-shrink: 0;">
+                    <i class="bi bi-wallet2 fs-5"></i>
+                </div>
+                <div class="ms-2">
+                    <small class="text-primary fw-semibold" style="font-size: 0.8rem;">{% if is_operacional %}Saldo Total{% else %}Seu Saldo{% endif %}</small>
+                    <h4 class="mt-1 mb-0 fw-bold text-primary">R$ {{ saldo|floatformat:2 }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 20px;">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-4" style="color: #172033;">Volume de OS por Dia da Semana</h5>
+                <div style="position: relative; height: 250px; width: 100%;">
+                    <canvas id="weeklyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 20px;">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-4" style="color: #172033;">Tipos de Serviço</h5>
+                <div style="position: relative; height: 250px; width: 100%; display: flex; justify-content: center;">
+                    <canvas id="typeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm" style="border-radius: 20px;">
+    <div class="card-body p-0">
+        <div class="p-4 border-bottom">
+            <h5 class="fw-bold mb-0" style="color: #172033;">{% if is_operacional %}Ordens recentes{% else %}Minhas ordens{% endif %}</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table align-middle mb-0 table-hover border-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4 text-secondary fw-semibold">OS</th>
+                        <th class="text-secondary fw-semibold">Cliente</th>
+                        <th class="text-secondary fw-semibold">Tipo</th>
+                        {% if is_operacional %}<th class="text-secondary fw-semibold">Técnico</th>{% endif %}
+                        <th class="pe-4 text-secondary fw-semibold">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for os in recentes %}
+                    <tr>
+                        <td class="ps-4"><a href="{% url 'ordem-detail' os.pk %}" class="fw-bold text-decoration-none" style="color: #4154f1;">{{ os }}</a></td>
+                        <td class="fw-medium">{{ os.cliente }}</td>
+                        <td><span class="badge text-bg-light border text-secondary">{{ os.tipo.nome }}</span></td>
+                        {% if is_operacional %}<td class="text-secondary">{{ os.tecnico|default:'Não atribuído' }}</td>{% endif %}
+                        <td class="pe-4"><span class="badge {% if os.status == 'CONCLUIDA' %}bg-success{% elif os.status == 'CANCELADA' %}bg-danger{% else %}bg-primary{% endif %} rounded-pill px-3">{{ os.get_status_display }}</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-secondary py-5">
+                            <i class="bi bi-inbox fs-1 d-block mb-2 text-muted"></i>
+                            Nenhuma ordem cadastrada.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const weekData = {{ grafico_semana|safe }};
+        const typeData = {{ grafico_tipos|safe }};
+        
+        // Weekly Bar Chart
+        new Chart(document.getElementById('weeklyChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: weekData.labels,
+                datasets: [{
+                    label: 'Quantidade de OS',
+                    data: weekData.data,
+                    backgroundColor: '#4154f1',
+                    borderRadius: 6,
+                    barPercentage: 0.6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#172033',
+                        padding: 12,
+                        titleFont: { size: 14 },
+                        bodyFont: { size: 14 }
+                    }
+                },
+                scales: {
+                    y: { beginAtZero: true, grid: { borderDash: [4, 4], color: '#e5e7eb' }, border: { display: false } },
+                    x: { grid: { display: false }, border: { display: false } }
+                }
+            }
+        });
+
+        // Type Pie Chart
+        new Chart(document.getElementById('typeChart').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: typeData.labels,
+                datasets: [{
+                    data: typeData.data,
+                    backgroundColor: ['#4154f1', '#2eca6a', '#ff771d', '#0dcaf0', '#ffc107', '#dc3545', '#6c757d'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { usePointStyle: true, padding: 20, font: { family: "'Inter', sans-serif" } }
+                    },
+                    tooltip: {
+                        backgroundColor: '#172033',
+                        padding: 12,
+                    }
+                }
+            }
+        });
+    });
+</script>
+
 {% endblock %}
