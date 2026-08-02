@@ -157,6 +157,9 @@ venv.bak/
 # mkdocs documentation
 /site
 
+# Certificados e dados do certbot (contém chaves privadas — nunca commitar)
+/data/
+
 # mypy
 .mypy_cache/
 .dmypy.json
