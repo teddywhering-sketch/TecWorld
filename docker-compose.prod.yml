@@ -1,6 +1,10 @@
 services:
   web:
-    env_file: .env.prod
+    # .env.prod.local (fora do git, criado pelo deploy_pro.sh na VPS) sobrepõe
+    # o .env.prod com os segredos gerados em produção.
+    env_file:
+      - .env.prod
+      - .env.prod.local
     expose:
       - "8000"
   

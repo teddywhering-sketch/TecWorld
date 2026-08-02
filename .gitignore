@@ -160,6 +160,9 @@ venv.bak/
 # Certificados e dados do certbot (contém chaves privadas — nunca commitar)
 /data/
 
+# Segredos de produção gerados na VPS pelo deploy_pro.sh
+.env.prod.local
+
 # mypy
 .mypy_cache/
 .dmypy.json
