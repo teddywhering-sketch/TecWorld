@@ -100,12 +100,22 @@ $COMPOSE build
 
 # ----------------------------------------------------------------------------
 log "7/9 Certificado SSL (Let's Encrypt)..."
-if [ -f "data/certbot/conf/live/${DOMAIN}/fullchain.pem" ]; then
+CERT="data/certbot/conf/live/${DOMAIN}/fullchain.pem"
+# O init-letsencrypt.sh cria um certificado "falso" (CN=localhost) no mesmo
+# caminho para o nginx conseguir iniciar — a simples existência do arquivo
+# não prova que o certificado real foi emitido.
+cert_ok() {
+  [ -f "$CERT" ] && ! openssl x509 -in "$CERT" -noout -subject 2>/dev/null | grep -q "CN *= *localhost"
+}
+if cert_ok; then
   warn "Certificado já existe — renovação automática fica com o container certbot."
 else
-  warn "Certificado ainda não existe — emitindo agora..."
+  warn "Certificado real ainda não existe — emitindo agora..."
   echo y | ./init-letsencrypt.sh
-  [ -f "data/certbot/conf/live/${DOMAIN}/fullchain.pem" ] || die "Emissão do certificado falhou. Verifique: DNS do domínio apontando para esta VPS e porta 80 acessível da internet."
+  cert_ok || die "Emissão do certificado falhou (o nginx segue com o certificado provisório).
+    Leia a saída do certbot acima para o motivo. Checagens: DNS de ${DOMAIN} e www
+    apontando para esta VPS, porta 80 acessível da internet e limite de tentativas
+    do Let's Encrypt (5 falhas/hora por domínio)."
 fi
 
 # ----------------------------------------------------------------------------
