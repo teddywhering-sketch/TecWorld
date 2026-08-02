@@ -5,11 +5,13 @@
 set -e
 
 VPS="${VPS:-root@145.223.92.203}"
-REPO_URL="https://github.com/teddywhering-sketch/TecWorld.git"
 APP_DIR="/srv/TecWorld"
 
-echo "### Conectando em $VPS ..."
-ssh -o ConnectTimeout=15 "$VPS" REPO_URL="$REPO_URL" APP_DIR="$APP_DIR" 'bash -s' <<'REMOTE'
+echo "### Enviando código local (commit atual) para $VPS:$APP_DIR ..."
+git archive HEAD | ssh -o ConnectTimeout=15 "$VPS" "mkdir -p '$APP_DIR' && tar -x -C '$APP_DIR'"
+
+echo "### Executando deploy na VPS..."
+ssh -o ConnectTimeout=15 "$VPS" APP_DIR="$APP_DIR" 'bash -s' <<'REMOTE'
 set -e
 
 echo "### [VPS] Verificando Docker..."
@@ -24,14 +26,6 @@ if command -v ufw >/dev/null 2>&1 && ufw status | grep -q "Status: active"; then
   ufw allow 443/tcp
 fi
 
-echo "### [VPS] Atualizando código..."
-mkdir -p "$(dirname "$APP_DIR")"
-if [ -d "$APP_DIR/.git" ]; then
-  git -C "$APP_DIR" fetch origin
-  git -C "$APP_DIR" reset --hard origin/main
-else
-  git clone "$REPO_URL" "$APP_DIR"
-fi
 cd "$APP_DIR"
 
 echo "### [VPS] Build da imagem..."
