@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Painel | TecWorld{% endblock %}
+{% block title %}Dashboard | TecWorld{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -12,94 +12,135 @@
     {% endif %}
 </div>
 
-<div class="row g-3 mb-4">
+<style>
+    .stat-card {
+        border-radius: 20px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+        position: relative;
+        z-index: 1;
+        border: 1px solid rgba(255,255,255,0.4);
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+    }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        z-index: -1;
+        opacity: 0.1;
+        background-size: cover;
+        background-position: right bottom;
+    }
+    .icon-box {
+        width: 54px; height: 54px;
+        border-radius: 16px;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    }
+    .stat-title { font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 700; opacity: 0.8; }
+    .stat-value { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.02em; margin-top: 0.2rem; }
+    
+    /* Gradientes */
+    .bg-grad-primary { background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%); color: white; }
+    .bg-grad-info { background: linear-gradient(135deg, #4cc9f0 0%, #4361ee 100%); color: white; }
+    .bg-grad-success { background: linear-gradient(135deg, #2eca6a 0%, #03b5aa 100%); color: white; }
+    .bg-grad-warning { background: linear-gradient(135deg, #ff9f1c 0%, #ff771d 100%); color: white; }
+    .bg-grad-danger { background: linear-gradient(135deg, #f72585 0%, #b5179e 100%); color: white; }
+    .bg-grad-dark { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; }
+</style>
+
+<div class="row g-4 mb-5">
     <div class="col-md-4 col-xl-3">
-        <div class="card p-3 border-0 shadow-sm h-100" style="border-radius: 16px;">
+        <div class="card stat-card p-4 h-100 bg-white">
             <div class="d-flex align-items-center">
-                <div class="text-primary bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; flex-shrink: 0;">
-                    <i class="bi bi-clipboard-data fs-5"></i>
+                <div class="icon-box bg-grad-primary text-white">
+                    <i class="bi bi-clipboard-data fs-4"></i>
                 </div>
-                <div class="ms-2">
-                    <small class="text-secondary fw-semibold" style="font-size: 0.8rem;">OS em aberto</small>
-                    <h4 class="mt-1 mb-0 fw-bold">{{ os_abertas }}</h4>
+                <div class="ms-3">
+                    <div class="stat-title text-secondary">OS em aberto</div>
+                    <div class="stat-value text-dark">{{ os_abertas }}</div>
                 </div>
             </div>
         </div>
     </div>
     <div class="col-md-4 col-xl-3">
-        <div class="card p-3 border-0 shadow-sm h-100" style="border-radius: 16px;">
+        <div class="card stat-card p-4 h-100 bg-white">
             <div class="d-flex align-items-center">
-                <div class="text-info bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; flex-shrink: 0;">
-                    <i class="bi bi-calendar2-check fs-5"></i>
+                <div class="icon-box bg-grad-info text-white">
+                    <i class="bi bi-calendar2-check fs-4"></i>
                 </div>
-                <div class="ms-2">
-                    <small class="text-secondary fw-semibold" style="font-size: 0.8rem;">Agendadas hoje</small>
-                    <h4 class="mt-1 mb-0 fw-bold">{{ os_hoje }}</h4>
+                <div class="ms-3">
+                    <div class="stat-title text-secondary">Agendadas hoje</div>
+                    <div class="stat-value text-dark">{{ os_hoje }}</div>
                 </div>
             </div>
         </div>
     </div>
     <div class="col-md-4 col-xl-3">
-        <div class="card p-3 border-0 shadow-sm h-100" style="border-radius: 16px;">
+        <div class="card stat-card p-4 h-100 bg-white">
             <div class="d-flex align-items-center">
-                <div class="text-success bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; flex-shrink: 0;">
-                    <i class="bi bi-cash-stack fs-5"></i>
+                <div class="icon-box bg-grad-success text-white">
+                    <i class="bi bi-cash-stack fs-4"></i>
                 </div>
-                <div class="ms-2">
-                    <small class="text-secondary fw-semibold" style="font-size: 0.8rem;">{% if is_operacional %}Faturamento{% else %}OS Concluídas{% endif %}</small>
-                    <h4 class="mt-1 mb-0 fw-bold">R$ {{ entradas|floatformat:2 }}</h4>
+                <div class="ms-3">
+                    <div class="stat-title text-secondary">{% if is_operacional %}Faturamento{% else %}OS Concluídas{% endif %}</div>
+                    <div class="stat-value text-dark"><span class="fs-5 text-muted fw-normal me-1">R$</span>{{ entradas|floatformat:2 }}</div>
                 </div>
             </div>
         </div>
     </div>
     <div class="col-md-4 col-xl-3">
-        <div class="card p-3 border-0 shadow-sm h-100" style="border-radius: 16px;">
+        <div class="card stat-card p-4 h-100 bg-white">
             <div class="d-flex align-items-center">
-                <div class="text-danger bg-danger bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; flex-shrink: 0;">
-                    <i class="bi bi-graph-down-arrow fs-5"></i>
+                <div class="icon-box bg-grad-danger text-white">
+                    <i class="bi bi-graph-down-arrow fs-4"></i>
                 </div>
-                <div class="ms-2">
-                    <small class="text-secondary fw-semibold" style="font-size: 0.8rem;">Saídas (Gastos)</small>
-                    <h4 class="mt-1 mb-0 fw-bold">R$ {{ saidas|floatformat:2 }}</h4>
+                <div class="ms-3">
+                    <div class="stat-title text-secondary">Saídas (Gastos)</div>
+                    <div class="stat-value text-dark"><span class="fs-5 text-muted fw-normal me-1">R$</span>{{ saidas|floatformat:2 }}</div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4 col-xl-3">
-        <div class="card p-3 border-0 shadow-sm h-100" style="border-radius: 16px;">
+    <div class="col-md-4 col-xl-4">
+        <div class="card stat-card p-4 h-100 bg-white">
             <div class="d-flex align-items-center">
-                <div class="text-danger bg-danger bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; flex-shrink: 0;">
-                    <i class="bi bi-fuel-pump fs-5"></i>
+                <div class="icon-box bg-grad-danger text-white opacity-75">
+                    <i class="bi bi-fuel-pump fs-4"></i>
                 </div>
-                <div class="ms-2">
-                    <small class="text-secondary fw-semibold" style="font-size: 0.8rem;">Combustível</small>
-                    <h4 class="mt-1 mb-0 fw-bold">R$ {{ combustivel|floatformat:2 }}</h4>
+                <div class="ms-3">
+                    <div class="stat-title text-secondary">Combustível</div>
+                    <div class="stat-value text-dark"><span class="fs-5 text-muted fw-normal me-1">R$</span>{{ combustivel|floatformat:2 }}</div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4 col-xl-3">
-        <div class="card p-3 border-0 shadow-sm h-100" style="border-radius: 16px;">
+    <div class="col-md-4 col-xl-4">
+        <div class="card stat-card p-4 h-100 bg-white">
             <div class="d-flex align-items-center">
-                <div class="text-warning bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; flex-shrink: 0;">
-                    <i class="bi bi-hourglass-split fs-5"></i>
+                <div class="icon-box bg-grad-warning text-white">
+                    <i class="bi bi-hourglass-split fs-4"></i>
                 </div>
-                <div class="ms-2">
-                    <small class="text-secondary fw-semibold" style="font-size: 0.8rem;">Aguardando</small>
-                    <h4 class="mt-1 mb-0 fw-bold">{{ aguardando_confirmacao }}</h4>
+                <div class="ms-3">
+                    <div class="stat-title text-secondary">Aguardando</div>
+                    <div class="stat-value text-dark">{{ aguardando_confirmacao }}</div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4 col-xl-3">
-        <div class="card p-3 border-0 shadow-sm h-100 bg-primary bg-opacity-10" style="border-radius: 16px;">
+    <div class="col-md-4 col-xl-4">
+        <div class="card stat-card p-4 h-100 bg-grad-dark text-white border-0 shadow-lg" style="transform: scale(1.02);">
             <div class="d-flex align-items-center">
-                <div class="text-primary bg-white bg-opacity-75 rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; flex-shrink: 0;">
-                    <i class="bi bi-wallet2 fs-5"></i>
+                <div class="icon-box bg-white text-dark shadow-sm">
+                    <i class="bi bi-wallet2 fs-4"></i>
                 </div>
-                <div class="ms-2">
-                    <small class="text-primary fw-semibold" style="font-size: 0.8rem;">{% if is_operacional %}Saldo Total{% else %}Seu Saldo{% endif %}</small>
-                    <h4 class="mt-1 mb-0 fw-bold text-primary">R$ {{ saldo|floatformat:2 }}</h4>
+                <div class="ms-3">
+                    <div class="stat-title text-white-50">{% if is_operacional %}Saldo Total{% else %}Seu Saldo{% endif %}</div>
+                    <div class="stat-value text-white"><span class="fs-5 text-white-50 fw-normal me-1">R$</span>{{ saldo|floatformat:2 }}</div>
                 </div>
             </div>
         </div>
@@ -129,11 +170,9 @@
     </div>
 </div>
 
-<div class="card border-0 shadow-sm" style="border-radius: 20px;">
+<h5 class="fw-bold mb-3 mt-4" style="color: #172033;">OS Abertas Recentes</h5>
+<div class="card border-0 shadow-sm mb-4" style="border-radius: 20px;">
     <div class="card-body p-0">
-        <div class="p-4 border-bottom">
-            <h5 class="fw-bold mb-0" style="color: #172033;">{% if is_operacional %}Ordens recentes{% else %}Minhas ordens{% endif %}</h5>
-        </div>
         <div class="table-responsive">
             <table class="table align-middle mb-0 table-hover border-0">
                 <thead class="table-light">
@@ -146,20 +185,85 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for os in recentes %}
+                    {% for os in os_abertas_list %}
                     <tr>
                         <td class="ps-4"><a href="{% url 'ordem-detail' os.pk %}" class="fw-bold text-decoration-none" style="color: #4154f1;">{{ os }}</a></td>
                         <td class="fw-medium">{{ os.cliente }}</td>
                         <td><span class="badge text-bg-light border text-secondary">{{ os.tipo.nome }}</span></td>
                         {% if is_operacional %}<td class="text-secondary">{{ os.tecnico|default:'Não atribuído' }}</td>{% endif %}
-                        <td class="pe-4"><span class="badge {% if os.status == 'CONCLUIDA' %}bg-success{% elif os.status == 'CANCELADA' %}bg-danger{% else %}bg-primary{% endif %} rounded-pill px-3">{{ os.get_status_display }}</span></td>
+                        <td class="pe-4"><span class="badge bg-primary rounded-pill px-3">{{ os.get_status_display }}</span></td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="5" class="text-center text-secondary py-5">
-                            <i class="bi bi-inbox fs-1 d-block mb-2 text-muted"></i>
-                            Nenhuma ordem cadastrada.
-                        </td>
+                        <td colspan="5" class="text-center text-secondary py-4">Nenhuma OS aberta recente.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<h5 class="fw-bold mb-3 mt-4" style="color: #172033;">Aguardando Confirmação</h5>
+<div class="card border-0 shadow-sm mb-4" style="border-radius: 20px;">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0 table-hover border-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4 text-secondary fw-semibold">OS</th>
+                        <th class="text-secondary fw-semibold">Cliente</th>
+                        <th class="text-secondary fw-semibold">Tipo</th>
+                        {% if is_operacional %}<th class="text-secondary fw-semibold">Técnico</th>{% endif %}
+                        <th class="pe-4 text-secondary fw-semibold">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for os in os_aguardando_list %}
+                    <tr>
+                        <td class="ps-4"><a href="{% url 'ordem-detail' os.pk %}" class="fw-bold text-decoration-none" style="color: #4154f1;">{{ os }}</a></td>
+                        <td class="fw-medium">{{ os.cliente }}</td>
+                        <td><span class="badge text-bg-light border text-secondary">{{ os.tipo.nome }}</span></td>
+                        {% if is_operacional %}<td class="text-secondary">{{ os.tecnico|default:'Não atribuído' }}</td>{% endif %}
+                        <td class="pe-4"><span class="badge bg-warning text-dark rounded-pill px-3">{{ os.get_status_display }}</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-secondary py-4">Nenhuma OS aguardando confirmação.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<h5 class="fw-bold mb-3 mt-4" style="color: #172033;">OS Finalizadas Recentes</h5>
+<div class="card border-0 shadow-sm" style="border-radius: 20px;">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0 table-hover border-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4 text-secondary fw-semibold">OS</th>
+                        <th class="text-secondary fw-semibold">Cliente</th>
+                        <th class="text-secondary fw-semibold">Tipo</th>
+                        {% if is_operacional %}<th class="text-secondary fw-semibold">Técnico</th>{% endif %}
+                        <th class="pe-4 text-secondary fw-semibold">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for os in os_concluidas_list %}
+                    <tr>
+                        <td class="ps-4"><a href="{% url 'ordem-detail' os.pk %}" class="fw-bold text-decoration-none" style="color: #4154f1;">{{ os }}</a></td>
+                        <td class="fw-medium">{{ os.cliente }}</td>
+                        <td><span class="badge text-bg-light border text-secondary">{{ os.tipo.nome }}</span></td>
+                        {% if is_operacional %}<td class="text-secondary">{{ os.tecnico|default:'Não atribuído' }}</td>{% endif %}
+                        <td class="pe-4"><span class="badge bg-success rounded-pill px-3">{{ os.get_status_display }}</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-secondary py-4">Nenhuma OS finalizada recente.</td>
                     </tr>
                     {% endfor %}
                 </tbody>

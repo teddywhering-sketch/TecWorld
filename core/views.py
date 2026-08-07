@@ -76,7 +76,9 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             combustivel=combustivel,
             saldo=saldo,
             aguardando_confirmacao=aguardando, 
-            recentes=atuais.select_related("cliente", "tecnico").order_by('-id')[:6]
+            os_abertas_list=atuais.filter(status__in=["ABERTA", "AGENDADA"]).select_related("cliente", "tecnico").order_by('-id')[:5],
+            os_aguardando_list=atuais.filter(status__in=["EM_ANDAMENTO", "AGUARDANDO_CONFIRMACAO"]).select_related("cliente", "tecnico").order_by('-id')[:5],
+            os_concluidas_list=atuais.filter(status="CONCLUIDA").select_related("cliente", "tecnico").order_by('-id')[:5]
         )
         
         qs_tipos = qs_tipos.values('tipo__nome').annotate(total=Count('id')).order_by('-total')
@@ -125,13 +127,22 @@ class ClienteFinalUpdateView(LoginRequiredMixin, OperacionalRequiredMixin, Updat
 
 
 class OrdemListView(LoginRequiredMixin, ListView):
-    model = OrdemServico; paginate_by = 12
+    model = OrdemServico
+    def get_paginate_by(self, queryset):
+        return 12 if self.request.GET.get("aba") == "arquivadas" else None
     def get_queryset(self):
         qs = OrdemServico.objects.select_related("cliente", "tecnico")
         qs = qs.filter(arquivada_em__isnull=False) if self.request.GET.get("aba") == "arquivadas" else qs.filter(arquivada_em__isnull=True)
         return qs if (self.request.user.is_staff or self.request.user.groups.filter(name="Secretaria").exists()) else qs.filter(tecnico=self.request.user)
     def get_context_data(self, **kwargs):
-        c = super().get_context_data(**kwargs); c["aba_arquivadas"] = self.request.GET.get("aba") == "arquivadas"; return c
+        c = super().get_context_data(**kwargs)
+        c["aba_arquivadas"] = self.request.GET.get("aba") == "arquivadas"
+        if not c["aba_arquivadas"]:
+            qs = self.get_queryset()
+            c["os_abertas"] = qs.filter(status__in=["ABERTA", "AGENDADA"])
+            c["os_aguardando"] = qs.filter(status__in=["EM_ANDAMENTO", "AGUARDANDO_CONFIRMACAO"])
+            c["os_concluidas"] = qs.filter(status="CONCLUIDA")
+        return c
 
 class OrdemDetailView(LoginRequiredMixin, DetailView):
     model = OrdemServico
@@ -205,7 +216,7 @@ class OrcamentoCreateView(LoginRequiredMixin, OperacionalRequiredMixin, CreateVi
     def form_valid(self, form): form.instance.responsavel = self.request.user; return super().form_valid(form)
 class OrcamentoUpdateView(LoginRequiredMixin, OperacionalRequiredMixin, UpdateView): model = Orcamento; form_class = OrcamentoForm; success_url = reverse_lazy("orcamento-list")
 
-class FinanceiroView(LoginRequiredMixin, AdminRequiredMixin, ListView):
+class FinanceiroView(LoginRequiredMixin, OperacionalRequiredMixin, ListView):
     model = Lancamento; template_name = "core/financeiro.html"; paginate_by = 15
     def get_queryset(self):
         ultimo = FechamentoCaixa.objects.first()
@@ -214,9 +225,9 @@ class FinanceiroView(LoginRequiredMixin, AdminRequiredMixin, ListView):
         c = super().get_context_data(**kwargs); qs = self.get_queryset()
         c["entradas"] = qs.filter(tipo="ENTRADA").aggregate(v=Sum("valor"))["v"] or 0; c["saidas"] = qs.filter(tipo="SAIDA").aggregate(v=Sum("valor"))["v"] or 0; c["saldo"] = c["entradas"] - c["saidas"]
         return c
-class LancamentoCreateView(LoginRequiredMixin, AdminRequiredMixin, CreateView): model = Lancamento; form_class = LancamentoForm; success_url = reverse_lazy("financeiro")
+class LancamentoCreateView(LoginRequiredMixin, OperacionalRequiredMixin, CreateView): model = Lancamento; form_class = LancamentoForm; success_url = reverse_lazy("financeiro")
 
-class CombustivelCreateView(LoginRequiredMixin, AdminRequiredMixin, CreateView):
+class CombustivelCreateView(LoginRequiredMixin, OperacionalRequiredMixin, CreateView):
     model = Lancamento
     form_class = CombustivelForm
     template_name = "core/form.html"
@@ -238,7 +249,7 @@ class FecharFinanceiroView(LoginRequiredMixin, AdminRequiredMixin, View):
         messages.success(request, "Balanço fechado e OS pagas arquivadas. O novo período financeiro inicia zerado.")
         return redirect("financeiro")
 
-class RelatorioView(LoginRequiredMixin, AdminRequiredMixin, TemplateView):
+class RelatorioView(LoginRequiredMixin, OperacionalRequiredMixin, TemplateView):
     template_name = "core/relatorios.html"
     def get_context_data(self, **kwargs):
         c = super().get_context_data(**kwargs); c["status"] = [{"nome": label, "total": OrdemServico.objects.filter(status=value).count()} for value, label in OrdemServico.Status.choices]; c["tecnicos"] = OrdemServico.objects.values("tecnico__username").annotate(total=Count("id")).order_by("-total"); return c
@@ -246,16 +257,16 @@ class RelatorioView(LoginRequiredMixin, AdminRequiredMixin, TemplateView):
 class UsuarioListView(LoginRequiredMixin, AdminRequiredMixin, ListView): model = User; template_name = "core/usuario_list.html"; queryset = User.objects.order_by("username")
 class UsuarioCreateView(LoginRequiredMixin, AdminRequiredMixin, CreateView): model = User; form_class = UsuarioForm; template_name = "core/usuario_form.html"; success_url = reverse_lazy("usuario-list")
 
-class ProdutoListView(LoginRequiredMixin, AdminRequiredMixin, ListView): model = Produto
-class ProdutoCreateView(LoginRequiredMixin, AdminRequiredMixin, CreateView): model = Produto; form_class = ProdutoForm; template_name = "core/form.html"; success_url = reverse_lazy("produto-list"); extra_context = {"title": "Novo Produto"}
-class ProdutoUpdateView(LoginRequiredMixin, AdminRequiredMixin, UpdateView): model = Produto; form_class = ProdutoForm; template_name = "core/form.html"; success_url = reverse_lazy("produto-list"); extra_context = {"title": "Editar Produto"}
+class ProdutoListView(LoginRequiredMixin, OperacionalRequiredMixin, ListView): model = Produto
+class ProdutoCreateView(LoginRequiredMixin, OperacionalRequiredMixin, CreateView): model = Produto; form_class = ProdutoForm; template_name = "core/form.html"; success_url = reverse_lazy("produto-list"); extra_context = {"title": "Novo Produto"}
+class ProdutoUpdateView(LoginRequiredMixin, OperacionalRequiredMixin, UpdateView): model = Produto; form_class = ProdutoForm; template_name = "core/form.html"; success_url = reverse_lazy("produto-list"); extra_context = {"title": "Editar Produto"}
 
-class EstoqueTecnicoListView(LoginRequiredMixin, AdminRequiredMixin, ListView): 
+class EstoqueTecnicoListView(LoginRequiredMixin, OperacionalRequiredMixin, ListView): 
     model = EstoqueTecnico
     template_name = "core/estoque_tecnico_list.html"
     def get_queryset(self): return EstoqueTecnico.objects.select_related("tecnico", "produto")
 
-class TransferenciaEstoqueView(LoginRequiredMixin, AdminRequiredMixin, View):
+class TransferenciaEstoqueView(LoginRequiredMixin, OperacionalRequiredMixin, View):
     def get(self, request):
         return render(request, "core/form.html", {"form": TransferenciaEstoqueForm(), "title": "Transferir Estoque"})
     def post(self, request):
@@ -317,3 +328,22 @@ class UsuarioSenhaView(LoginRequiredMixin, AdminRequiredMixin, View):
         if form.is_valid():
             form.save(); messages.success(request, f"Senha de {usuario.username} atualizada."); return redirect("usuario-list")
         return render(request, "core/senha_form.html", {"form": form, "usuario_alvo": usuario})
+
+from .models import ConfiguracaoSistema
+
+class ConfiguracaoSistemaUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = ConfiguracaoSistema
+    template_name = "core/form.html"
+    fields = ['logo']
+    success_url = reverse_lazy("dashboard")
+
+    def get_object(self):
+        return ConfiguracaoSistema.load()
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def get_context_data(self, **kwargs):
+        c = super().get_context_data(**kwargs)
+        c["titulo"] = "Configurações do Sistema"
+        return c

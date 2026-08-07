@@ -1,1 +1,19 @@
-{% extends 'base.html' %}{% block guest_content %}<main class="min-vh-100 d-flex align-items-center justify-content-center p-3" style="background:linear-gradient(135deg,#17203a,#4154f1)"><div class="card p-4 p-md-5" style="width:100%;max-width:430px"><div class="text-center mb-4"><div class="metric-icon mx-auto mb-3" style="background:#e7eafe;color:#4154f1"><i class="bi bi-router-fill"></i></div><h2 class="fw-bold">TecWorld</h2><p class="text-secondary">Acesse a operação do seu provedor</p></div><form method="post">{% csrf_token %}{% if form.errors %}<div class="alert alert-danger py-2">Usuário ou senha inválidos.</div>{% endif %}<div class="mb-3"><label class="form-label">Usuário</label><input class="form-control" name="username" autofocus required></div><div class="mb-4"><label class="form-label">Senha</label><input class="form-control" name="password" type="password" required></div><button class="btn btn-primary w-100 py-2">Entrar <i class="bi bi-arrow-right ms-1"></i></button></form></div></main>{% endblock %}
+{% extends 'base.html' %}{% block guest_content %}<main class="min-vh-100 d-flex align-items-center justify-content-center p-3" style="background:linear-gradient(135deg,#17203a,#4154f1)"><div class="card p-4 p-md-5" style="width:100%;max-width:430px"><div class="text-center mb-4">
+{% if config_logo_url %}
+<img src="{{ config_logo_url }}" alt="Logo" class="mb-3" style="max-width: 280px; max-height: 120px; object-fit: contain;">
+{% else %}
+<svg width="96" height="96" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" class="mb-3">
+  <circle cx="50" cy="50" r="45" stroke="url(#logo-grad-login)" stroke-width="8" stroke-dasharray="70 20" stroke-linecap="round"/>
+  <path d="M30 65 A 30 30 0 0 1 70 65" stroke="url(#logo-grad-login)" stroke-width="8" stroke-linecap="round"/>
+  <path d="M40 55 A 15 15 0 0 1 60 55" stroke="url(#logo-grad-login)" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="50" cy="40" r="6" fill="#4cc9f0"/>
+  <defs>
+    <linearGradient id="logo-grad-login" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4cc9f0" />
+      <stop offset="100%" stop-color="#4361ee" />
+    </linearGradient>
+  </defs>
+</svg>
+<h2 class="fw-bold">TecWorld</h2>
+{% endif %}
+<p class="text-secondary">Acesse a operação do seu provedor</p></div><form method="post">{% csrf_token %}{% if form.errors %}<div class="alert alert-danger py-2">Usuário ou senha inválidos.</div>{% endif %}<div class="mb-3"><label class="form-label">Usuário</label><input class="form-control" name="username" autofocus required></div><div class="mb-4"><label class="form-label">Senha</label><input class="form-control" name="password" type="password" required></div><button class="btn btn-primary w-100 py-2">Entrar <i class="bi bi-arrow-right ms-1"></i></button></form></div></main>{% endblock %}

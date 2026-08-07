@@ -143,3 +143,14 @@ class ProdutoOS(models.Model):
     registrado_em = models.DateTimeField(auto_now_add=True)
     class Meta: ordering = ["registrado_em"]
     def __str__(self): return f"{self.quantidade}x {self.produto.nome}"
+
+class ConfiguracaoSistema(models.Model):
+    logo = models.ImageField("Logo do Sistema", upload_to="logos/", null=True, blank=True)
+    class Meta:
+        verbose_name = "Configuração do Sistema"
+        verbose_name_plural = "Configurações do Sistema"
+
+    @classmethod
+    def load(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj

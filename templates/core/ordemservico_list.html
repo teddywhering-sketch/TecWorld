@@ -11,9 +11,6 @@
 </div>
 {% if aba_arquivadas %}
 <ul class="nav nav-tabs mb-3"><li class="nav-item"><span class="nav-link active"><i class="bi bi-archive me-1"></i>Arquivadas</span></li></ul>
-{% else %}
-<ul class="nav nav-tabs mb-3"><li class="nav-item"><span class="nav-link active">Atuais</span></li></ul>
-{% endif %}
 <div class="card">
     <div class="table-responsive">
         <table class="table align-middle mb-0">
@@ -69,4 +66,145 @@
         </table>
     </div>
 </div>
+{% else %}
+<ul class="nav nav-tabs mb-3"><li class="nav-item"><span class="nav-link active">Atuais</span></li></ul>
+
+<!-- OS Abertas -->
+<h5 class="mb-3">OS Abertas</h5>
+<div class="card mb-4">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Número</th>
+                    <th>Cliente</th>
+                    <th>Tipo</th>
+                    <th>Agendamento</th>
+                    {% if is_operacional %}<th>Técnico</th>{% endif %}
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for os in os_abertas %}
+                <tr>
+                    <td class="fw-semibold">{{ os }}</td>
+                    <td>{{ os.cliente }}</td>
+                    <td>{{ os.tipo.nome }}</td>
+                    <td>{{ os.agendamento|date:'d/m/Y H:i'|default:'A definir' }}</td>
+                    {% if is_operacional %}<td>{{ os.tecnico|default:'—' }}</td>{% endif %}
+                    <td><span class="badge text-bg-light">{{ os.get_status_display }}</span></td>
+                    <td><a href="{% url 'ordem-detail' os.pk %}" class="btn btn-sm btn-light">Ver</a></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-secondary">Nenhuma OS aberta.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Aguardando Confirmação -->
+<h5 class="mb-3">Aguardando confirmação</h5>
+<div class="card mb-4">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Número</th>
+                    <th>Cliente</th>
+                    <th>Tipo</th>
+                    <th>Cliente instalado</th>
+                    <th>Tempo de Execução</th>
+                    {% if is_operacional %}<th>Técnico</th>{% endif %}
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for os in os_aguardando %}
+                <tr>
+                    <td class="fw-semibold">{{ os }}</td>
+                    <td>{{ os.cliente }}</td>
+                    <td>{{ os.tipo.nome }}</td>
+                    <td>{{ os.nome_cliente_instalado|default:'—' }}</td>
+                    <td>
+                        {% if os.tempo_gasto %}
+                            <span class="badge bg-info text-dark rounded-pill shadow-sm"><i class="bi bi-stopwatch me-1"></i>{{ os.tempo_gasto }}</span>
+                        {% else %}
+                            <span class="text-secondary small">—</span>
+                        {% endif %}
+                    </td>
+                    {% if is_operacional %}<td>{{ os.tecnico|default:'—' }}</td>{% endif %}
+                    <td><span class="badge text-bg-warning">{{ os.get_status_display }}</span></td>
+                    <td><a href="{% url 'ordem-detail' os.pk %}" class="btn btn-sm btn-light">Ver</a></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center py-4 text-secondary">Nenhuma OS aguardando confirmação.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- OS Finalizada e Paga -->
+<h5 class="mb-3">OS Finalizada e Paga</h5>
+<div class="card">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Número</th>
+                    <th>Cliente</th>
+                    <th>Tipo</th>
+                    <th>Cliente instalado</th>
+                    <th>Tempo de Execução</th>
+                    {% if is_operacional %}<th>Técnico</th>{% endif %}
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for os in os_concluidas %}
+                <tr>
+                    <td class="fw-semibold">{{ os }}</td>
+                    <td>{{ os.cliente }}</td>
+                    <td>{{ os.tipo.nome }}</td>
+                    <td>{{ os.nome_cliente_instalado|default:'—' }}</td>
+                    <td>
+                        {% if os.tempo_gasto %}
+                            <span class="badge bg-info text-dark rounded-pill shadow-sm"><i class="bi bi-stopwatch me-1"></i>{{ os.tempo_gasto }}</span>
+                        {% else %}
+                            <span class="text-secondary small">—</span>
+                        {% endif %}
+                    </td>
+                    {% if is_operacional %}<td>{{ os.tecnico|default:'—' }}</td>{% endif %}
+                    <td>
+                        {% if os.comprovante_pagamento %}
+                            <span class="badge text-bg-success"><i class="bi bi-check-circle-fill me-1"></i>Confirmada e paga</span>
+                        {% else %}
+                            <span class="badge text-bg-success">{{ os.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'ordem-detail' os.pk %}" class="btn btn-sm btn-light">Ver</a>
+                        {% if not is_operacional and os.comprovante_pagamento %}
+                            <a href="{{ os.comprovante_pagamento.url }}" target="_blank" class="btn btn-sm btn-success ms-1" title="Abrir comprovante"><i class="bi bi-receipt"></i></a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center py-4 text-secondary">Nenhuma OS finalizada e paga.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
