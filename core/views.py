@@ -68,6 +68,9 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             saldo = entradas - saidas
             aguardando = atuais.filter(status=OrdemServico.Status.AGUARDANDO_CONFIRMACAO).count()
 
+        from django.db.models import Q
+        qs_listas = atuais.filter(Q(tecnico=self.request.user) | Q(tecnico__isnull=True)) if is_operacional else atuais.filter(tecnico=self.request.user)
+
         c.update(
             os_abertas=atuais.exclude(status__in=["CONCLUIDA", "CANCELADA"]).count(), 
             os_hoje=atuais.filter(agendamento__date=timezone.localdate()).count(), 
@@ -76,9 +79,9 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             combustivel=combustivel,
             saldo=saldo,
             aguardando_confirmacao=aguardando, 
-            os_abertas_list=atuais.filter(status__in=["ABERTA", "AGENDADA"]).select_related("cliente", "tecnico").order_by('-id')[:5],
-            os_aguardando_list=atuais.filter(status__in=["EM_ANDAMENTO", "AGUARDANDO_CONFIRMACAO"]).select_related("cliente", "tecnico").order_by('-id')[:5],
-            os_concluidas_list=atuais.filter(status="CONCLUIDA").select_related("cliente", "tecnico").order_by('-id')[:5]
+            os_abertas_list=qs_listas.filter(status__in=["ABERTA", "AGENDADA"]).select_related("cliente", "tecnico").order_by('-id')[:5],
+            os_aguardando_list=qs_listas.filter(status__in=["EM_ANDAMENTO", "AGUARDANDO_CONFIRMACAO"]).select_related("cliente", "tecnico").order_by('-id')[:5],
+            os_concluidas_list=qs_listas.filter(status="CONCLUIDA").select_related("cliente", "tecnico").order_by('-id')[:5]
         )
         
         qs_tipos = qs_tipos.values('tipo__nome').annotate(total=Count('id')).order_by('-total')
@@ -96,7 +99,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
 
 class SearchableListView(LoginRequiredMixin, ListView):
-    paginate_by = 12
+    paginate_by = 10
     def get_queryset(self):
         qs = super().get_queryset(); q = self.request.GET.get("q")
         return qs.filter(nome__icontains=q) if q and self.model is Cliente else qs
@@ -128,20 +131,44 @@ class ClienteFinalUpdateView(LoginRequiredMixin, OperacionalRequiredMixin, Updat
 
 class OrdemListView(LoginRequiredMixin, ListView):
     model = OrdemServico
-    def get_paginate_by(self, queryset):
-        return 12 if self.request.GET.get("aba") == "arquivadas" else None
+    paginate_by = 10
+    
     def get_queryset(self):
         qs = OrdemServico.objects.select_related("cliente", "tecnico")
-        qs = qs.filter(arquivada_em__isnull=False) if self.request.GET.get("aba") == "arquivadas" else qs.filter(arquivada_em__isnull=True)
-        return qs if (self.request.user.is_staff or self.request.user.groups.filter(name="Secretaria").exists()) else qs.filter(tecnico=self.request.user)
+        is_operacional = self.request.user.is_staff or self.request.user.groups.filter(name="Secretaria").exists()
+        if not is_operacional:
+            qs = qs.filter(tecnico=self.request.user)
+            
+        aba = self.request.GET.get("aba", "abertas")
+        if aba == "arquivadas":
+            qs = qs.filter(arquivada_em__isnull=False)
+        else:
+            qs = qs.filter(arquivada_em__isnull=True)
+            if aba == "abertas":
+                qs = qs.filter(status__in=["ABERTA", "AGENDADA"])
+            elif aba == "aguardando":
+                qs = qs.filter(status__in=["EM_ANDAMENTO", "AGUARDANDO_CONFIRMACAO"])
+            elif aba == "concluidas":
+                qs = qs.filter(status="CONCLUIDA")
+                
+        return qs.order_by('-id')
+
     def get_context_data(self, **kwargs):
         c = super().get_context_data(**kwargs)
-        c["aba_arquivadas"] = self.request.GET.get("aba") == "arquivadas"
-        if not c["aba_arquivadas"]:
-            qs = self.get_queryset()
-            c["os_abertas"] = qs.filter(status__in=["ABERTA", "AGENDADA"])
-            c["os_aguardando"] = qs.filter(status__in=["EM_ANDAMENTO", "AGUARDANDO_CONFIRMACAO"])
-            c["os_concluidas"] = qs.filter(status="CONCLUIDA")
+        aba = self.request.GET.get("aba", "abertas")
+        c["aba_atual"] = aba
+        
+        is_operacional = self.request.user.is_staff or self.request.user.groups.filter(name="Secretaria").exists()
+        qs_base = OrdemServico.objects.filter(arquivada_em__isnull=True)
+        if not is_operacional:
+            qs_base = qs_base.filter(tecnico=self.request.user)
+            c["count_arquivadas"] = 0
+        else:
+            c["count_arquivadas"] = OrdemServico.objects.filter(arquivada_em__isnull=False).count()
+            
+        c["count_abertas"] = qs_base.filter(status__in=["ABERTA", "AGENDADA"]).count()
+        c["count_aguardando"] = qs_base.filter(status__in=["EM_ANDAMENTO", "AGUARDANDO_CONFIRMACAO"]).count()
+        c["count_concluidas"] = qs_base.filter(status="CONCLUIDA").count()
         return c
 
 class OrdemDetailView(LoginRequiredMixin, DetailView):
@@ -153,7 +180,7 @@ class OrdemDetailView(LoginRequiredMixin, DetailView):
 class OrdemCreateView(LoginRequiredMixin, OperacionalRequiredMixin, CreateView): model = OrdemServico; form_class = OrdemServicoForm; success_url = reverse_lazy("ordem-list")
 class OrdemUpdateView(LoginRequiredMixin, OperacionalRequiredMixin, UpdateView): model = OrdemServico; form_class = OrdemServicoForm; success_url = reverse_lazy("ordem-list")
 
-class TipoServicoListView(LoginRequiredMixin, OperacionalRequiredMixin, ListView): model = TipoServico
+class TipoServicoListView(LoginRequiredMixin, OperacionalRequiredMixin, ListView): model = TipoServico; paginate_by = 10
 class TipoServicoCreateView(LoginRequiredMixin, OperacionalRequiredMixin, CreateView): model = TipoServico; form_class = TipoServicoForm; success_url = reverse_lazy("tipo-servico-list"); extra_context = {"title": "Novo Tipo de Serviço"}
 class TipoServicoUpdateView(LoginRequiredMixin, OperacionalRequiredMixin, UpdateView): model = TipoServico; form_class = TipoServicoForm; success_url = reverse_lazy("tipo-servico-list"); extra_context = {"title": "Editar Tipo de Serviço"}
 
@@ -210,14 +237,14 @@ class ConfirmarOSView(LoginRequiredMixin, OperacionalRequiredMixin, View):
         return redirect("ordem-detail", pk=os.pk)
 
 
-class OrcamentoListView(LoginRequiredMixin, OperacionalRequiredMixin, ListView): model = Orcamento; paginate_by = 12
+class OrcamentoListView(LoginRequiredMixin, OperacionalRequiredMixin, ListView): model = Orcamento; paginate_by = 10
 class OrcamentoCreateView(LoginRequiredMixin, OperacionalRequiredMixin, CreateView):
     model = Orcamento; form_class = OrcamentoForm; success_url = reverse_lazy("orcamento-list")
     def form_valid(self, form): form.instance.responsavel = self.request.user; return super().form_valid(form)
 class OrcamentoUpdateView(LoginRequiredMixin, OperacionalRequiredMixin, UpdateView): model = Orcamento; form_class = OrcamentoForm; success_url = reverse_lazy("orcamento-list")
 
 class FinanceiroView(LoginRequiredMixin, OperacionalRequiredMixin, ListView):
-    model = Lancamento; template_name = "core/financeiro.html"; paginate_by = 15
+    model = Lancamento; template_name = "core/financeiro.html"; paginate_by = 10
     def get_queryset(self):
         ultimo = FechamentoCaixa.objects.first()
         return Lancamento.objects.filter(criado_em__gt=ultimo.fechado_em) if ultimo else Lancamento.objects.all()
@@ -254,14 +281,15 @@ class RelatorioView(LoginRequiredMixin, OperacionalRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         c = super().get_context_data(**kwargs); c["status"] = [{"nome": label, "total": OrdemServico.objects.filter(status=value).count()} for value, label in OrdemServico.Status.choices]; c["tecnicos"] = OrdemServico.objects.values("tecnico__username").annotate(total=Count("id")).order_by("-total"); return c
 
-class UsuarioListView(LoginRequiredMixin, AdminRequiredMixin, ListView): model = User; template_name = "core/usuario_list.html"; queryset = User.objects.order_by("username")
+class UsuarioListView(LoginRequiredMixin, AdminRequiredMixin, ListView): model = User; template_name = "core/usuario_list.html"; queryset = User.objects.order_by("username"); paginate_by = 10
 class UsuarioCreateView(LoginRequiredMixin, AdminRequiredMixin, CreateView): model = User; form_class = UsuarioForm; template_name = "core/usuario_form.html"; success_url = reverse_lazy("usuario-list")
 
-class ProdutoListView(LoginRequiredMixin, OperacionalRequiredMixin, ListView): model = Produto
+class ProdutoListView(LoginRequiredMixin, OperacionalRequiredMixin, ListView): model = Produto; paginate_by = 10
 class ProdutoCreateView(LoginRequiredMixin, OperacionalRequiredMixin, CreateView): model = Produto; form_class = ProdutoForm; template_name = "core/form.html"; success_url = reverse_lazy("produto-list"); extra_context = {"title": "Novo Produto"}
 class ProdutoUpdateView(LoginRequiredMixin, OperacionalRequiredMixin, UpdateView): model = Produto; form_class = ProdutoForm; template_name = "core/form.html"; success_url = reverse_lazy("produto-list"); extra_context = {"title": "Editar Produto"}
 
-class EstoqueTecnicoListView(LoginRequiredMixin, OperacionalRequiredMixin, ListView): 
+class EstoqueTecnicoListView(LoginRequiredMixin, OperacionalRequiredMixin, ListView):
+    paginate_by = 10
     model = EstoqueTecnico
     template_name = "core/estoque_tecnico_list.html"
     def get_queryset(self): return EstoqueTecnico.objects.select_related("tecnico", "produto")
