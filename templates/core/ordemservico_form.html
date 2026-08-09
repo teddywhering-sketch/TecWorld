@@ -1,1 +1,28 @@
 {% extends 'core/form.html' %}
+
+{% block content %}
+    {{ block.super }}
+    
+    {% if tipos_precos_json %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tiposPrecos = {{ tipos_precos_json|safe }};
+            const tipoSelect = document.getElementById('id_tipo');
+            const valorInput = document.getElementById('id_valor');
+            
+            if (tipoSelect && valorInput) {
+                tipoSelect.addEventListener('change', function() {
+                    const selectedId = this.value;
+                    if (selectedId && tiposPrecos[selectedId]) {
+                        // Formata o valor com 2 casas decimais e vírgula
+                        let valorRaw = parseFloat(tiposPrecos[selectedId]).toFixed(2);
+                        // Dependendo da localização, o Django aceita . ou ,
+                        // Vamos usar a notação padrão do sistema
+                        valorInput.value = valorRaw;
+                    }
+                });
+            }
+        });
+    </script>
+    {% endif %}
+{% endblock %}

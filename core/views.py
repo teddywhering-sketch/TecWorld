@@ -187,7 +187,21 @@ class OrdemCreateView(LoginRequiredMixin, OperacionalRequiredMixin, CreateView):
         if 'descricao' in self.request.GET: initial['descricao'] = self.request.GET['descricao']
         if 'valor' in self.request.GET: initial['valor'] = self.request.GET['valor']
         return initial
-class OrdemUpdateView(LoginRequiredMixin, OperacionalRequiredMixin, UpdateView): model = OrdemServico; form_class = OrdemServicoForm; success_url = reverse_lazy("ordem-list")
+    def get_context_data(self, **kwargs):
+        c = super().get_context_data(**kwargs)
+        import json
+        precos = {str(t.id): str(t.valor_padrao) for t in TipoServico.objects.filter(ativo=True)}
+        c['tipos_precos_json'] = json.dumps(precos)
+        return c
+
+class OrdemUpdateView(LoginRequiredMixin, OperacionalRequiredMixin, UpdateView): 
+    model = OrdemServico; form_class = OrdemServicoForm; success_url = reverse_lazy("ordem-list")
+    def get_context_data(self, **kwargs):
+        c = super().get_context_data(**kwargs)
+        import json
+        precos = {str(t.id): str(t.valor_padrao) for t in TipoServico.objects.filter(ativo=True)}
+        c['tipos_precos_json'] = json.dumps(precos)
+        return c
 
 class TipoServicoListView(LoginRequiredMixin, OperacionalRequiredMixin, ListView): model = TipoServico; paginate_by = 10
 class TipoServicoCreateView(LoginRequiredMixin, OperacionalRequiredMixin, CreateView): model = TipoServico; form_class = TipoServicoForm; success_url = reverse_lazy("tipo-servico-list"); extra_context = {"title": "Novo Tipo de Serviço"}
