@@ -2,14 +2,15 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import Group, User
 from .models import (
-    Cliente, ClienteFinal, FechamentoCaixa, Lancamento, Orcamento, 
+    Cliente, ClienteFinal, FechamentoCaixa, Lancamento, Orcamento, OrcamentoItem, 
     OrdemServico, TipoServico, Produto, ProdutoOS
 )
 
 class TipoServicoForm(forms.ModelForm):
     class Meta:
         model = TipoServico
-        fields = ["nome", "ativo"]
+        fields = ["nome", "valor_padrao", "ativo"]
+        labels = {"valor_padrao": "Valor Base (Para consulta rápida)"}
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -48,8 +49,20 @@ class OrdemServicoForm(BaseForm):
 class OrcamentoForm(BaseForm):
     class Meta:
         model = Orcamento
-        fields = ["cliente", "descricao", "valor", "validade", "status"]
+        fields = ["cliente", "descricao", "valor", "desconto", "validade", "status"]
         widgets = {"validade": forms.DateInput(attrs={"type": "date"}), "descricao": forms.Textarea(attrs={"rows": 4})}
+        labels = {"valor": "Subtotal (Opcional se usar Itens)", "desconto": "Desconto Geral"}
+
+class OrcamentoItemForm(BaseForm):
+    class Meta:
+        model = OrcamentoItem
+        fields = ["descricao", "quantidade", "preco_unitario"]
+
+from django.forms import inlineformset_factory
+OrcamentoItemFormSet = inlineformset_factory(
+    Orcamento, OrcamentoItem, form=OrcamentoItemForm,
+    extra=3, can_delete=True
+)
 
 class LancamentoForm(BaseForm):
     class Meta:

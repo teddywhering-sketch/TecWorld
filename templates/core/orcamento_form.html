@@ -1,1 +1,110 @@
-{% extends 'core/form.html' %}
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="page-title mb-1">{% if object %}Editar Orçamento{% else %}Novo Orçamento{% endif %}</h2>
+                <p class="text-secondary mb-0">Preencha os dados e os itens da proposta.</p>
+            </div>
+            <a href="{% url 'orcamento-list' %}" class="btn btn-light">Cancelar</a>
+        </div>
+        
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="card p-4 mb-4">
+                <h5 class="mb-4">Dados Principais</h5>
+                <div class="row g-3">
+                    {% for field in form %}
+                    <div class="col-md-6">
+                        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}<small class="text-secondary d-block mt-1">{{ field.help_text }}</small>{% endif %}
+                        {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors|striptags }}</div>{% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="card p-4 mb-4">
+                <h5 class="mb-4">Itens do Orçamento (Opcional)</h5>
+                <p class="text-secondary small mb-3">Preencha os itens detalhados. Se não preencher, apenas o "Subtotal" informado acima será considerado.</p>
+                
+                {{ itens.management_form }}
+                <div class="table-responsive">
+                    <table class="table table-sm" id="items-table">
+                        <thead>
+                            <tr>
+                                <th>Descrição do Serviço / Produto</th>
+                                <th style="width: 120px;">Qtd</th>
+                                <th style="width: 150px;">Preço Unit.</th>
+                                <th style="width: 80px;">Apagar</th>
+                            </tr>
+                        </thead>
+                        <tbody id="items-body">
+                            {% for item_form in itens %}
+                            <tr class="item-row">
+                                {% for hidden in item_form.hidden_fields %}{{ hidden }}{% endfor %}
+                                <td>{{ item_form.descricao }}</td>
+                                <td>{{ item_form.quantidade }}</td>
+                                <td>{{ item_form.preco_unitario }}</td>
+                                <td class="text-center align-middle">
+                                    {% if item_form.instance.pk %}
+                                        {{ item_form.DELETE }}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-2 text-end">
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="add-item-btn">
+                        <i class="bi bi-plus-circle me-1"></i> Adicionar Item
+                    </button>
+                </div>
+            </div>
+            
+            <button class="btn btn-primary px-4 btn-lg"><i class="bi bi-check-lg me-1"></i>Salvar Orçamento</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const addItemBtn = document.getElementById("add-item-btn");
+        const itemsBody = document.getElementById("items-body");
+        const totalFormsInput = document.getElementById("id_itens-TOTAL_FORMS");
+        
+        addItemBtn.addEventListener("click", function() {
+            const formCount = parseInt(totalFormsInput.value);
+            const rowTemplates = itemsBody.getElementsByClassName("item-row");
+            const templateRow = rowTemplates[rowTemplates.length - 1]; // Clone the last row
+            
+            const newRow = templateRow.cloneNode(true);
+            
+            // Update input names and ids in the new row
+            const regex = new RegExp(`itens-(\\d+)-`, 'g');
+            newRow.innerHTML = newRow.innerHTML.replace(regex, `itens-${formCount}-`);
+            
+            // Clear values
+            const inputs = newRow.querySelectorAll("input, textarea, select");
+            inputs.forEach(input => {
+                if (input.type !== "hidden" || input.name.includes("DELETE")) {
+                    if (input.type === "checkbox" || input.type === "radio") {
+                        input.checked = false;
+                    } else {
+                        input.value = "";
+                    }
+                } else if(input.name.includes("-id")) {
+                    input.value = ""; // Clear PK hidden field for new row
+                }
+            });
+            
+            itemsBody.appendChild(newRow);
+            totalFormsInput.value = formCount + 1;
+        });
+    });
+</script>
+{% endblock %}

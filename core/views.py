@@ -7,13 +7,13 @@ from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 from django.contrib.auth.views import LoginView, PasswordChangeView
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Sum
-from django.shortcuts import redirect, render
-from django.urls import reverse_lazy
+from django.shortcuts import redirect, render, get_object_or_404
+from django.urls import reverse_lazy, reverse
 from django.utils import timezone
 from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, TemplateView, UpdateView
 
-from .forms import ClienteForm, CombustivelForm, ConfirmarOSForm, FinalizarOSForm, LancamentoForm, OrcamentoForm, OrdemServicoForm, TipoServicoForm, UsuarioForm, ProdutoForm, TransferenciaEstoqueForm, ProdutoOSForm, ClienteFinalForm
+from .forms import ClienteForm, CombustivelForm, ConfirmarOSForm, FinalizarOSForm, LancamentoForm, OrcamentoForm, OrcamentoItemFormSet, OrdemServicoForm, TipoServicoForm, UsuarioForm, ProdutoForm, TransferenciaEstoqueForm, ProdutoOSForm, ClienteFinalForm
 from .models import Cliente, FechamentoCaixa, Lancamento, Orcamento, OrdemServico, TipoServico, Produto, EstoqueTecnico, ProdutoOS, ClienteFinal
 
 
@@ -94,6 +94,8 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             if item['weekday'] in dias:
                 semana_counts[dias[item['weekday']]] += item['total']
         c['grafico_semana'] = json.dumps({'labels': list(semana_counts.keys()), 'data': list(semana_counts.values())})
+        
+        c['tabela_precos'] = TipoServico.objects.filter(ativo=True).order_by('nome')
         
         return c
 
@@ -177,7 +179,14 @@ class OrdemDetailView(LoginRequiredMixin, DetailView):
         qs = OrdemServico.objects.select_related("cliente", "tecnico")
         return qs if (self.request.user.is_staff or self.request.user.groups.filter(name="Secretaria").exists()) else qs.filter(tecnico=self.request.user)
 
-class OrdemCreateView(LoginRequiredMixin, OperacionalRequiredMixin, CreateView): model = OrdemServico; form_class = OrdemServicoForm; success_url = reverse_lazy("ordem-list")
+class OrdemCreateView(LoginRequiredMixin, OperacionalRequiredMixin, CreateView):
+    model = OrdemServico; form_class = OrdemServicoForm; success_url = reverse_lazy("ordem-list")
+    def get_initial(self):
+        initial = super().get_initial()
+        if 'cliente' in self.request.GET: initial['cliente'] = self.request.GET['cliente']
+        if 'descricao' in self.request.GET: initial['descricao'] = self.request.GET['descricao']
+        if 'valor' in self.request.GET: initial['valor'] = self.request.GET['valor']
+        return initial
 class OrdemUpdateView(LoginRequiredMixin, OperacionalRequiredMixin, UpdateView): model = OrdemServico; form_class = OrdemServicoForm; success_url = reverse_lazy("ordem-list")
 
 class TipoServicoListView(LoginRequiredMixin, OperacionalRequiredMixin, ListView): model = TipoServico; paginate_by = 10
@@ -239,9 +248,78 @@ class ConfirmarOSView(LoginRequiredMixin, OperacionalRequiredMixin, View):
 
 class OrcamentoListView(LoginRequiredMixin, OperacionalRequiredMixin, ListView): model = Orcamento; paginate_by = 10
 class OrcamentoCreateView(LoginRequiredMixin, OperacionalRequiredMixin, CreateView):
-    model = Orcamento; form_class = OrcamentoForm; success_url = reverse_lazy("orcamento-list")
-    def form_valid(self, form): form.instance.responsavel = self.request.user; return super().form_valid(form)
-class OrcamentoUpdateView(LoginRequiredMixin, OperacionalRequiredMixin, UpdateView): model = Orcamento; form_class = OrcamentoForm; success_url = reverse_lazy("orcamento-list")
+    model = Orcamento
+    form_class = OrcamentoForm
+    success_url = reverse_lazy("orcamento-list")
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        if self.request.POST:
+            data['itens'] = OrcamentoItemFormSet(self.request.POST)
+        else:
+            data['itens'] = OrcamentoItemFormSet()
+        return data
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        itens = context['itens']
+        form.instance.responsavel = self.request.user
+        if itens.is_valid():
+            self.object = form.save()
+            itens.instance = self.object
+            itens.save()
+            return redirect(self.success_url)
+        else:
+            return self.render_to_response(self.get_context_data(form=form))
+
+class OrcamentoUpdateView(LoginRequiredMixin, OperacionalRequiredMixin, UpdateView):
+    model = Orcamento
+    form_class = OrcamentoForm
+    success_url = reverse_lazy("orcamento-list")
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        if self.request.POST:
+            data['itens'] = OrcamentoItemFormSet(self.request.POST, instance=self.object)
+        else:
+            data['itens'] = OrcamentoItemFormSet(instance=self.object)
+        return data
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        itens = context['itens']
+        if itens.is_valid():
+            self.object = form.save()
+            itens.instance = self.object
+            itens.save()
+            return redirect(self.success_url)
+        else:
+            return self.render_to_response(self.get_context_data(form=form))
+
+from django.views import View
+
+class GerarOSFromOrcamentoView(LoginRequiredMixin, OperacionalRequiredMixin, View):
+    def post(self, request, pk):
+        orcamento = get_object_or_404(Orcamento, pk=pk)
+        if orcamento.status == Orcamento.Status.APROVADO:
+            descricao_os = orcamento.descricao + "\n\n--- ITENS ---\n"
+            for item in orcamento.itens.all():
+                descricao_os += f"- {item.quantidade}x {item.descricao} (R$ {item.preco_unitario})\n"
+            
+            from urllib.parse import urlencode
+            params = urlencode({
+                'cliente': orcamento.cliente_id,
+                'descricao': descricao_os,
+                'valor': orcamento.valor_total,
+            })
+            messages.info(request, "Preencha os dados restantes para gerar a OS.")
+            return redirect(f"{reverse('ordem-create')}?{params}")
+        messages.error(request, "Apenas orçamentos aprovados podem gerar OS.")
+        return redirect("orcamento-list")
+
+class OrcamentoPrintView(LoginRequiredMixin, OperacionalRequiredMixin, DetailView):
+    model = Orcamento
+    template_name = "core/orcamento_print.html"
 
 class FinanceiroView(LoginRequiredMixin, OperacionalRequiredMixin, ListView):
     model = Lancamento; template_name = "core/financeiro.html"; paginate_by = 10

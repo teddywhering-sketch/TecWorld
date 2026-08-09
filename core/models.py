@@ -23,7 +23,8 @@ class Cliente(TimeStampedModel):
 
 class TipoServico(models.Model):
     nome = models.CharField("Nome", max_length=100, unique=True)
-    ativo = models.BooleanField(default=True)
+    ativo = models.BooleanField("Ativo", default=True)
+    valor_padrao = models.DecimalField("Valor Padrão", max_digits=10, decimal_places=2, default=0.00)
     
     class Meta:
         ordering = ["nome"]
@@ -38,16 +39,36 @@ class Orcamento(TimeStampedModel):
     numero = models.PositiveIntegerField(unique=True, editable=False)
     cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, related_name="orcamentos")
     descricao = models.TextField()
-    valor = models.DecimalField(max_digits=12, decimal_places=2)
+    valor = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    desconto = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     validade = models.DateField()
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.RASCUNHO)
     responsavel = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     class Meta: ordering = ["-criado_em"]
+    
+    @property
+    def valor_total(self):
+        # Se tem itens, usa a soma dos itens como base. Se não, usa o campo valor.
+        subtotal = sum(item.total for item in self.itens.all()) if self.itens.exists() else self.valor
+        # Import Decimal
+        from decimal import Decimal
+        return max(Decimal('0.00'), subtotal - self.desconto)
+
     def save(self, *args, **kwargs):
         if not self.numero:
             self.numero = (Orcamento.objects.order_by("-numero").first().numero + 1) if Orcamento.objects.exists() else 1
         super().save(*args, **kwargs)
     def __str__(self): return f"ORC-{self.numero:05d}"
+
+class OrcamentoItem(models.Model):
+    orcamento = models.ForeignKey(Orcamento, on_delete=models.CASCADE, related_name="itens")
+    descricao = models.CharField(max_length=255)
+    quantidade = models.PositiveIntegerField(default=1)
+    preco_unitario = models.DecimalField(max_digits=12, decimal_places=2)
+    
+    @property
+    def total(self):
+        return self.quantidade * self.preco_unitario
 
 class ClienteFinal(TimeStampedModel):
     provedor = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name="clientes_finais")
