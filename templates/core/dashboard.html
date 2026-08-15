@@ -134,15 +134,22 @@
     </div>
     <div class="col-md-4 col-xl-4">
         <div class="card stat-card p-4 h-100 bg-grad-dark text-white border-0 shadow-lg" style="transform: scale(1.02);">
-            <div class="d-flex align-items-center">
+            <div class="d-flex align-items-center mb-3">
                 <div class="icon-box bg-white text-dark shadow-sm">
                     <i class="bi bi-wallet2 fs-4"></i>
                 </div>
                 <div class="ms-3">
-                    <div class="stat-title text-white-50">{% if is_operacional %}Saldo Total{% else %}Seu Saldo{% endif %}</div>
+                    <div class="stat-title text-white-50">{% if is_operacional %}Saldo Total{% else %}Seu Saldo a Receber{% endif %}</div>
                     <div class="stat-value text-white"><span class="fs-5 text-white-50 fw-normal me-1">R$</span>{{ saldo|floatformat:2 }}</div>
                 </div>
             </div>
+            {% if not is_operacional %}
+            <div class="border-top border-secondary pt-2 mt-2">
+                <small class="d-block text-white-50 d-flex justify-content-between"><span>Ganho OS (50%):</span> <span class="text-white">R$ {{ ganho_os|floatformat:2 }}</span></small>
+                <small class="d-block text-white-50 d-flex justify-content-between"><span>Combustível (50%):</span> <span class="text-danger">-R$ {{ desc_combustivel|floatformat:2 }}</span></small>
+                <small class="d-block text-white-50 d-flex justify-content-between"><span>Adiantamentos/Vales:</span> <span class="text-danger">-R$ {{ desc_saidas|floatformat:2 }}</span></small>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>

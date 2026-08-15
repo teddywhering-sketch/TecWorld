@@ -11,10 +11,10 @@ from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
 from django.views import View
-from django.views.generic import CreateView, DetailView, ListView, TemplateView, UpdateView
+from django.views.generic import CreateView, DetailView, ListView, TemplateView, UpdateView, DeleteView
 
 from .forms import ClienteForm, CombustivelForm, ConfirmarOSForm, FinalizarOSForm, LancamentoForm, OrcamentoForm, OrcamentoItemFormSet, OrdemServicoForm, TipoServicoForm, UsuarioForm, ProdutoForm, TransferenciaEstoqueForm, ProdutoOSForm, ClienteFinalForm
-from .models import Cliente, FechamentoCaixa, Lancamento, Orcamento, OrdemServico, TipoServico, Produto, EstoqueTecnico, ProdutoOS, ClienteFinal
+from .models import Cliente, FechamentoCaixa, Lancamento, Orcamento, OrdemServico, TipoServico, Produto, EstoqueTecnico, ProdutoOS, ClienteFinal, LogTransacao
 
 
 class UserLoginView(LoginView):
@@ -52,13 +52,23 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             
             ultimo_fechamento = FechamentoCaixa.objects.first()
             lanc_tecnico = Lancamento.objects.filter(tecnico=self.request.user)
-            lanc_tecnico_os = Lancamento.objects.filter(ordem_servico__tecnico=self.request.user)
             if ultimo_fechamento:
                 lanc_tecnico = lanc_tecnico.filter(criado_em__gt=ultimo_fechamento.fechado_em)
-                lanc_tecnico_os = lanc_tecnico_os.filter(criado_em__gt=ultimo_fechamento.fechado_em)
-            saidas = lanc_tecnico_os.filter(tipo=Lancamento.Tipo.SAIDA).aggregate(v=Sum('valor'))['v'] or Decimal('0.00')
-            combustivel = lanc_tecnico.filter(tipo=Lancamento.Tipo.SAIDA, categoria="Combustível").aggregate(v=Sum('valor'))['v'] or Decimal('0.00')
-            saldo = entradas - (saidas + combustivel)
+                
+            combustivel = lanc_tecnico.filter(tipo=Lancamento.Tipo.SAIDA, categoria__icontains="combust").aggregate(v=Sum('valor'))['v'] or Decimal('0.00')
+            saidas = lanc_tecnico.filter(tipo=Lancamento.Tipo.SAIDA).exclude(categoria__icontains="combust").aggregate(v=Sum('valor'))['v'] or Decimal('0.00')
+            
+            ganho_os = float(entradas) * 0.5
+            desc_combustivel = float(combustivel) * 0.5
+            desc_saidas = float(saidas)
+            saldo = ganho_os - desc_combustivel - desc_saidas
+            
+            c.update({
+                'ganho_os': ganho_os,
+                'desc_combustivel': desc_combustivel,
+                'desc_saidas': desc_saidas,
+            })
+
         else:
             ultimo_fechamento = FechamentoCaixa.objects.first()
             lancamentos = Lancamento.objects.filter(criado_em__gt=ultimo_fechamento.fechado_em) if ultimo_fechamento else Lancamento.objects.all()
@@ -171,6 +181,38 @@ class OrdemListView(LoginRequiredMixin, ListView):
         c["count_abertas"] = qs_base.filter(status__in=["ABERTA", "AGENDADA"]).count()
         c["count_aguardando"] = qs_base.filter(status__in=["EM_ANDAMENTO", "AGUARDANDO_CONFIRMACAO"]).count()
         c["count_concluidas"] = qs_base.filter(status="CONCLUIDA").count()
+        
+        if is_operacional:
+            from django.contrib.auth.models import User
+            from django.db.models import Sum
+            from decimal import Decimal
+            import math
+            tecnicos = User.objects.filter(ordens_tecnicas__in=qs_base).distinct()
+            resumo_tecnicos_os = []
+            
+            ultimo = FechamentoCaixa.objects.first()
+            qs_lanc = Lancamento.objects.filter(criado_em__gt=ultimo.fechado_em) if ultimo else Lancamento.objects.all()
+            
+            for t in tecnicos:
+                ordens_concluidas = qs_base.filter(tecnico=t, status="CONCLUIDA")
+                valor_ordens = ordens_concluidas.aggregate(v=Sum("valor"))["v"] or Decimal("0.00")
+                
+                combustivel_t = qs_lanc.filter(tecnico=t, tipo="SAIDA", categoria__icontains="combust").aggregate(v=Sum("valor"))["v"] or Decimal("0.00")
+                
+                ganho_os = float(valor_ordens) * 0.5
+                custo_combustivel = float(combustivel_t) * 0.5
+                saldo_tecnico = ganho_os - custo_combustivel
+                
+                resumo_tecnicos_os.append({
+                    "tecnico": t.get_full_name() or t.username,
+                    "valor_ordens": float(valor_ordens),
+                    "ganho_os": ganho_os,
+                    "combustivel_total": float(combustivel_t),
+                    "custo_combustivel": custo_combustivel,
+                    "saldo": saldo_tecnico
+                })
+            c["resumo_tecnicos_os"] = resumo_tecnicos_os
+
         return c
 
 class OrdemDetailView(LoginRequiredMixin, DetailView):
@@ -202,6 +244,13 @@ class OrdemUpdateView(LoginRequiredMixin, OperacionalRequiredMixin, UpdateView):
         precos = {str(t.id): str(t.valor_padrao) for t in TipoServico.objects.filter(ativo=True)}
         c['tipos_precos_json'] = json.dumps(precos)
         return c
+
+class OrdemDeleteView(LoginRequiredMixin, OperacionalRequiredMixin, DeleteView):
+    model = OrdemServico
+    success_url = reverse_lazy("ordem-list")
+
+    def get_queryset(self):
+        return super().get_queryset().filter(status="ABERTA")
 
 class TipoServicoListView(LoginRequiredMixin, OperacionalRequiredMixin, ListView): model = TipoServico; paginate_by = 10
 class TipoServicoCreateView(LoginRequiredMixin, OperacionalRequiredMixin, CreateView): model = TipoServico; form_class = TipoServicoForm; success_url = reverse_lazy("tipo-servico-list"); extra_context = {"title": "Novo Tipo de Serviço"}
@@ -343,6 +392,31 @@ class FinanceiroView(LoginRequiredMixin, OperacionalRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         c = super().get_context_data(**kwargs); qs = self.get_queryset()
         c["entradas"] = qs.filter(tipo="ENTRADA").aggregate(v=Sum("valor"))["v"] or 0; c["saidas"] = qs.filter(tipo="SAIDA").aggregate(v=Sum("valor"))["v"] or 0; c["saldo"] = c["entradas"] - c["saidas"]
+        
+        from django.contrib.auth.models import User
+        tecnicos = User.objects.filter(lancamentos__in=qs).distinct()
+        resumo_tecnicos = []
+        for t in tecnicos:
+            qs_t = qs.filter(tecnico=t)
+            entradas_t = qs_t.filter(tipo="ENTRADA").aggregate(v=Sum("valor"))["v"] or 0
+            saidas_t = qs_t.filter(tipo="SAIDA").exclude(categoria__icontains="combust").aggregate(v=Sum("valor"))["v"] or 0
+            combustivel_t = qs_t.filter(tipo="SAIDA", categoria__icontains="combust").aggregate(v=Sum("valor"))["v"] or 0
+            
+            ganho = float(entradas_t) * 0.5
+            desconto_combustivel = float(combustivel_t) * 0.5
+            descontos_outros = float(saidas_t)
+            saldo_receber = ganho - desconto_combustivel - descontos_outros
+            
+            resumo_tecnicos.append({
+                "tecnico": t.get_full_name() or t.username,
+                "entradas": entradas_t,
+                "saidas": saidas_t,
+                "combustivel": combustivel_t,
+                "ganho": ganho,
+                "desconto_combustivel": desconto_combustivel,
+                "saldo_receber": saldo_receber
+            })
+        c["resumo_tecnicos"] = resumo_tecnicos
         return c
 class LancamentoCreateView(LoginRequiredMixin, OperacionalRequiredMixin, CreateView): model = Lancamento; form_class = LancamentoForm; success_url = reverse_lazy("financeiro")
 
@@ -358,15 +432,43 @@ class CombustivelCreateView(LoginRequiredMixin, OperacionalRequiredMixin, Create
         messages.success(self.request, "Gasto de combustível lançado com sucesso.")
         return super().form_valid(form)
 
+class AdiantamentoCreateView(LoginRequiredMixin, OperacionalRequiredMixin, CreateView):
+    model = Lancamento
+    from .forms import AdiantamentoForm
+    form_class = AdiantamentoForm
+    template_name = "core/form.html"
+    success_url = reverse_lazy("financeiro")
+    extra_context = {"title": "Lançar Pagamento / Adiantamento"}
+    def form_valid(self, form):
+        form.instance.tipo = Lancamento.Tipo.SAIDA
+        form.instance.categoria = "Adiantamento / Pagamento"
+        messages.success(self.request, "Pagamento/Adiantamento ao técnico lançado com sucesso.")
+        return super().form_valid(form)
+
 class FecharFinanceiroView(LoginRequiredMixin, AdminRequiredMixin, View):
     def post(self, request):
         ultimo = FechamentoCaixa.objects.first(); qs = Lancamento.objects.filter(criado_em__gt=ultimo.fechado_em) if ultimo else Lancamento.objects.all()
         entradas = qs.filter(tipo=Lancamento.Tipo.ENTRADA).aggregate(v=Sum("valor"))["v"] or 0
         saidas = qs.filter(tipo=Lancamento.Tipo.SAIDA).aggregate(v=Sum("valor"))["v"] or 0
         FechamentoCaixa.objects.create(entradas=entradas, saidas=saidas, responsavel=request.user)
-        OrdemServico.objects.filter(lancamentos__in=qs, status=OrdemServico.Status.CONCLUIDA, arquivada_em__isnull=True).update(arquivada_em=timezone.now())
-        messages.success(request, "Balanço fechado e OS pagas arquivadas. O novo período financeiro inicia zerado.")
+        for os in OrdemServico.objects.filter(status=OrdemServico.Status.CONCLUIDA, arquivada_em__isnull=True):
+            os.arquivada_em = timezone.now()
+            os.save(update_fields=["arquivada_em"])
+        messages.success(request, "Período fechado com sucesso! Saldo zerado visualmente.")
         return redirect("financeiro")
+
+class LogTransacaoListView(LoginRequiredMixin, ListView):
+    model = LogTransacao
+    template_name = "core/log_transacao.html"
+    paginate_by = 50
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if not (self.request.user.is_staff or self.request.user.groups.filter(name="Secretaria").exists()):
+            # Técnicos só vêem os próprios logs ou logs de coisas relacionadas a eles
+            # Como a descrição pode conter o nome, deixamos ver logs onde foram o autor ou o nome deles tá lá
+            qs = qs.filter(models.Q(usuario=self.request.user) | models.Q(descricao__icontains=self.request.user.username))
+        return qs
+
 
 class RelatorioView(LoginRequiredMixin, OperacionalRequiredMixin, TemplateView):
     template_name = "core/relatorios.html"

@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}Log de Transações | TecWorld{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="page-title mb-1">Log de Transações</h2>
+        <p class="text-secondary mb-0">Histórico de todas as atividades e alterações no sistema.</p>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0 table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Data/Hora</th>
+                    <th>Usuário</th>
+                    <th>Ação</th>
+                    <th>Módulo</th>
+                    <th>Descrição</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in object_list %}
+                <tr>
+                    <td class="text-nowrap text-secondary">{{ log.data|date:"d/m/Y H:i" }}</td>
+                    <td class="fw-semibold">{{ log.usuario.get_full_name|default:log.usuario.username|default:"Sistema" }}</td>
+                    <td>
+                        {% if log.acao == 'CRIADO' %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle">CRIADO</span>
+                        {% elif log.acao == 'ALTERADO' %}
+                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle">ALTERADO</span>
+                        {% elif log.acao == 'EXCLUIDO' %}
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle">EXCLUIDO</span>
+                        {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">{{ log.acao }}</span>
+                        {% endif %}
+                    </td>
+                    <td><span class="badge bg-light text-dark border">{{ log.modelo }}</span></td>
+                    <td class="text-secondary" style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ log.descricao }}">
+                        {{ log.descricao }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-5 text-secondary">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                        Nenhuma transação registrada no momento.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    {% if page_obj.has_other_pages %}
+    <div class="card-footer bg-white border-top-0 py-3">
+        <ul class="pagination pagination-sm justify-content-center mb-0">
+            {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a></li>
+            {% endif %}
+            
+            {% for i in page_obj.paginator.page_range %}
+                {% if page_obj.number == i %}
+                <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                {% else %}
+                <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Próximo</a></li>
+            {% endif %}
+        </ul>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

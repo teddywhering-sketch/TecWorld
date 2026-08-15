@@ -175,3 +175,37 @@ class ConfiguracaoSistema(models.Model):
     def load(cls):
         obj, _ = cls.objects.get_or_create(pk=1)
         return obj
+
+class LogTransacao(models.Model):
+    data = models.DateTimeField(auto_now_add=True)
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    acao = models.CharField(max_length=50) # CRIADO, ALTERADO, EXCLUIDO
+    modelo = models.CharField(max_length=50)
+    descricao = models.TextField()
+    class Meta: ordering = ["-data"]
+
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
+from .middleware import get_current_user
+
+def registrar_log(acao, instance):
+    usuario = get_current_user()
+    modelo = instance.__class__.__name__
+    descricao = str(instance)
+    LogTransacao.objects.create(usuario=usuario, acao=acao, modelo=modelo, descricao=descricao)
+
+@receiver(post_save, sender=OrdemServico)
+def log_os_save(sender, instance, created, **kwargs):
+    registrar_log('CRIADO' if created else 'ALTERADO', instance)
+
+@receiver(post_delete, sender=OrdemServico)
+def log_os_delete(sender, instance, **kwargs):
+    registrar_log('EXCLUIDO', instance)
+
+@receiver(post_save, sender=Lancamento)
+def log_lanc_save(sender, instance, created, **kwargs):
+    registrar_log('CRIADO' if created else 'ALTERADO', instance)
+
+@receiver(post_delete, sender=Lancamento)
+def log_lanc_delete(sender, instance, **kwargs):
+    registrar_log('EXCLUIDO', instance)

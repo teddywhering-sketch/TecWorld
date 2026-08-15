@@ -80,6 +80,16 @@ class CombustivelForm(BaseForm):
         super().__init__(*args, **kwargs)
         self.fields["tecnico"].required = True
 
+class AdiantamentoForm(BaseForm):
+    class Meta:
+        model = Lancamento
+        fields = ["data", "tecnico", "valor", "descricao"]
+        widgets = {"data": forms.DateInput(attrs={"type": "date"})}
+        labels = {"tecnico": "Técnico", "valor": "Valor do Adiantamento/Repasse (R$)", "descricao": "Observação (ex: Adiantamento semanal, Vale)"}
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["tecnico"].required = True
+
 class ProdutoForm(BaseForm):
     class Meta:
         model = Produto
