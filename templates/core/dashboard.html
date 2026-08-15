@@ -187,17 +187,33 @@
                     {% endif %}
                 </div>
                 
-                <div class="row g-3">
+                <div class="row g-4">
                     {% for item in tabela_precos %}
                     <div class="col-md-6 col-lg-4 col-xl-3">
-                        <div class="p-3 border rounded bg-light h-100 d-flex flex-column justify-content-between">
-                            <div class="text-secondary small fw-semibold mb-1">{{ item.nome }}</div>
-                            <div class="fs-5 fw-bold text-dark">R$ {{ item.valor_padrao|floatformat:2 }}</div>
+                        <div class="card h-100 border border-light bg-white position-relative overflow-hidden shadow-sm" style="border-radius: 16px;">
+                            <div class="position-absolute top-0 end-0 p-3" style="opacity: 0.04; transform: rotate(-15deg) scale(2.5) translate(10px, -10px);">
+                                <i class="bi bi-clipboard2-check-fill fs-1 text-primary"></i>
+                            </div>
+                            <div class="card-body p-4 d-flex flex-column justify-content-between z-1 position-relative">
+                                <div class="d-flex align-items-start mb-3">
+                                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 46px; height: 46px;">
+                                        <i class="bi bi-stars fs-5"></i>
+                                    </div>
+                                    <h6 class="text-dark fw-bold mb-0 mt-1" style="line-height: 1.4;">{{ item.nome }}</h6>
+                                </div>
+                                <div class="mt-2 pt-3 border-top border-light border-opacity-50">
+                                    <div class="text-secondary fw-medium text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.08em;">Preço Base</div>
+                                    <div class="fs-4 fw-bolder text-primary" style="letter-spacing: -0.03em;">
+                                        <span class="fs-6 text-primary opacity-75 fw-normal me-1">R$</span>{{ item.valor_padrao|floatformat:2 }}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     {% empty %}
-                    <div class="col-12 text-center text-secondary py-3">
-                        Nenhum serviço ou preço cadastrado.
+                    <div class="col-12 text-center text-secondary py-5">
+                        <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50"></i>
+                        Nenhum serviço ou preço cadastrado ainda.
                     </div>
                     {% endfor %}
                 </div>
