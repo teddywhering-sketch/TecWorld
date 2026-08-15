@@ -304,7 +304,7 @@ class ConfirmarOSView(LoginRequiredMixin, OperacionalRequiredMixin, View):
         form.save()
         os.status = OrdemServico.Status.CONCLUIDA
         os.save(update_fields=["status", "atualizado_em"])
-        Lancamento.objects.get_or_create(ordem_servico=os, defaults={"descricao": f"Recebimento da {os}", "tipo": Lancamento.Tipo.ENTRADA, "categoria": "Prestação de serviço", "valor": os.valor})
+        Lancamento.objects.get_or_create(ordem_servico=os, defaults={"descricao": f"Recebimento da {os}", "tipo": Lancamento.Tipo.ENTRADA, "categoria": "Prestação de serviço", "valor": os.valor, "tecnico": os.tecnico})
         messages.success(request, f"{os} confirmada e lançada no financeiro.")
         return redirect("ordem-detail", pk=os.pk)
 
