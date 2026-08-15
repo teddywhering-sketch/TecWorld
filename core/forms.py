@@ -46,6 +46,26 @@ class OrdemServicoForm(BaseForm):
         widgets = {"agendamento": forms.DateTimeInput(attrs={"type": "datetime-local"}), "descricao": forms.Textarea(attrs={"rows": 4})}
         labels = {"cliente": "Provedor", "cliente_final": "Cliente do Provedor (Opcional)"}
 
+    def clean(self):
+        cleaned_data = super().clean()
+        cliente = cleaned_data.get("cliente")
+        cliente_final = cleaned_data.get("cliente_final")
+        tipo = cleaned_data.get("tipo")
+        descricao = cleaned_data.get("descricao")
+        
+        if not self.instance.pk and cliente and tipo:
+            duplicada = OrdemServico.objects.filter(
+                cliente=cliente,
+                tipo=tipo,
+                descricao=descricao,
+                cliente_final=cliente_final
+            ).exclude(status='CANCELADA').exists()
+            
+            if duplicada:
+                raise forms.ValidationError("Atenção: Já existe uma Ordem de Serviço idêntica a esta (mesmo Provedor, Tipo e Descrição). Verifique as suas Ordens para evitar duplicação.")
+        
+        return cleaned_data
+
 class OrcamentoForm(BaseForm):
     class Meta:
         model = Orcamento
