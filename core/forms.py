@@ -42,7 +42,7 @@ class ClienteFinalForm(BaseForm):
 class OrdemServicoForm(BaseForm):
     class Meta:
         model = OrdemServico
-        fields = ["cliente", "cliente_final", "tipo", "tecnico", "agendamento", "valor", "descricao", "anexo_inicial"]
+        fields = ["cliente", "cliente_final", "tipo", "agendamento", "valor", "descricao", "anexo_inicial"]
         widgets = {"agendamento": forms.DateTimeInput(attrs={"type": "datetime-local"}), "descricao": forms.Textarea(attrs={"rows": 4})}
         labels = {"cliente": "Provedor", "cliente_final": "Cliente do Provedor (Opcional)"}
 
@@ -161,8 +161,10 @@ class ConfirmarOSForm(BaseForm):
         self.fields["comprovante_pagamento"].required = True
 
 class UsuarioForm(UserCreationForm):
-    PAPEL = [("TECNICO", "Técnico"), ("SECRETARIA", "Secretaria"), ("ADMIN", "Administrador")]
+    PAPEL = [("TECNICO", "Técnico"), ("SECRETARIA", "Secretaria"), ("ADMIN", "Administrador"), ("PROVEDOR", "Provedor (Cliente)")]
     papel = forms.ChoiceField(choices=PAPEL, label="Perfil")
+    cliente_vinculado = forms.ModelChoiceField(queryset=Cliente.objects.all(), required=False, label="Vincular a qual Provedor? (Apenas se o perfil for Provedor)")
+    
     class Meta:
         model = User
         fields = ["username", "first_name", "last_name", "email"]
@@ -171,6 +173,7 @@ class UsuarioForm(UserCreationForm):
         for field in self.fields.values():
             field.widget.attrs["class"] = "form-control"
         self.fields["papel"].widget.attrs["class"] = "form-select"
+        self.fields["cliente_vinculado"].widget.attrs["class"] = "form-select"
     def save(self, commit=True):
         user = super().save(commit=False)
         papel = self.cleaned_data["papel"]
@@ -178,6 +181,14 @@ class UsuarioForm(UserCreationForm):
         if commit:
             user.save()
             secretaria, _ = Group.objects.get_or_create(name="Secretaria")
+            provedor_group, _ = Group.objects.get_or_create(name="Provedor")
             user.groups.remove(secretaria)
+            user.groups.remove(provedor_group)
             if papel == "SECRETARIA": user.groups.add(secretaria)
+            if papel == "PROVEDOR": 
+                user.groups.add(provedor_group)
+                cliente = self.cleaned_data.get("cliente_vinculado")
+                if cliente:
+                    cliente.usuario = user
+                    cliente.save()
         return user

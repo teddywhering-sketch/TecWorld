@@ -17,6 +17,7 @@ class Cliente(TimeStampedModel):
     email = models.EmailField(blank=True)
     endereco = models.CharField(max_length=255)
     observacoes = models.TextField(blank=True)
+    usuario = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="cliente_provedor")
     class Meta:
         ordering = ["nome"]
     def __str__(self): return self.nome

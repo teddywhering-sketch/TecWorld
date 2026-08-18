@@ -7,4 +7,5 @@ def role_context(request):
         logo_url = config.logo.url if config.logo else None
     except Exception:
         logo_url = None
-    return {"is_secretaria": is_secretaria, "is_operacional": user.is_authenticated and (user.is_staff or is_secretaria), "config_logo_url": logo_url}
+    is_provedor = user.is_authenticated and user.groups.filter(name="Provedor").exists()
+    return {"is_secretaria": is_secretaria, "is_operacional": user.is_authenticated and (user.is_staff or is_secretaria), "is_provedor": is_provedor, "config_logo_url": logo_url}

@@ -106,8 +106,13 @@
             <p><b>Técnico</b><br>{{ object.tecnico|default:'Não atribuído' }}</p>
             <p><b>Valor</b><br>R$ {{ object.valor|floatformat:2 }}</p>
             
-            {% if not is_operacional and object.status != 'AGUARDANDO_CONFIRMACAO' and object.status != 'CONCLUIDA' and object.status != 'CANCELADA' %}
-                {% if object.status == 'ABERTA' or object.status == 'AGENDADA' %}
+            {% if not is_operacional and not is_provedor and object.status != 'AGUARDANDO_CONFIRMACAO' and object.status != 'CONCLUIDA' and object.status != 'CANCELADA' %}
+                {% if not object.tecnico %}
+                    <form method="post" action="{% url 'ordem-puxar' object.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-warning w-100 mb-2"><i class="bi bi-person-plus-fill me-1"></i>Puxar esta OS para mim</button>
+                    </form>
+                {% elif object.status == 'ABERTA' or object.status == 'AGENDADA' %}
                     <form method="post" action="{% url 'ordem-iniciar' object.pk %}">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-primary w-100 mb-2"><i class="bi bi-play-circle me-1"></i>Iniciar Atendimento</button>

@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 from django.contrib.auth.views import LoginView, PasswordChangeView
 from django.core.exceptions import PermissionDenied
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, Q
 from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
@@ -42,9 +42,27 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         qs_tipos = OrdemServico.objects.all()
 
         is_operacional = self.request.user.is_staff or self.request.user.groups.filter(name="Secretaria").exists()
+        is_provedor = self.request.user.groups.filter(name="Provedor").exists()
 
-        if not is_operacional:
-            atuais = atuais.filter(tecnico=self.request.user)
+        if is_provedor:
+            cliente = getattr(self.request.user, 'cliente_provedor', None)
+            if cliente:
+                atuais = atuais.filter(cliente=cliente)
+                qs_semana = qs_semana.filter(cliente=cliente)
+                qs_tipos = qs_tipos.filter(cliente=cliente)
+            else:
+                atuais = atuais.none()
+                qs_semana = qs_semana.none()
+                qs_tipos = qs_tipos.none()
+            entradas = Decimal('0.00')
+            saidas = Decimal('0.00')
+            combustivel = Decimal('0.00')
+            saldo = Decimal('0.00')
+            aguardando = atuais.filter(status=OrdemServico.Status.AGUARDANDO_CONFIRMACAO).count()
+            qs_listas = atuais
+            c.update({'ganho_os': 0, 'desc_combustivel': 0, 'desc_saidas': 0})
+        elif not is_operacional:
+            atuais = atuais.filter(Q(tecnico=self.request.user) | Q(tecnico__isnull=True))
             qs_semana = qs_semana.filter(tecnico=self.request.user)
             qs_tipos = qs_tipos.filter(tecnico=self.request.user)
             entradas = atuais.filter(status=OrdemServico.Status.CONCLUIDA).aggregate(v=Sum('valor'))['v'] or Decimal('0.00')
@@ -68,7 +86,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 'desc_combustivel': desc_combustivel,
                 'desc_saidas': desc_saidas,
             })
-
+            qs_listas = atuais.filter(Q(tecnico=self.request.user) | Q(tecnico__isnull=True))
         else:
             ultimo_fechamento = FechamentoCaixa.objects.first()
             lancamentos = Lancamento.objects.filter(criado_em__gt=ultimo_fechamento.fechado_em) if ultimo_fechamento else Lancamento.objects.all()
@@ -77,9 +95,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             combustivel = lancamentos.filter(tipo=Lancamento.Tipo.SAIDA, categoria="Combustível").aggregate(v=Sum("valor"))["v"] or Decimal('0.00')
             saldo = entradas - saidas
             aguardando = atuais.filter(status=OrdemServico.Status.AGUARDANDO_CONFIRMACAO).count()
-
-        from django.db.models import Q
-        qs_listas = atuais.filter(Q(tecnico=self.request.user) | Q(tecnico__isnull=True)) if is_operacional else atuais.filter(tecnico=self.request.user)
+            qs_listas = atuais
 
         c.update(
             os_abertas=atuais.exclude(status__in=["CONCLUIDA", "CANCELADA"]).count(), 
@@ -148,8 +164,15 @@ class OrdemListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         qs = OrdemServico.objects.select_related("cliente", "tecnico")
         is_operacional = self.request.user.is_staff or self.request.user.groups.filter(name="Secretaria").exists()
-        if not is_operacional:
-            qs = qs.filter(tecnico=self.request.user)
+        is_provedor = self.request.user.groups.filter(name="Provedor").exists()
+        if is_provedor:
+            cliente = getattr(self.request.user, 'cliente_provedor', None)
+            if cliente:
+                qs = qs.filter(cliente=cliente)
+            else:
+                qs = qs.none()
+        elif not is_operacional:
+            qs = qs.filter(Q(tecnico=self.request.user) | Q(tecnico__isnull=True))
             
         aba = self.request.GET.get("aba", "abertas")
         if aba == "arquivadas":
@@ -171,9 +194,18 @@ class OrdemListView(LoginRequiredMixin, ListView):
         c["aba_atual"] = aba
         
         is_operacional = self.request.user.is_staff or self.request.user.groups.filter(name="Secretaria").exists()
+        is_provedor = self.request.user.groups.filter(name="Provedor").exists()
         qs_base = OrdemServico.objects.filter(arquivada_em__isnull=True)
-        if not is_operacional:
-            qs_base = qs_base.filter(tecnico=self.request.user)
+        if is_provedor:
+            cliente = getattr(self.request.user, 'cliente_provedor', None)
+            if cliente:
+                qs_base = qs_base.filter(cliente=cliente)
+                c["count_arquivadas"] = OrdemServico.objects.filter(cliente=cliente, arquivada_em__isnull=False).count()
+            else:
+                qs_base = qs_base.none()
+                c["count_arquivadas"] = 0
+        elif not is_operacional:
+            qs_base = qs_base.filter(Q(tecnico=self.request.user) | Q(tecnico__isnull=True))
             c["count_arquivadas"] = 0
         else:
             c["count_arquivadas"] = OrdemServico.objects.filter(arquivada_em__isnull=False).count()
@@ -219,7 +251,15 @@ class OrdemDetailView(LoginRequiredMixin, DetailView):
     model = OrdemServico
     def get_queryset(self):
         qs = OrdemServico.objects.select_related("cliente", "tecnico")
-        return qs if (self.request.user.is_staff or self.request.user.groups.filter(name="Secretaria").exists()) else qs.filter(tecnico=self.request.user)
+        is_operacional = self.request.user.is_staff or self.request.user.groups.filter(name="Secretaria").exists()
+        is_provedor = self.request.user.groups.filter(name="Provedor").exists()
+        if is_provedor:
+            cliente = getattr(self.request.user, 'cliente_provedor', None)
+            return qs.filter(cliente=cliente) if cliente else qs.none()
+        elif is_operacional:
+            return qs
+        else:
+            return qs.filter(Q(tecnico=self.request.user) | Q(tecnico__isnull=True))
 
 class OrdemCreateView(LoginRequiredMixin, OperacionalRequiredMixin, CreateView):
     model = OrdemServico; form_class = OrdemServicoForm; success_url = reverse_lazy("ordem-list")
@@ -569,3 +609,13 @@ class ConfiguracaoSistemaUpdateView(LoginRequiredMixin, UserPassesTestMixin, Upd
         c = super().get_context_data(**kwargs)
         c["titulo"] = "Configurações do Sistema"
         return c
+
+class PuxarOSView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        os = OrdemServico.objects.filter(pk=pk, tecnico__isnull=True).exclude(status__in=[OrdemServico.Status.CONCLUIDA, OrdemServico.Status.CANCELADA]).first()
+        if not os:
+            raise PermissionDenied
+        os.tecnico = request.user
+        os.save(update_fields=["tecnico", "atualizado_em"])
+        messages.success(request, f"Você assumiu a OS {os}.")
+        return redirect("ordem-detail", pk=os.pk)
