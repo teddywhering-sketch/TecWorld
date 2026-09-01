@@ -15,9 +15,13 @@ class Migration(migrations.Migration):
             model_name='ordemservico',
             name='tipo_servico',
         ),
-        migrations.AlterField(
+        migrations.RemoveField(
             model_name='ordemservico',
             name='tipo',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='core.tiposervico', verbose_name='Tipo de Serviço'),
+        ),
+        migrations.AddField(
+            model_name='ordemservico',
+            name='tipo',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to='core.tiposervico', verbose_name='Tipo de Serviço'),
         ),
     ]

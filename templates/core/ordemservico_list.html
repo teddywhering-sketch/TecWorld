@@ -5,7 +5,7 @@
         <h2 class="page-title mb-1">{% if aba_atual == 'arquivadas' %}OS arquivadas{% elif is_operacional %}Ordens de serviço{% else %}Minhas ordens de serviço{% endif %}</h2>
         <p class="text-secondary mb-0">{% if aba_atual == 'arquivadas' %}Atendimentos concluídos e fechados em períodos anteriores.{% elif is_operacional %}Instalações, reparos e visitas técnicas do período atual.{% else %}Atendimentos atribuídos para sua execução no período atual.{% endif %}</p>
     </div>
-    {% if is_operacional and aba_atual != 'arquivadas' %}
+    {% if is_operacional and aba_atual != 'arquivadas' or is_provedor and aba_atual != 'arquivadas' %}
     <a href="{% url 'ordem-create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Nova OS</a>
     {% endif %}
 </div>

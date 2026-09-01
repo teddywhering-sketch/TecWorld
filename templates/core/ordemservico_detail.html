@@ -5,7 +5,7 @@
         <span class="text-secondary">Ordem de serviço</span>
         <h2 class="page-title mb-0">{{ object }}</h2>
     </div>
-    {% if is_operacional %}
+    {% if is_operacional or is_provedor %}
     <div>
         <a class="btn btn-primary" href="{% url 'ordem-update' object.pk %}"><i class="bi bi-pencil me-1"></i>Editar OS</a>
         {% if object.status == 'ABERTA' %}

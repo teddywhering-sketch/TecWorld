@@ -27,6 +27,11 @@ class AdminRequiredMixin(UserPassesTestMixin):
 class OperacionalRequiredMixin(UserPassesTestMixin):
     def test_func(self): return self.request.user.is_staff or self.request.user.groups.filter(name="Secretaria").exists()
 
+class ProvedorOrOperacionalRequiredMixin(UserPassesTestMixin):
+    def test_func(self): 
+        user = self.request.user
+        return user.is_staff or user.groups.filter(name__in=["Secretaria", "Provedor"]).exists()
+
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = "core/dashboard.html"
@@ -136,25 +141,63 @@ class ClienteListView(OperacionalRequiredMixin, SearchableListView): model = Cli
 class ClienteCreateView(LoginRequiredMixin, OperacionalRequiredMixin, CreateView): model = Cliente; form_class = ClienteForm; success_url = reverse_lazy("cliente-list")
 class ClienteUpdateView(LoginRequiredMixin, OperacionalRequiredMixin, UpdateView): model = Cliente; form_class = ClienteForm; success_url = reverse_lazy("cliente-list")
 
-class ClienteFinalListView(OperacionalRequiredMixin, SearchableListView): 
+class ClienteFinalListView(ProvedorOrOperacionalRequiredMixin, SearchableListView): 
     model = ClienteFinal
     def get_queryset(self):
-        qs = super().get_queryset()
-        return qs.select_related("provedor")
+        qs = super().get_queryset().select_related("provedor")
+        is_provedor = self.request.user.groups.filter(name="Provedor").exists()
+        if is_provedor:
+            cliente = getattr(self.request.user, 'cliente_provedor', None)
+            if cliente:
+                qs = qs.filter(provedor=cliente)
+            else:
+                qs = qs.none()
+        return qs
 
-class ClienteFinalCreateView(LoginRequiredMixin, OperacionalRequiredMixin, CreateView): 
+class ClienteFinalCreateView(LoginRequiredMixin, ProvedorOrOperacionalRequiredMixin, CreateView): 
     model = ClienteFinal
     form_class = ClienteFinalForm
     template_name = "core/form.html"
     success_url = reverse_lazy("clientefinal-list")
     extra_context = {"title": "Novo Cliente Final"}
+    
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        is_provedor = self.request.user.groups.filter(name="Provedor").exists()
+        if is_provedor:
+            cliente = getattr(self.request.user, 'cliente_provedor', None)
+            if cliente:
+                form.fields['provedor'].queryset = Cliente.objects.filter(id=cliente.id)
+                form.fields['provedor'].initial = cliente
+            else:
+                form.fields['provedor'].queryset = Cliente.objects.none()
+        return form
 
-class ClienteFinalUpdateView(LoginRequiredMixin, OperacionalRequiredMixin, UpdateView): 
+class ClienteFinalUpdateView(LoginRequiredMixin, ProvedorOrOperacionalRequiredMixin, UpdateView): 
     model = ClienteFinal
     form_class = ClienteFinalForm
     template_name = "core/form.html"
     success_url = reverse_lazy("clientefinal-list")
     extra_context = {"title": "Editar Cliente Final"}
+    
+    def get_queryset(self):
+        qs = super().get_queryset()
+        is_provedor = self.request.user.groups.filter(name="Provedor").exists()
+        if is_provedor:
+            cliente = getattr(self.request.user, 'cliente_provedor', None)
+            return qs.filter(provedor=cliente) if cliente else qs.none()
+        return qs
+    
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        is_provedor = self.request.user.groups.filter(name="Provedor").exists()
+        if is_provedor:
+            cliente = getattr(self.request.user, 'cliente_provedor', None)
+            if cliente:
+                form.fields['provedor'].queryset = Cliente.objects.filter(id=cliente.id)
+            else:
+                form.fields['provedor'].queryset = Cliente.objects.none()
+        return form
 
 
 class OrdemListView(LoginRequiredMixin, ListView):
@@ -261,7 +304,7 @@ class OrdemDetailView(LoginRequiredMixin, DetailView):
         else:
             return qs.filter(Q(tecnico=self.request.user) | Q(tecnico__isnull=True))
 
-class OrdemCreateView(LoginRequiredMixin, OperacionalRequiredMixin, CreateView):
+class OrdemCreateView(LoginRequiredMixin, ProvedorOrOperacionalRequiredMixin, CreateView):
     model = OrdemServico; form_class = OrdemServicoForm; success_url = reverse_lazy("ordem-list")
     def get_initial(self):
         initial = super().get_initial()
@@ -275,22 +318,64 @@ class OrdemCreateView(LoginRequiredMixin, OperacionalRequiredMixin, CreateView):
         precos = {str(t.id): str(t.valor_padrao) for t in TipoServico.objects.filter(ativo=True)}
         c['tipos_precos_json'] = json.dumps(precos)
         return c
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        is_provedor = self.request.user.groups.filter(name="Provedor").exists()
+        if is_provedor:
+            cliente = getattr(self.request.user, 'cliente_provedor', None)
+            if cliente:
+                form.fields['cliente'].queryset = Cliente.objects.filter(id=cliente.id)
+                form.fields['cliente'].initial = cliente
+                form.fields['cliente_final'].queryset = ClienteFinal.objects.filter(provedor=cliente)
+            else:
+                form.fields['cliente'].queryset = Cliente.objects.none()
+                form.fields['cliente_final'].queryset = ClienteFinal.objects.none()
+        return form
 
-class OrdemUpdateView(LoginRequiredMixin, OperacionalRequiredMixin, UpdateView): 
+class OrdemUpdateView(LoginRequiredMixin, ProvedorOrOperacionalRequiredMixin, UpdateView): 
     model = OrdemServico; form_class = OrdemServicoForm; success_url = reverse_lazy("ordem-list")
+    
+    def get_queryset(self):
+        qs = super().get_queryset()
+        is_provedor = self.request.user.groups.filter(name="Provedor").exists()
+        if is_provedor:
+            cliente = getattr(self.request.user, 'cliente_provedor', None)
+            return qs.filter(cliente=cliente) if cliente else qs.none()
+        return qs
+
     def get_context_data(self, **kwargs):
         c = super().get_context_data(**kwargs)
         import json
         precos = {str(t.id): str(t.valor_padrao) for t in TipoServico.objects.filter(ativo=True)}
         c['tipos_precos_json'] = json.dumps(precos)
         return c
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        is_provedor = self.request.user.groups.filter(name="Provedor").exists()
+        if is_provedor:
+            cliente = getattr(self.request.user, 'cliente_provedor', None)
+            if cliente:
+                form.fields['cliente'].queryset = Cliente.objects.filter(id=cliente.id)
+                form.fields['cliente_final'].queryset = ClienteFinal.objects.filter(provedor=cliente)
+            else:
+                form.fields['cliente'].queryset = Cliente.objects.none()
+                form.fields['cliente_final'].queryset = ClienteFinal.objects.none()
+        return form
 
-class OrdemDeleteView(LoginRequiredMixin, OperacionalRequiredMixin, DeleteView):
+class OrdemDeleteView(LoginRequiredMixin, ProvedorOrOperacionalRequiredMixin, DeleteView):
     model = OrdemServico
     success_url = reverse_lazy("ordem-list")
 
     def get_queryset(self):
-        return super().get_queryset().filter(status="ABERTA")
+        qs = super().get_queryset().filter(status="ABERTA")
+        is_provedor = self.request.user.groups.filter(name="Provedor").exists()
+        if is_provedor:
+            cliente = getattr(self.request.user, 'cliente_provedor', None)
+            if cliente:
+                qs = qs.filter(cliente=cliente)
+            else:
+                qs = qs.none()
+        return qs
 
 class TipoServicoListView(LoginRequiredMixin, OperacionalRequiredMixin, ListView): model = TipoServico; paginate_by = 10
 class TipoServicoCreateView(LoginRequiredMixin, OperacionalRequiredMixin, CreateView): model = TipoServico; form_class = TipoServicoForm; success_url = reverse_lazy("tipo-servico-list"); extra_context = {"title": "Novo Tipo de Serviço"}
@@ -349,8 +434,21 @@ class ConfirmarOSView(LoginRequiredMixin, OperacionalRequiredMixin, View):
         return redirect("ordem-detail", pk=os.pk)
 
 
-class OrcamentoListView(LoginRequiredMixin, OperacionalRequiredMixin, ListView): model = Orcamento; paginate_by = 10
-class OrcamentoCreateView(LoginRequiredMixin, OperacionalRequiredMixin, CreateView):
+class OrcamentoListView(LoginRequiredMixin, ProvedorOrOperacionalRequiredMixin, ListView): 
+    model = Orcamento
+    paginate_by = 10
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        is_provedor = self.request.user.groups.filter(name="Provedor").exists()
+        if is_provedor:
+            cliente = getattr(self.request.user, 'cliente_provedor', None)
+            if cliente:
+                qs = qs.filter(cliente=cliente)
+            else:
+                qs = qs.none()
+        return qs
+class OrcamentoCreateView(LoginRequiredMixin, ProvedorOrOperacionalRequiredMixin, CreateView):
     model = Orcamento
     form_class = OrcamentoForm
     success_url = reverse_lazy("orcamento-list")
@@ -375,10 +473,30 @@ class OrcamentoCreateView(LoginRequiredMixin, OperacionalRequiredMixin, CreateVi
         else:
             return self.render_to_response(self.get_context_data(form=form))
 
-class OrcamentoUpdateView(LoginRequiredMixin, OperacionalRequiredMixin, UpdateView):
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        is_provedor = self.request.user.groups.filter(name="Provedor").exists()
+        if is_provedor:
+            cliente = getattr(self.request.user, 'cliente_provedor', None)
+            if cliente:
+                form.fields['cliente'].queryset = Cliente.objects.filter(id=cliente.id)
+                form.fields['cliente'].initial = cliente
+            else:
+                form.fields['cliente'].queryset = Cliente.objects.none()
+        return form
+
+class OrcamentoUpdateView(LoginRequiredMixin, ProvedorOrOperacionalRequiredMixin, UpdateView):
     model = Orcamento
     form_class = OrcamentoForm
     success_url = reverse_lazy("orcamento-list")
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        is_provedor = self.request.user.groups.filter(name="Provedor").exists()
+        if is_provedor:
+            cliente = getattr(self.request.user, 'cliente_provedor', None)
+            return qs.filter(cliente=cliente) if cliente else qs.none()
+        return qs
 
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
@@ -398,6 +516,17 @@ class OrcamentoUpdateView(LoginRequiredMixin, OperacionalRequiredMixin, UpdateVi
             return redirect(self.success_url)
         else:
             return self.render_to_response(self.get_context_data(form=form))
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        is_provedor = self.request.user.groups.filter(name="Provedor").exists()
+        if is_provedor:
+            cliente = getattr(self.request.user, 'cliente_provedor', None)
+            if cliente:
+                form.fields['cliente'].queryset = Cliente.objects.filter(id=cliente.id)
+            else:
+                form.fields['cliente'].queryset = Cliente.objects.none()
+        return form
 
 from django.views import View
 
@@ -420,9 +549,17 @@ class GerarOSFromOrcamentoView(LoginRequiredMixin, OperacionalRequiredMixin, Vie
         messages.error(request, "Apenas orçamentos aprovados podem gerar OS.")
         return redirect("orcamento-list")
 
-class OrcamentoPrintView(LoginRequiredMixin, OperacionalRequiredMixin, DetailView):
+class OrcamentoPrintView(LoginRequiredMixin, ProvedorOrOperacionalRequiredMixin, DetailView):
     model = Orcamento
     template_name = "core/orcamento_print.html"
+    
+    def get_queryset(self):
+        qs = super().get_queryset()
+        is_provedor = self.request.user.groups.filter(name="Provedor").exists()
+        if is_provedor:
+            cliente = getattr(self.request.user, 'cliente_provedor', None)
+            return qs.filter(cliente=cliente) if cliente else qs.none()
+        return qs
 
 class FinanceiroView(LoginRequiredMixin, OperacionalRequiredMixin, ListView):
     model = Lancamento; template_name = "core/financeiro.html"; paginate_by = 10
