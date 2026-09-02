@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import Group, User
 from .models import (
-    Cliente, ClienteFinal, FechamentoCaixa, Lancamento, Orcamento, OrcamentoItem, 
+    Cliente, ClienteFinal, FechamentoCaixa, Lancamento, Orcamento, OrcamentoItem, ItemOS, 
     OrdemServico, TipoServico, Produto, ProdutoOS
 )
 
@@ -42,7 +42,7 @@ class ClienteFinalForm(BaseForm):
 class OrdemServicoForm(BaseForm):
     class Meta:
         model = OrdemServico
-        fields = ["cliente", "cliente_final", "tipo", "agendamento", "valor", "descricao", "anexo_inicial"]
+        fields = ["cliente", "cliente_final", "tipo", "plus_code", "agendamento", "valor", "descricao", "anexo_inicial"]
         widgets = {"agendamento": forms.DateTimeInput(attrs={"type": "datetime-local"}), "descricao": forms.Textarea(attrs={"rows": 4})}
         labels = {"cliente": "Provedor", "cliente_final": "Cliente do Provedor (Opcional)"}
 
@@ -69,9 +69,9 @@ class OrdemServicoForm(BaseForm):
 class OrcamentoForm(BaseForm):
     class Meta:
         model = Orcamento
-        fields = ["cliente", "descricao", "valor", "desconto", "validade", "status"]
+        fields = ["cliente", "cliente_final", "descricao", "valor", "desconto", "validade", "status"]
         widgets = {"validade": forms.DateInput(attrs={"type": "date"}), "descricao": forms.Textarea(attrs={"rows": 4})}
-        labels = {"valor": "Subtotal (Opcional se usar Itens)", "desconto": "Desconto Geral"}
+        labels = {"cliente_final": "Cliente Final (Opcional)", "valor": "Subtotal (Opcional se usar Itens)", "desconto": "Desconto Geral"}
 
 class OrcamentoItemForm(BaseForm):
     class Meta:
@@ -79,6 +79,18 @@ class OrcamentoItemForm(BaseForm):
         fields = ["descricao", "quantidade", "preco_unitario"]
 
 from django.forms import inlineformset_factory
+
+class ItemOSForm(BaseForm):
+    class Meta:
+        model = ItemOS
+        fields = ["descricao", "quantidade", "valor_unitario"]
+        labels = {"descricao": "Descrição", "quantidade": "Qtd", "valor_unitario": "Valor Un. (R$)"}
+
+ItemOSFormSet = inlineformset_factory(
+    OrdemServico, ItemOS, form=ItemOSForm,
+    extra=3, can_delete=True
+)
+
 OrcamentoItemFormSet = inlineformset_factory(
     Orcamento, OrcamentoItem, form=OrcamentoItemForm,
     extra=3, can_delete=True

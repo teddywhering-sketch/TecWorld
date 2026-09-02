@@ -39,6 +39,7 @@ class Orcamento(TimeStampedModel):
         RASCUNHO = "RASCUNHO", "Rascunho"; ENVIADO = "ENVIADO", "Enviado"; APROVADO = "APROVADO", "Aprovado"; RECUSADO = "RECUSADO", "Recusado"
     numero = models.PositiveIntegerField(unique=True, editable=False)
     cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, related_name="orcamentos")
+    cliente_final = models.ForeignKey("ClienteFinal", on_delete=models.SET_NULL, blank=True, null=True, related_name="orcamentos")
     descricao = models.TextField()
     valor = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     desconto = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
@@ -85,11 +86,12 @@ class OrdemServico(TimeStampedModel):
     numero = models.PositiveIntegerField(unique=True, editable=False)
     cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, related_name="ordens")
     cliente_final = models.ForeignKey(ClienteFinal, on_delete=models.SET_NULL, blank=True, null=True)
-    tipo = models.ForeignKey(TipoServico, on_delete=models.PROTECT, verbose_name="Tipo de Serviço")
+    tipo = models.ForeignKey(TipoServico, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Tipo de Serviço Principal")
     cliente_instalado = models.BooleanField(default=False)
     nome_cliente_instalado = models.CharField(max_length=150, blank=True)
     status = models.CharField(max_length=25, choices=Status.choices, default=Status.ABERTA)
     tecnico = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="ordens_tecnicas")
+    plus_code = models.CharField("Plus Code (Localização)", max_length=50, blank=True, help_text="Ex: 87G8Q222+22")
     agendamento = models.DateTimeField(null=True, blank=True)
     iniciado_em = models.DateTimeField(null=True, blank=True)
     finalizado_em = models.DateTimeField(null=True, blank=True)
@@ -120,6 +122,17 @@ class OrdemServico(TimeStampedModel):
             self.numero = (OrdemServico.objects.order_by("-numero").first().numero + 1) if OrdemServico.objects.exists() else 1
         super().save(*args, **kwargs)
     def __str__(self): return f"OS-{self.numero:05d}"
+
+
+class ItemOS(models.Model):
+    ordem_servico = models.ForeignKey(OrdemServico, on_delete=models.CASCADE, related_name="itens")
+    descricao = models.CharField(max_length=255)
+    quantidade = models.PositiveIntegerField(default=1)
+    valor_unitario = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    
+    @property
+    def total(self):
+        return self.quantidade * self.valor_unitario
 
 class Lancamento(TimeStampedModel):
     class Tipo(models.TextChoices): ENTRADA = "ENTRADA", "Entrada"; SAIDA = "SAIDA", "Saída"

@@ -13,7 +13,7 @@ from django.utils import timezone
 from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, TemplateView, UpdateView, DeleteView
 
-from .forms import ClienteForm, CombustivelForm, ConfirmarOSForm, FinalizarOSForm, LancamentoForm, OrcamentoForm, OrcamentoItemFormSet, OrdemServicoForm, TipoServicoForm, UsuarioForm, ProdutoForm, TransferenciaEstoqueForm, ProdutoOSForm, ClienteFinalForm
+from .forms import ClienteForm, CombustivelForm, ConfirmarOSForm, FinalizarOSForm, LancamentoForm, OrcamentoForm, OrcamentoItemFormSet, OrdemServicoForm, ItemOSFormSet, TipoServicoForm, UsuarioForm, ProdutoForm, TransferenciaEstoqueForm, ProdutoOSForm, ClienteFinalForm
 from .models import Cliente, FechamentoCaixa, Lancamento, Orcamento, OrdemServico, TipoServico, Produto, EstoqueTecnico, ProdutoOS, ClienteFinal, LogTransacao
 
 
@@ -312,12 +312,33 @@ class OrdemCreateView(LoginRequiredMixin, ProvedorOrOperacionalRequiredMixin, Cr
         if 'descricao' in self.request.GET: initial['descricao'] = self.request.GET['descricao']
         if 'valor' in self.request.GET: initial['valor'] = self.request.GET['valor']
         return initial
+
     def get_context_data(self, **kwargs):
         c = super().get_context_data(**kwargs)
         import json
         precos = {str(t.id): str(t.valor_padrao) for t in TipoServico.objects.filter(ativo=True)}
         c['tipos_precos_json'] = json.dumps(precos)
+        if self.request.POST:
+            c['itens'] = ItemOSFormSet(self.request.POST)
+        else:
+            c['itens'] = ItemOSFormSet()
         return c
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        itens = context['itens']
+        if itens.is_valid():
+            self.object = form.save()
+            itens.instance = self.object
+            itens.save()
+            # Calculate total
+            total = sum(item.total for item in self.object.itens.all()) if self.object.itens.exists() else form.cleaned_data.get('valor', 0)
+            self.object.valor = total
+            self.object.save(update_fields=['valor'])
+            return redirect(self.success_url)
+        else:
+            return self.render_to_response(self.get_context_data(form=form))
+
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         is_provedor = self.request.user.groups.filter(name="Provedor").exists()
@@ -343,12 +364,33 @@ class OrdemUpdateView(LoginRequiredMixin, ProvedorOrOperacionalRequiredMixin, Up
             return qs.filter(cliente=cliente) if cliente else qs.none()
         return qs
 
+
     def get_context_data(self, **kwargs):
         c = super().get_context_data(**kwargs)
         import json
         precos = {str(t.id): str(t.valor_padrao) for t in TipoServico.objects.filter(ativo=True)}
         c['tipos_precos_json'] = json.dumps(precos)
+        if self.request.POST:
+            c['itens'] = ItemOSFormSet(self.request.POST, instance=self.object)
+        else:
+            c['itens'] = ItemOSFormSet(instance=self.object)
         return c
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        itens = context['itens']
+        if itens.is_valid():
+            self.object = form.save()
+            itens.instance = self.object
+            itens.save()
+            # Calculate total
+            total = sum(item.total for item in self.object.itens.all()) if self.object.itens.exists() else form.cleaned_data.get('valor', 0)
+            self.object.valor = total
+            self.object.save(update_fields=['valor'])
+            return redirect(self.success_url)
+        else:
+            return self.render_to_response(self.get_context_data(form=form))
+
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         is_provedor = self.request.user.groups.filter(name="Provedor").exists()
@@ -481,8 +523,10 @@ class OrcamentoCreateView(LoginRequiredMixin, ProvedorOrOperacionalRequiredMixin
             if cliente:
                 form.fields['cliente'].queryset = Cliente.objects.filter(id=cliente.id)
                 form.fields['cliente'].initial = cliente
+                form.fields['cliente_final'].queryset = ClienteFinal.objects.filter(provedor=cliente)
             else:
                 form.fields['cliente'].queryset = Cliente.objects.none()
+                form.fields['cliente_final'].queryset = ClienteFinal.objects.none()
         return form
 
 class OrcamentoUpdateView(LoginRequiredMixin, ProvedorOrOperacionalRequiredMixin, UpdateView):
@@ -524,8 +568,10 @@ class OrcamentoUpdateView(LoginRequiredMixin, ProvedorOrOperacionalRequiredMixin
             cliente = getattr(self.request.user, 'cliente_provedor', None)
             if cliente:
                 form.fields['cliente'].queryset = Cliente.objects.filter(id=cliente.id)
+                form.fields['cliente_final'].queryset = ClienteFinal.objects.filter(provedor=cliente)
             else:
                 form.fields['cliente'].queryset = Cliente.objects.none()
+                form.fields['cliente_final'].queryset = ClienteFinal.objects.none()
         return form
 
 from django.views import View
