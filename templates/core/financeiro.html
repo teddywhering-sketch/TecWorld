@@ -3,10 +3,10 @@
 {% if resumo_tecnicos %}
 <h5 class="mt-4 mb-3">Resumo por Técnico</h5>
 <div class="card mb-4"><div class="table-responsive"><table class="table align-middle mb-0">
-<thead class="table-light"><tr><th>Técnico</th><th class="text-secondary">OS Totais</th><th class="text-success">Ganho (50%)</th><th class="text-danger">Combustível Total</th><th class="text-danger">Desconto (50%)</th><th class="text-danger">Outros Descontos</th><th>Saldo a Receber</th></tr></thead>
+<thead class="table-light"><tr><th>Técnico</th><th class="text-success">Total OS (Ganho)</th><th class="text-danger">Combustível Total</th><th class="text-danger">Outros Descontos</th><th>Saldo a Receber</th></tr></thead>
 <tbody>
 {% for r in resumo_tecnicos %}
-<tr><td class="fw-semibold">{{ r.tecnico }}</td><td class="text-secondary">R$ {{ r.entradas|floatformat:2 }}</td><td class="text-success fw-bold">R$ {{ r.ganho|floatformat:2 }}</td><td class="text-danger">R$ {{ r.combustivel|floatformat:2 }}</td><td class="text-danger fw-bold">R$ {{ r.desconto_combustivel|floatformat:2 }}</td><td class="text-danger">R$ {{ r.saidas|floatformat:2 }}</td><td class="fw-bold fs-5">R$ {{ r.saldo_receber|floatformat:2 }}</td></tr>
+<tr><td class="fw-semibold">{{ r.tecnico }}</td><td class="text-success fw-bold">R$ {{ r.entradas|floatformat:2 }}</td><td class="text-danger fw-bold">R$ {{ r.combustivel|floatformat:2 }}</td><td class="text-danger">R$ {{ r.saidas|floatformat:2 }}</td><td class="fw-bold fs-5">R$ {{ r.saldo_receber|floatformat:2 }}</td></tr>
 {% endfor %}
 </tbody></table></div></div>
 {% endif %}

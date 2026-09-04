@@ -44,9 +44,7 @@
                 <tr>
                     <th>Técnico</th>
                     <th class="text-success">Total OS (Concluídas)</th>
-                    <th class="text-success">Ganho OS (50%)</th>
-                    <th class="text-danger">Total Combustível</th>
-                    <th class="text-danger">Desconto Combustível (50%)</th>
+                    <th class="text-danger">Combustível Total</th>
                     <th>Saldo Líquido Técnico</th>
                 </tr>
             </thead>
@@ -54,10 +52,8 @@
                 {% for r in resumo_tecnicos_os %}
                 <tr>
                     <td class="fw-semibold">{{ r.tecnico }}</td>
-                    <td class="text-success">R$ {{ r.valor_ordens|floatformat:2 }}</td>
-                    <td class="text-success fw-bold">R$ {{ r.ganho_os|floatformat:2 }}</td>
-                    <td class="text-danger">R$ {{ r.combustivel_total|floatformat:2 }}</td>
-                    <td class="text-danger fw-bold">R$ {{ r.custo_combustivel|floatformat:2 }}</td>
+                    <td class="text-success fw-bold">R$ {{ r.valor_ordens|floatformat:2 }}</td>
+                    <td class="text-danger fw-bold">R$ {{ r.combustivel_total|floatformat:2 }}</td>
                     <td class="fw-bold fs-5">R$ {{ r.saldo|floatformat:2 }}</td>
                 </tr>
                 {% endfor %}

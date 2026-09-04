@@ -81,8 +81,8 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             combustivel = lanc_tecnico.filter(tipo=Lancamento.Tipo.SAIDA, categoria__icontains="combust").aggregate(v=Sum('valor'))['v'] or Decimal('0.00')
             saidas = lanc_tecnico.filter(tipo=Lancamento.Tipo.SAIDA).exclude(categoria__icontains="combust").aggregate(v=Sum('valor'))['v'] or Decimal('0.00')
             
-            ganho_os = float(entradas) * 0.5
-            desc_combustivel = float(combustivel) * 0.5
+            ganho_os = float(entradas)
+            desc_combustivel = float(combustivel)
             desc_saidas = float(saidas)
             saldo = ganho_os - desc_combustivel - desc_saidas
             
@@ -274,8 +274,8 @@ class OrdemListView(LoginRequiredMixin, ListView):
                 
                 combustivel_t = qs_lanc.filter(tecnico=t, tipo="SAIDA", categoria__icontains="combust").aggregate(v=Sum("valor"))["v"] or Decimal("0.00")
                 
-                ganho_os = float(valor_ordens) * 0.5
-                custo_combustivel = float(combustivel_t) * 0.5
+                ganho_os = float(valor_ordens)
+                custo_combustivel = float(combustivel_t)
                 saldo_tecnico = ganho_os - custo_combustivel
                 
                 resumo_tecnicos_os.append({
@@ -625,8 +625,8 @@ class FinanceiroView(LoginRequiredMixin, OperacionalRequiredMixin, ListView):
             saidas_t = qs_t.filter(tipo="SAIDA").exclude(categoria__icontains="combust").aggregate(v=Sum("valor"))["v"] or 0
             combustivel_t = qs_t.filter(tipo="SAIDA", categoria__icontains="combust").aggregate(v=Sum("valor"))["v"] or 0
             
-            ganho = float(entradas_t) * 0.5
-            desconto_combustivel = float(combustivel_t) * 0.5
+            ganho = float(entradas_t)
+            desconto_combustivel = float(combustivel_t)
             descontos_outros = float(saidas_t)
             saldo_receber = ganho - desconto_combustivel - descontos_outros
             
