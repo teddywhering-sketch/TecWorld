@@ -59,9 +59,20 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="mt-2 text-end">
+                <div class="mt-3 d-flex justify-content-between align-items-center">
+                    <div class="d-flex gap-2 align-items-center">
+                        <select id="produto-catalogo" class="form-select form-select-sm" style="width: auto;">
+                            <option value="">-- Selecione do Catálogo --</option>
+                            {% for p in produtos_catalogo %}
+                            <option value="{{ p.preco_base }}" data-nome="{{ p.nome }}">{{ p.nome }} (R$ {{ p.preco_base }})</option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-outline-success btn-sm" id="add-catalog-btn">
+                            <i class="bi bi-cart-plus me-1"></i> Adicionar do Catálogo
+                        </button>
+                    </div>
                     <button type="button" class="btn btn-outline-primary btn-sm" id="add-item-btn">
-                        <i class="bi bi-plus-circle me-1"></i> Adicionar Item
+                        <i class="bi bi-plus-circle me-1"></i> Adicionar Item Manual
                     </button>
                 </div>
             </div>
@@ -75,6 +86,8 @@
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const addItemBtn = document.getElementById("add-item-btn");
+        const addCatalogBtn = document.getElementById("add-catalog-btn");
+        const catalogSelect = document.getElementById("produto-catalogo");
         const itemsBody = document.getElementById("items-body");
         const totalFormsInput = document.getElementById("id_itens-TOTAL_FORMS");
         const valorTotalInput = document.getElementById("id_valor");
@@ -121,18 +134,19 @@
             }
         });
 
-        addItemBtn.addEventListener("click", function() {
+        function addNewRow(nome = "", preco = "") {
             const formCount = parseInt(totalFormsInput.value);
             const rowTemplates = itemsBody.getElementsByClassName("item-row");
+            if (rowTemplates.length === 0) return;
             const templateRow = rowTemplates[rowTemplates.length - 1]; // Clone the last row
             
             const newRow = templateRow.cloneNode(true);
             
             // Update input names and ids in the new row
-            const regex = new RegExp(`itens-(\d+)-`, 'g');
+            const regex = new RegExp(`itens-(\\d+)-`, 'g'); // FIX: missing extra backslash
             newRow.innerHTML = newRow.innerHTML.replace(regex, `itens-${formCount}-`);
             
-            // Clear values
+            // Clear values and assign if provided
             const inputs = newRow.querySelectorAll("input, textarea, select");
             inputs.forEach(input => {
                 if (input.type !== "hidden" || input.name.includes("DELETE")) {
@@ -142,7 +156,9 @@
                         if (input.name.includes("-quantidade")) {
                             input.value = "1";
                         } else if (input.name.includes("-preco_unitario")) {
-                            input.value = "";
+                            input.value = preco;
+                        } else if (input.name.includes("-descricao")) {
+                            input.value = nome;
                         } else {
                             input.value = "";
                         }
@@ -154,6 +170,23 @@
             
             itemsBody.appendChild(newRow);
             totalFormsInput.value = formCount + 1;
+            calculateTotal();
+        }
+
+        addItemBtn.addEventListener("click", function() {
+            addNewRow();
+        });
+
+        addCatalogBtn.addEventListener("click", function() {
+            const selectedOption = catalogSelect.options[catalogSelect.selectedIndex];
+            if (selectedOption.value) {
+                const preco = selectedOption.value;
+                const nome = selectedOption.getAttribute('data-nome');
+                addNewRow(nome, preco);
+                catalogSelect.value = ""; // reset
+            } else {
+                alert("Por favor, selecione um produto do catálogo primeiro.");
+            }
         });
     });
 </script>

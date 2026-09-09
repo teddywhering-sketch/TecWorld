@@ -497,6 +497,7 @@ class OrcamentoCreateView(LoginRequiredMixin, ProvedorOrOperacionalRequiredMixin
 
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
+        data['produtos_catalogo'] = Produto.objects.all()
         if self.request.POST:
             data['itens'] = OrcamentoItemFormSet(self.request.POST)
         else:
@@ -544,6 +545,7 @@ class OrcamentoUpdateView(LoginRequiredMixin, ProvedorOrOperacionalRequiredMixin
 
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
+        data['produtos_catalogo'] = Produto.objects.all()
         if self.request.POST:
             data['itens'] = OrcamentoItemFormSet(self.request.POST, instance=self.object)
         else:

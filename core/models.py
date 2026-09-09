@@ -159,6 +159,7 @@ class Produto(TimeStampedModel):
     nome = models.CharField(max_length=150, unique=True)
     unidade = models.CharField("Unidade de medida", max_length=20, default="UN")
     estoque_base = models.IntegerField("Estoque na Sede", default=0)
+    preco_base = models.DecimalField("Preço Base", max_digits=12, decimal_places=2, default=0.00)
     class Meta: ordering = ["nome"]
     def __str__(self): return f"{self.nome} ({self.unidade})"
 

@@ -125,8 +125,8 @@ class AdiantamentoForm(BaseForm):
 class ProdutoForm(BaseForm):
     class Meta:
         model = Produto
-        fields = ["nome", "unidade", "estoque_base"]
-        labels = {"estoque_base": "Quantidade no Estoque (Sede)"}
+        fields = ["nome", "unidade", "estoque_base", "preco_base"]
+        labels = {"estoque_base": "Quantidade no Estoque (Sede)", "preco_base": "Preço Base (R$)"}
 
 class TransferenciaEstoqueForm(forms.Form):
     tecnico = forms.ModelChoiceField(queryset=User.objects.filter(groups__name__isnull=True), label="Técnico Destino")
