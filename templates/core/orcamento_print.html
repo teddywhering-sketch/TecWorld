@@ -72,11 +72,18 @@
     <div class="info-grid">
         <div class="info-block">
             <h6>Cliente</h6>
-            <p><strong>{{ object.cliente.nome }}</strong></p>
-            {% if object.cliente.documento %}<p>Doc: {{ object.cliente.documento }}</p>{% endif %}
-            <p>Endereço: {{ object.cliente.endereco|default:"Não informado" }}</p>
-            <p>Telefone: {{ object.cliente.telefone|default:"Não informado" }}</p>
-            {% if object.cliente.email %}<p>E-mail: {{ object.cliente.email }}</p>{% endif %}
+            {% if object.cliente_final %}
+                <p><strong>{{ object.cliente_final.nome }}</strong></p>
+                <p>Endereço: {{ object.cliente_final.endereco|default:"Não informado" }}</p>
+                <p>Telefone: {{ object.cliente_final.telefone|default:"Não informado" }}</p>
+                <p><small>(Provedor: {{ object.cliente.nome }})</small></p>
+            {% else %}
+                <p><strong>{{ object.cliente.nome }}</strong></p>
+                {% if object.cliente.documento %}<p>Doc: {{ object.cliente.documento }}</p>{% endif %}
+                <p>Endereço: {{ object.cliente.endereco|default:"Não informado" }}</p>
+                <p>Telefone: {{ object.cliente.telefone|default:"Não informado" }}</p>
+                {% if object.cliente.email %}<p>E-mail: {{ object.cliente.email }}</p>{% endif %}
+            {% endif %}
         </div>
         <div class="info-block text-end">
             <h6>Detalhes do Orçamento</h6>
