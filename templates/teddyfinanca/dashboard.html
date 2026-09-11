@@ -234,6 +234,7 @@
                             {% if divida.status == 'PAGO' %}
                             <a href="{% url 'teddyfinanca:arquivar_divida' divida.id %}" class="btn btn-outline-secondary btn-sm mt-1" style="font-size: 0.7rem;"><i class="bi bi-archive"></i> Arquivar</a>
                             {% else %}
+                            <a href="{% url 'teddyfinanca:deletar_divida' divida.id %}" class="btn btn-outline-danger btn-sm mt-1" style="font-size: 0.7rem;" onclick="return confirm('Deletar divida?');"><i class="bi bi-trash"></i></a>
                             <a href="{% url 'teddyfinanca:pagar_divida' divida.id %}" class="btn btn-success btn-sm mt-1 btn-pagamento" data-restante="{{ divida.restante|unlocalize }}" style="font-size: 0.7rem;">Pagar</a>
                             {% endif %}
                         </div>
@@ -252,10 +253,12 @@
                         {% endif %}
                         
                         {% for i in dividas.paginator.page_range %}
+                            {% if i >= dividas.number|add:"-2" and i <= dividas.number|add:"2" %}
                             {% if dividas.number == i %}
                             <li class="page-item active"><span class="page-link bg-danger border-danger">{{ i }}</span></li>
                             {% else %}
                             <li class="page-item"><a class="page-link text-danger" href="?page_divida={{ i }}">{{ i }}</a></li>
+                            {% endif %}
                             {% endif %}
                         {% endfor %}
                         
@@ -291,6 +294,7 @@
                             {% if emp.status == 'PAGO' %}
                             <a href="{% url 'teddyfinanca:arquivar_emprestimo' emp.id %}" class="btn btn-outline-secondary btn-sm mt-1" style="font-size: 0.7rem;"><i class="bi bi-archive"></i> Arquivar</a>
                             {% else %}
+                            <a href="{% url 'teddyfinanca:deletar_emprestimo' emp.id %}" class="btn btn-outline-danger btn-sm mt-1" style="font-size: 0.7rem;" onclick="return confirm('Deletar emprestimo?');"><i class="bi bi-trash"></i></a>
                             <a href="{% url 'teddyfinanca:receber_emprestimo' emp.id %}" class="btn btn-success btn-sm mt-1 btn-pagamento" data-restante="{{ emp.restante|unlocalize }}" style="font-size: 0.7rem;">Receber</a>
                             {% endif %}
                         </div>
@@ -309,10 +313,12 @@
                         {% endif %}
                         
                         {% for i in emprestimos.paginator.page_range %}
+                            {% if i >= emprestimos.number|add:"-2" and i <= emprestimos.number|add:"2" %}
                             {% if emprestimos.number == i %}
                             <li class="page-item active"><span class="page-link bg-warning text-dark border-warning">{{ i }}</span></li>
                             {% else %}
                             <li class="page-item"><a class="page-link text-warning" href="?page_emprestimo={{ i }}">{{ i }}</a></li>
+                            {% endif %}
                             {% endif %}
                         {% endfor %}
                         
@@ -405,10 +411,12 @@
                         {% endif %}
                         
                         {% for i in vendas.paginator.page_range %}
+                            {% if i >= vendas.number|add:"-2" and i <= vendas.number|add:"2" %}
                             {% if vendas.number == i %}
                             <li class="page-item active"><span class="page-link bg-info text-dark border-info">{{ i }}</span></li>
                             {% else %}
                             <li class="page-item"><a class="page-link text-info" href="?page_venda={{ i }}">{{ i }}</a></li>
+                            {% endif %}
                             {% endif %}
                         {% endfor %}
                         

@@ -324,3 +324,22 @@ def arquivar_divida(request, id):
     except Divida.DoesNotExist:
         messages.error(request, "Dívida não encontrada.")
     return redirect('teddyfinanca:dashboard')
+@login_required(login_url='teddyfinanca:login')
+def deletar_divida(request, id):
+    try:
+        divida = Divida.objects.get(id=id, usuario=request.user)
+        divida.delete()
+        messages.success(request, f"Dívida '{divida.descricao}' deletada com sucesso!")
+    except Divida.DoesNotExist:
+        messages.error(request, "Dívida não encontrada.")
+    return redirect('teddyfinanca:dashboard')
+
+@login_required(login_url='teddyfinanca:login')
+def deletar_emprestimo(request, id):
+    try:
+        emp = Emprestimo.objects.get(id=id, usuario=request.user)
+        emp.delete()
+        messages.success(request, f"Empréstimo '{emp.nome_pessoa}' deletado com sucesso!")
+    except Emprestimo.DoesNotExist:
+        messages.error(request, "Empréstimo não encontrado.")
+    return redirect('teddyfinanca:dashboard')
