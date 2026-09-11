@@ -78,6 +78,11 @@ class VendaParcelada(models.Model):
     def todas_parcelas_pagas(self):
         return self.parcelas.exists() and not self.parcelas.filter(status='PENDENTE').exists()
 
+    @property
+    def valor_restante(self):
+        from django.db.models import Sum
+        return self.parcelas.filter(status='PENDENTE').aggregate(total=Sum('valor'))['total'] or 0
+
     def __str__(self):
         return f"Venda para {self.cliente} - R$ {self.valor_total}"
 

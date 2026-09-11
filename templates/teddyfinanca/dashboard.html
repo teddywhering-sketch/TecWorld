@@ -343,7 +343,12 @@
                                     </div>
                                     <div class="text-end">
                                         <strong>R$ {{ venda.valor_total|floatformat:"2g" }}</strong><br>
-                                        <small class="text-muted" style="font-size: 0.7rem;">{% if venda.entrada > 0 %}Entrada: R$ {{ venda.entrada|floatformat:"2g" }}{% endif %}</small>
+                                        <small class="text-muted d-block" style="font-size: 0.7rem;">{% if venda.entrada > 0 %}Entrada: R$ {{ venda.entrada|floatformat:"2g" }}{% endif %}</small>
+                                        {% if not venda.todas_parcelas_pagas %}
+                                        <small class="text-danger fw-bold" style="font-size: 0.75rem;">Resta: R$ {{ venda.valor_restante|floatformat:"2g" }}</small>
+                                        {% else %}
+                                        <small class="text-success fw-bold" style="font-size: 0.75rem;">Quitado!</small>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </button>
