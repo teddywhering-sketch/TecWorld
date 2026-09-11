@@ -68,10 +68,15 @@ class VendaParcelada(models.Model):
     entrada = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, verbose_name="Valor de Entrada")
     quantidade_parcelas = models.PositiveIntegerField()
     data_venda = models.DateField(default=timezone.now)
+    arquivado = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "Venda Parcelada"
         verbose_name_plural = "Vendas Parceladas"
+
+    @property
+    def todas_parcelas_pagas(self):
+        return self.parcelas.exists() and not self.parcelas.filter(status='PENDENTE').exists()
 
     def __str__(self):
         return f"Venda para {self.cliente} - R$ {self.valor_total}"
@@ -109,6 +114,7 @@ class Emprestimo(models.Model):
     data_devolucao = models.DateField(verbose_name="Data de Devolução Prometida")
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDENTE')
     observacao = models.TextField(blank=True, null=True)
+    arquivado = models.BooleanField(default=False)
 
     class Meta:
         verbose_name_plural = "Empréstimos"
@@ -134,6 +140,7 @@ class Divida(models.Model):
     valor = models.DecimalField(max_digits=12, decimal_places=2)
     data_vencimento = models.DateField()
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDENTE')
+    arquivado = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "Dívida"

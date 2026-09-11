@@ -137,20 +137,20 @@ def dashboard(request):
     entradas_mes = Transacao.objects.filter(usuario=request.user, tipo='ENTRADA').aggregate(total=Sum('valor'))['total'] or 0
     saidas_mes = Transacao.objects.filter(usuario=request.user, tipo='SAIDA').aggregate(total=Sum('valor'))['total'] or 0
     
-    # Dívidas com paginação (5 por página)
-    dividas_list = dividas_pendentes.order_by('data_vencimento')
+    # Dívidas com paginação (5 por página) - Mostra todas não arquivadas
+    dividas_list = Divida.objects.filter(usuario=request.user, arquivado=False).order_by('data_vencimento')
     paginator_dividas = Paginator(dividas_list, 5)
     page_divida = request.GET.get('page_divida')
     dividas = paginator_dividas.get_page(page_divida)
 
-    # Empréstimos com paginação (5 por página)
-    emprestimos_list = emprestimos_pendentes.order_by('data_devolucao')
+    # Empréstimos com paginação (5 por página) - Mostra todos não arquivados
+    emprestimos_list = Emprestimo.objects.filter(usuario=request.user, arquivado=False).order_by('data_devolucao')
     paginator_emprestimos = Paginator(emprestimos_list, 5)
     page_emprestimo = request.GET.get('page_emprestimo')
     emprestimos = paginator_emprestimos.get_page(page_emprestimo)
     
-    # Vendas Parceladas com paginação (5 por página)
-    vendas_list = VendaParcelada.objects.filter(usuario=request.user).order_by('-data_venda')
+    # Vendas Parceladas com paginação (5 por página) - Mostra todas não arquivadas
+    vendas_list = VendaParcelada.objects.filter(usuario=request.user, arquivado=False).order_by('-data_venda')
     paginator_vendas = Paginator(vendas_list, 5)
     page_venda = request.GET.get('page_venda')
     vendas = paginator_vendas.get_page(page_venda)
@@ -217,4 +217,37 @@ def deletar_venda(request, id):
         messages.success(request, "Venda parcelada e todas as suas faturas foram apagadas com sucesso!")
     except VendaParcelada.DoesNotExist:
         messages.error(request, "Venda não encontrada.")
+    return redirect('teddyfinanca:dashboard')
+
+@login_required(login_url='teddyfinanca:login')
+def arquivar_venda(request, id):
+    try:
+        venda = VendaParcelada.objects.get(id=id, usuario=request.user)
+        venda.arquivado = True
+        venda.save()
+        messages.success(request, "Venda arquivada com sucesso!")
+    except VendaParcelada.DoesNotExist:
+        messages.error(request, "Venda não encontrada.")
+    return redirect('teddyfinanca:dashboard')
+
+@login_required(login_url='teddyfinanca:login')
+def arquivar_emprestimo(request, id):
+    try:
+        emp = Emprestimo.objects.get(id=id, usuario=request.user)
+        emp.arquivado = True
+        emp.save()
+        messages.success(request, "Empréstimo arquivado com sucesso!")
+    except Emprestimo.DoesNotExist:
+        messages.error(request, "Empréstimo não encontrado.")
+    return redirect('teddyfinanca:dashboard')
+
+@login_required(login_url='teddyfinanca:login')
+def arquivar_divida(request, id):
+    try:
+        divida = Divida.objects.get(id=id, usuario=request.user)
+        divida.arquivado = True
+        divida.save()
+        messages.success(request, "Dívida arquivada com sucesso!")
+    except Divida.DoesNotExist:
+        messages.error(request, "Dívida não encontrada.")
     return redirect('teddyfinanca:dashboard')

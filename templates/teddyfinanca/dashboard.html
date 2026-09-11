@@ -222,11 +222,19 @@
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <div>
                             <strong>{{ divida.descricao }}</strong><br>
+                            {% if divida.status == 'PAGO' %}
+                            <small class="text-success">Paga</small>
+                            {% else %}
                             <small class="text-danger">Vence em {{ divida.dias_para_vencer }} dias</small>
+                            {% endif %}
                         </div>
                         <div class="text-end">
                             <strong>R$ {{ divida.valor|floatformat:"2g" }}</strong><br>
+                            {% if divida.status == 'PAGO' %}
+                            <a href="{% url 'teddyfinanca:arquivar_divida' divida.id %}" class="btn btn-outline-secondary btn-sm mt-1" style="font-size: 0.7rem;"><i class="bi bi-archive"></i> Arquivar</a>
+                            {% else %}
                             <a href="{% url 'teddyfinanca:pagar_divida' divida.id %}" class="btn btn-success btn-sm mt-1" style="font-size: 0.7rem;">Pagar</a>
+                            {% endif %}
                         </div>
                     </li>
                     {% empty %}
@@ -271,11 +279,19 @@
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <div>
                             <strong>{{ emp.nome_pessoa }}</strong><br>
+                            {% if emp.status == 'PAGO' %}
+                            <small class="text-success">Recebido</small>
+                            {% else %}
                             <small class="text-warning text-dark">Receber em {{ emp.dias_para_receber }} dias</small>
+                            {% endif %}
                         </div>
                         <div class="text-end">
                             <strong>R$ {{ emp.valor|floatformat:"2g" }}</strong><br>
+                            {% if emp.status == 'PAGO' %}
+                            <a href="{% url 'teddyfinanca:arquivar_emprestimo' emp.id %}" class="btn btn-outline-secondary btn-sm mt-1" style="font-size: 0.7rem;"><i class="bi bi-archive"></i> Arquivar</a>
+                            {% else %}
                             <a href="{% url 'teddyfinanca:receber_emprestimo' emp.id %}" class="btn btn-success btn-sm mt-1" style="font-size: 0.7rem;">Receber</a>
+                            {% endif %}
                         </div>
                     </li>
                     {% empty %}
@@ -356,10 +372,15 @@
                                     </li>
                                     {% endfor %}
                                 </ul>
-                                <div class="p-2 text-center bg-light border-top">
-                                    <a href="{% url 'teddyfinanca:deletar_venda' venda.id %}" class="btn btn-outline-danger btn-sm rounded-pill px-4" onclick="return confirm('Tem certeza que deseja apagar essa venda e TODAS as suas faturas?');">
-                                        <i class="bi bi-trash"></i> Apagar Venda
+                                <div class="p-2 text-center bg-light border-top d-flex justify-content-between">
+                                    <a href="{% url 'teddyfinanca:deletar_venda' venda.id %}" class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="return confirm('Tem certeza que deseja apagar essa venda e TODAS as suas faturas?');">
+                                        <i class="bi bi-trash"></i> Apagar
                                     </a>
+                                    {% if venda.todas_parcelas_pagas %}
+                                    <a href="{% url 'teddyfinanca:arquivar_venda' venda.id %}" class="btn btn-success btn-sm rounded-pill px-3">
+                                        <i class="bi bi-archive"></i> Arquivar
+                                    </a>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
