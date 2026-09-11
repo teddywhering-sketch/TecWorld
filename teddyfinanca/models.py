@@ -91,6 +91,7 @@ class ParcelaVenda(models.Model):
     venda = models.ForeignKey(VendaParcelada, on_delete=models.CASCADE, related_name='parcelas')
     numero = models.PositiveIntegerField()
     valor = models.DecimalField(max_digits=12, decimal_places=2)
+    valor_pago = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     data_vencimento = models.DateField()
     status = models.CharField(max_length=10, choices=(('PENDENTE', 'Pendente'), ('PAGO', 'Pago')), default='PENDENTE')
 
@@ -104,6 +105,10 @@ class ParcelaVenda(models.Model):
         hoje = date.today()
         return (self.data_vencimento - hoje).days
 
+    @property
+    def restante(self):
+        return self.valor - self.valor_pago
+
     def __str__(self):
         return f"Parcela {self.numero} de {self.venda.cliente}"
 
@@ -115,6 +120,7 @@ class Emprestimo(models.Model):
     )
     nome_pessoa = models.CharField(max_length=150, verbose_name="Amigo/Familiar")
     valor = models.DecimalField(max_digits=12, decimal_places=2)
+    valor_pago = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     data_emprestimo = models.DateField(default=timezone.now)
     data_devolucao = models.DateField(verbose_name="Data de Devolução Prometida")
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDENTE')
@@ -132,6 +138,10 @@ class Emprestimo(models.Model):
         diferenca = (self.data_devolucao - hoje).days
         return diferenca
 
+    @property
+    def restante(self):
+        return self.valor - self.valor_pago
+
     def __str__(self):
         return f"Empréstimo: {self.nome_pessoa} - R$ {self.valor}"
 
@@ -143,6 +153,7 @@ class Divida(models.Model):
     )
     descricao = models.CharField(max_length=255, verbose_name="Descrição da Dívida")
     valor = models.DecimalField(max_digits=12, decimal_places=2)
+    valor_pago = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     data_vencimento = models.DateField()
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDENTE')
     arquivado = models.BooleanField(default=False)
@@ -158,6 +169,10 @@ class Divida(models.Model):
         hoje = date.today()
         diferenca = (self.data_vencimento - hoje).days
         return diferenca
+
+    @property
+    def restante(self):
+        return self.valor - self.valor_pago
 
     def __str__(self):
         return f"Dívida: {self.descricao} - R$ {self.valor}"

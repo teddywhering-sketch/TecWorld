@@ -120,14 +120,20 @@ def dashboard(request):
     total_saldo = bancos.aggregate(total=Sum('saldo_atual'))['total'] or 0
     
     dividas_pendentes = Divida.objects.filter(usuario=request.user, status='PENDENTE')
-    total_pagar = dividas_pendentes.aggregate(total=Sum('valor'))['total'] or 0
+    total_divida = dividas_pendentes.aggregate(total=Sum('valor'))['total'] or 0
+    pago_divida = dividas_pendentes.aggregate(total=Sum('valor_pago'))['total'] or 0
+    total_pagar = total_divida - pago_divida
     
     emprestimos_pendentes = Emprestimo.objects.filter(usuario=request.user, status='PENDENTE')
-    total_receber_emp = emprestimos_pendentes.aggregate(total=Sum('valor'))['total'] or 0
+    total_emp = emprestimos_pendentes.aggregate(total=Sum('valor'))['total'] or 0
+    pago_emp = emprestimos_pendentes.aggregate(total=Sum('valor_pago'))['total'] or 0
+    total_receber_emp = total_emp - pago_emp
     
     from .models import ParcelaVenda
     parcelas_pendentes = ParcelaVenda.objects.filter(usuario=request.user, status='PENDENTE')
-    total_receber_parcelas = parcelas_pendentes.aggregate(total=Sum('valor'))['total'] or 0
+    total_parc = parcelas_pendentes.aggregate(total=Sum('valor'))['total'] or 0
+    pago_parc = parcelas_pendentes.aggregate(total=Sum('valor_pago'))['total'] or 0
+    total_receber_parcelas = total_parc - pago_parc
     
     total_receber = total_receber_emp + total_receber_parcelas
     
@@ -177,22 +183,42 @@ def dashboard(request):
 
 @login_required(login_url='teddyfinanca:login')
 def pagar_divida(request, id):
+    from decimal import Decimal
     try:
         divida = Divida.objects.get(id=id, usuario=request.user)
-        divida.status = 'PAGO'
-        divida.save()
-        messages.success(request, f"Dívida '{divida.descricao}' marcada como paga!")
+        if request.method == 'POST':
+            valor = Decimal(request.POST.get('valor_pagamento', 0))
+            divida.valor_pago += valor
+            if divida.restante <= 0:
+                divida.status = 'PAGO'
+            divida.save()
+            messages.success(request, f"Pagamento de R$ {valor} registrado em '{divida.descricao}'.")
+        else:
+            divida.status = 'PAGO'
+            divida.valor_pago = divida.valor
+            divida.save()
+            messages.success(request, f"Dívida '{divida.descricao}' quitada!")
     except Divida.DoesNotExist:
         messages.error(request, "Dívida não encontrada.")
     return redirect('teddyfinanca:dashboard')
 
 @login_required(login_url='teddyfinanca:login')
 def receber_emprestimo(request, id):
+    from decimal import Decimal
     try:
         emp = Emprestimo.objects.get(id=id, usuario=request.user)
-        emp.status = 'PAGO'
-        emp.save()
-        messages.success(request, f"Empréstimo de '{emp.nome_pessoa}' marcado como recebido!")
+        if request.method == 'POST':
+            valor = Decimal(request.POST.get('valor_pagamento', 0))
+            emp.valor_pago += valor
+            if emp.restante <= 0:
+                emp.status = 'PAGO'
+            emp.save()
+            messages.success(request, f"Recebimento de R$ {valor} registrado de '{emp.nome_pessoa}'.")
+        else:
+            emp.status = 'PAGO'
+            emp.valor_pago = emp.valor
+            emp.save()
+            messages.success(request, f"Empréstimo de '{emp.nome_pessoa}' totalmente recebido!")
     except Emprestimo.DoesNotExist:
         messages.error(request, "Empréstimo não encontrado.")
     return redirect('teddyfinanca:dashboard')
@@ -200,11 +226,21 @@ def receber_emprestimo(request, id):
 @login_required(login_url='teddyfinanca:login')
 def receber_parcela(request, id):
     from .models import ParcelaVenda
+    from decimal import Decimal
     try:
         parcela = ParcelaVenda.objects.get(id=id, usuario=request.user)
-        parcela.status = 'PAGO'
-        parcela.save()
-        messages.success(request, f"Parcela {parcela.numero} de '{parcela.venda.cliente}' marcada como recebida!")
+        if request.method == 'POST':
+            valor = Decimal(request.POST.get('valor_pagamento', 0))
+            parcela.valor_pago += valor
+            if parcela.restante <= 0:
+                parcela.status = 'PAGO'
+            parcela.save()
+            messages.success(request, f"Recebimento de R$ {valor} na Parcela {parcela.numero} de '{parcela.venda.cliente}'.")
+        else:
+            parcela.status = 'PAGO'
+            parcela.valor_pago = parcela.valor
+            parcela.save()
+            messages.success(request, f"Parcela {parcela.numero} de '{parcela.venda.cliente}' quitada!")
     except ParcelaVenda.DoesNotExist:
         messages.error(request, "Parcela não encontrada.")
     return redirect('teddyfinanca:dashboard')

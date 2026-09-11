@@ -1,3 +1,4 @@
+{% load l10n %}
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -229,11 +230,11 @@
                             {% endif %}
                         </div>
                         <div class="text-end">
-                            <strong>R$ {{ divida.valor|floatformat:"2g" }}</strong><br>
+                            <strong>R$ {{ divida.restante|floatformat:"2g" }}</strong><br><small class="text-muted" style="font-size:0.65rem;">de R$ {{ divida.valor|floatformat:"2g" }}</small><br>
                             {% if divida.status == 'PAGO' %}
                             <a href="{% url 'teddyfinanca:arquivar_divida' divida.id %}" class="btn btn-outline-secondary btn-sm mt-1" style="font-size: 0.7rem;"><i class="bi bi-archive"></i> Arquivar</a>
                             {% else %}
-                            <a href="{% url 'teddyfinanca:pagar_divida' divida.id %}" class="btn btn-success btn-sm mt-1" style="font-size: 0.7rem;">Pagar</a>
+                            <a href="{% url 'teddyfinanca:pagar_divida' divida.id %}" class="btn btn-success btn-sm mt-1 btn-pagamento" data-restante="{{ divida.restante|unlocalize }}" style="font-size: 0.7rem;">Pagar</a>
                             {% endif %}
                         </div>
                     </li>
@@ -286,11 +287,11 @@
                             {% endif %}
                         </div>
                         <div class="text-end">
-                            <strong>R$ {{ emp.valor|floatformat:"2g" }}</strong><br>
+                            <strong>R$ {{ emp.restante|floatformat:"2g" }}</strong><br><small class="text-muted" style="font-size:0.65rem;">de R$ {{ emp.valor|floatformat:"2g" }}</small><br>
                             {% if emp.status == 'PAGO' %}
                             <a href="{% url 'teddyfinanca:arquivar_emprestimo' emp.id %}" class="btn btn-outline-secondary btn-sm mt-1" style="font-size: 0.7rem;"><i class="bi bi-archive"></i> Arquivar</a>
                             {% else %}
-                            <a href="{% url 'teddyfinanca:receber_emprestimo' emp.id %}" class="btn btn-success btn-sm mt-1" style="font-size: 0.7rem;">Receber</a>
+                            <a href="{% url 'teddyfinanca:receber_emprestimo' emp.id %}" class="btn btn-success btn-sm mt-1 btn-pagamento" data-restante="{{ emp.restante|unlocalize }}" style="font-size: 0.7rem;">Receber</a>
                             {% endif %}
                         </div>
                     </li>
@@ -367,9 +368,9 @@
                                             {% endif %}
                                         </div>
                                         <div class="text-end">
-                                            <strong>R$ {{ parcela.valor|floatformat:"2g" }}</strong><br>
+                                            <strong>R$ {{ parcela.restante|floatformat:"2g" }}</strong><br><small class="text-muted" style="font-size:0.65rem;">de R$ {{ parcela.valor|floatformat:"2g" }}</small><br>
                                             {% if parcela.status == 'PENDENTE' %}
-                                                <a href="{% url 'teddyfinanca:receber_parcela' parcela.id %}" class="btn btn-outline-success btn-sm mt-1" style="font-size: 0.7rem; padding: 2px 5px;">Receber</a>
+                                                <a href="{% url 'teddyfinanca:receber_parcela' parcela.id %}" class="btn btn-outline-success btn-sm mt-1 btn-pagamento" data-restante="{{ parcela.restante|unlocalize }}" style="font-size: 0.7rem; padding: 2px 5px;">Receber</a>
                                             {% else %}
                                                 <i class="bi bi-check-circle-fill text-success mt-1 d-block"></i>
                                             {% endif %}
@@ -562,6 +563,20 @@
             tab.show();
         }
     });
+</script>
+<script>
+document.querySelectorAll('.btn-pagamento').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const actionUrl = this.getAttribute('href');
+        const maxVal = this.getAttribute('data-restante');
+        document.getElementById('formPagamentoParcial').action = actionUrl;
+        document.getElementById('inputValorPagamento').value = maxVal;
+        document.getElementById('inputValorPagamento').max = maxVal;
+        document.getElementById('textoRestante').innerText = 'Faltava: R$ ' + maxVal;
+        new bootstrap.Modal(document.getElementById('modalPagamento')).show();
+    });
+});
 </script>
 </body>
 </html>
