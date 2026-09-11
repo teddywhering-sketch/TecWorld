@@ -115,6 +115,14 @@ def dashboard(request):
                 emp.save()
                 messages.success(request, "Empréstimo adicionado com sucesso!")
                 return redirect('teddyfinanca:dashboard')
+        elif 'btn_categoria' in request.POST:
+            form = CategoriaForm(request.POST)
+            if form.is_valid():
+                categoria = form.save(commit=False)
+                categoria.usuario = request.user
+                categoria.save()
+                messages.success(request, "Categoria criada com sucesso!")
+                return redirect('teddyfinanca:dashboard')
         elif 'btn_banco' in request.POST:
             form = BancoForm(request.POST)
             if form.is_valid():
@@ -157,10 +165,14 @@ def dashboard(request):
                 return redirect('teddyfinanca:login')
 
     transacao_form = TransacaoForm()
+    transacao_form.fields['categoria'].queryset = Categoria.objects.filter(usuario=request.user)
+    transacao_form.fields['banco'].queryset = Banco.objects.filter(usuario=request.user)
+    
     divida_form = DividaForm()
     emprestimo_form = EmprestimoForm()
     banco_form = BancoForm()
     venda_form = VendaParceladaForm()
+    categoria_form = CategoriaForm()
 
     # Filtra tudo pelo usuário logado
     bancos = Banco.objects.filter(usuario=request.user)
@@ -229,6 +241,8 @@ def dashboard(request):
         'emprestimo_form': emprestimo_form,
         'banco_form': banco_form,
         'venda_form': venda_form,
+        'categoria_form': categoria_form,
+        'categorias': Categoria.objects.filter(usuario=request.user),
     }
     return render(request, 'teddyfinanca/dashboard.html', context)
 
@@ -358,4 +372,13 @@ def deletar_emprestimo(request, id):
         messages.success(request, f"Empréstimo '{emp.nome_pessoa}' deletado com sucesso!")
     except Emprestimo.DoesNotExist:
         messages.error(request, "Empréstimo não encontrado.")
+    return redirect('teddyfinanca:dashboard')
+@login_required(login_url='teddyfinanca:login')
+def deletar_categoria(request, id):
+    try:
+        categoria = Categoria.objects.get(id=id, usuario=request.user)
+        categoria.delete()
+        messages.success(request, f"Categoria '{categoria.nome}' deletada!")
+    except Categoria.DoesNotExist:
+        messages.error(request, "Categoria não encontrada.")
     return redirect('teddyfinanca:dashboard')

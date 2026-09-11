@@ -1,3 +1,4 @@
+{% load widget_tweaks %}
 {% load l10n %}
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -141,9 +142,10 @@
                 <div class="card-body p-3">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h6 class="mb-0 text-muted">Fluxo e Gráfico</h6>
-                        <button class="btn btn-success rounded-pill fw-bold shadow-sm px-3" data-bs-toggle="modal" data-bs-target="#modalTransacao">
-                            + Lançar
-                        </button>
+                        <div>
+                            <button class="btn btn-outline-secondary rounded-pill fw-bold shadow-sm px-3 me-2" data-bs-toggle="modal" data-bs-target="#modalCategorias">Categorias</button>
+                            <button class="btn btn-success rounded-pill fw-bold shadow-sm px-3" data-bs-toggle="modal" data-bs-target="#modalTransacao">+ Lançar</button>
+                        </div>
                     </div>
                     <div class="row align-items-center g-2">
                         <!-- Coluna do Gráfico -->
@@ -460,6 +462,43 @@
 </ul>
 
 <!-- Modals -->
+
+<div class="modal fade" id="modalCategorias" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0" style="border-radius:15px;">
+      <div class="modal-header bg-secondary text-white border-0" style="border-radius:15px 15px 0 0;">
+        <h5 class="modal-title">Gerenciar Categorias</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="p-3 bg-light border-bottom">
+            <form method="POST">
+                {% csrf_token %}
+                <label class="form-label text-muted small mb-1">Nova Categoria</label>
+                <div class="input-group">
+                    {% render_field categoria_form.nome class="form-control border-0" placeholder="Nome da Categoria" %}
+                    {% render_field categoria_form.tipo class="form-select border-0" style="max-width: 120px;" %}
+                    <button type="submit" name="btn_categoria" class="btn btn-secondary fw-bold px-3">Adicionar</button>
+                </div>
+            </form>
+        </div>
+        <ul class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;">
+            {% for cat in categorias %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>{{ cat.nome }}</strong>
+                    <span class="badge {% if cat.tipo == 'ENTRADA' %}bg-success{% elif cat.tipo == 'SAIDA' %}bg-danger{% else %}bg-secondary{% endif %} ms-2" style="font-size:0.6rem;">{{ cat.get_tipo_display }}</span>
+                </div>
+                <a href="{% url 'teddyfinanca:deletar_categoria' cat.id %}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Tem certeza que deseja apagar essa categoria?');"><i class="bi bi-trash"></i></a>
+            </li>
+            {% empty %}
+            <li class="list-group-item text-muted text-center py-3">Nenhuma categoria criada.</li>
+            {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
 {% load widget_tweaks %}
 <div class="modal fade" id="modalTransacao" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0" style="border-radius:15px;">
