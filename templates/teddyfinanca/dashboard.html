@@ -234,8 +234,28 @@
                     {% endfor %}
                 </ul>
                 {% if dividas.has_other_pages %}
-                <div class="card-footer bg-white text-center">
-                    <small>Navegue pelas páginas (Mova para o PC ou crie botões menores aqui)</small>
+                <div class="card-footer bg-white text-center border-0">
+                    <ul class="pagination pagination-sm justify-content-center mb-0">
+                        {% if dividas.has_previous %}
+                        <li class="page-item"><a class="page-link text-danger" href="?page_divida={{ dividas.previous_page_number }}">&laquo;</a></li>
+                        {% else %}
+                        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                        {% endif %}
+                        
+                        {% for i in dividas.paginator.page_range %}
+                            {% if dividas.number == i %}
+                            <li class="page-item active"><span class="page-link bg-danger border-danger">{{ i }}</span></li>
+                            {% else %}
+                            <li class="page-item"><a class="page-link text-danger" href="?page_divida={{ i }}">{{ i }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if dividas.has_next %}
+                        <li class="page-item"><a class="page-link text-danger" href="?page_divida={{ dividas.next_page_number }}">&raquo;</a></li>
+                        {% else %}
+                        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                        {% endif %}
+                    </ul>
                 </div>
                 {% endif %}
             </div>
@@ -262,6 +282,31 @@
                     <li class="list-group-item text-muted">Nenhum empréstimo.</li>
                     {% endfor %}
                 </ul>
+                {% if emprestimos.has_other_pages %}
+                <div class="card-footer bg-white text-center border-0">
+                    <ul class="pagination pagination-sm justify-content-center mb-0">
+                        {% if emprestimos.has_previous %}
+                        <li class="page-item"><a class="page-link text-warning" href="?page_emprestimo={{ emprestimos.previous_page_number }}">&laquo;</a></li>
+                        {% else %}
+                        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                        {% endif %}
+                        
+                        {% for i in emprestimos.paginator.page_range %}
+                            {% if emprestimos.number == i %}
+                            <li class="page-item active"><span class="page-link bg-warning text-dark border-warning">{{ i }}</span></li>
+                            {% else %}
+                            <li class="page-item"><a class="page-link text-warning" href="?page_emprestimo={{ i }}">{{ i }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if emprestimos.has_next %}
+                        <li class="page-item"><a class="page-link text-warning" href="?page_emprestimo={{ emprestimos.next_page_number }}">&raquo;</a></li>
+                        {% else %}
+                        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                        {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
             </div>
 
             <!-- Vendas Parceladas -->
@@ -283,6 +328,31 @@
                     <li class="list-group-item text-muted">Nenhuma venda parcelada.</li>
                     {% endfor %}
                 </ul>
+                {% if vendas.has_other_pages %}
+                <div class="card-footer bg-white text-center border-0">
+                    <ul class="pagination pagination-sm justify-content-center mb-0">
+                        {% if vendas.has_previous %}
+                        <li class="page-item"><a class="page-link text-info" href="?page_venda={{ vendas.previous_page_number }}">&laquo;</a></li>
+                        {% else %}
+                        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                        {% endif %}
+                        
+                        {% for i in vendas.paginator.page_range %}
+                            {% if vendas.number == i %}
+                            <li class="page-item active"><span class="page-link bg-info text-dark border-info">{{ i }}</span></li>
+                            {% else %}
+                            <li class="page-item"><a class="page-link text-info" href="?page_venda={{ i }}">{{ i }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if vendas.has_next %}
+                        <li class="page-item"><a class="page-link text-info" href="?page_venda={{ vendas.next_page_number }}">&raquo;</a></li>
+                        {% else %}
+                        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                        {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
             </div>
 
         </div>

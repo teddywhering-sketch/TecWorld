@@ -126,6 +126,12 @@ def dashboard(request):
     page_emprestimo = request.GET.get('page_emprestimo')
     emprestimos = paginator_emprestimos.get_page(page_emprestimo)
     
+    # Vendas Parceladas com paginação (5 por página)
+    vendas_list = VendaParcelada.objects.filter(usuario=request.user).order_by('-data_venda')
+    paginator_vendas = Paginator(vendas_list, 5)
+    page_venda = request.GET.get('page_venda')
+    vendas = paginator_vendas.get_page(page_venda)
+    
     context = {
         'bancos': bancos,
         'dividas': dividas,
