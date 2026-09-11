@@ -35,7 +35,6 @@ class DividaForm(forms.ModelForm):
     )
     tipo_divida = forms.ChoiceField(choices=TIPO_CHOICES, initial='UNICA', label="Tipo de Dívida")
     quantidade_parcelas = forms.IntegerField(min_value=2, required=False, label="Quantas parcelas? (Se Parcelada)")
-    quantidade_anos = forms.IntegerField(min_value=1, required=False, label="Por quantos anos? (Se Recorrente)")
     entrada = forms.DecimalField(max_digits=12, decimal_places=2, required=False, initial=0.00, label="Valor de Entrada (Se houver)")
 
     class Meta:

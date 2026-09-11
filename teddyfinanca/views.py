@@ -39,6 +39,35 @@ def financeiro_logout(request):
 
 @login_required(login_url='teddyfinanca:login')
 def dashboard(request):
+    from datetime import date
+    # -- LÓGICA DE GERAÇÃO PREGUIÇOSA DE RECORRENTES --
+    hoje = date.today()
+    geradores = Divida.objects.filter(usuario=request.user, tipo_recorrencia='RECORRENTE')
+    for gerador in geradores:
+        # Se o mês/ano do gerador for menor que o atual, gera o próximo
+        while (gerador.data_vencimento.year < hoje.year) or (gerador.data_vencimento.year == hoje.year and gerador.data_vencimento.month < hoje.month):
+            prox_mes = gerador.data_vencimento.month % 12 + 1
+            prox_ano = gerador.data_vencimento.year + (gerador.data_vencimento.month // 12)
+            try:
+                nova_data = gerador.data_vencimento.replace(year=prox_ano, month=prox_mes)
+            except ValueError:
+                nova_data = gerador.data_vencimento.replace(year=prox_ano, month=prox_mes, day=28)
+            
+            # O gerador antigo vira UNICA
+            gerador.tipo_recorrencia = 'UNICA'
+            gerador.save()
+            
+            # O novo criado assume o posto de gerador RECORRENTE
+            gerador = Divida.objects.create(
+                usuario=gerador.usuario,
+                descricao=gerador.descricao,
+                valor=gerador.valor,
+                data_vencimento=nova_data,
+                tipo_recorrencia='RECORRENTE',
+                status='PENDENTE'
+            )
+    # ------------------------------------------------
+
     if request.method == 'POST':
         if 'btn_transacao' in request.POST:
             form = TransacaoForm(request.POST)
@@ -70,24 +99,11 @@ def dashboard(request):
                             status=form.cleaned_data['status']
                         )
                     messages.success(request, f"{qtd} parcelas de R$ {valor_parcela:.2f} geradas com sucesso! Lembre-se de lançar a entrada de R$ {entrada:.2f} no fluxo diário se ela saiu hoje.")
-                elif tipo == 'RECORRENTE':
-                    anos = form.cleaned_data.get('quantidade_anos') or 1
-                    qtd_meses = anos * 12
-                    for i in range(qtd_meses):
-                        Divida.objects.create(
-                            usuario=request.user,
-                            descricao=f"{form.cleaned_data['descricao']}",
-                            valor=valor_total - entrada,
-                            data_vencimento=form.cleaned_data['data_vencimento'] + timedelta(days=30*i),
-                            tipo_recorrencia='UNICA',
-                            status=form.cleaned_data['status']
-                        )
-                    messages.success(request, f"{qtd_meses} meses de '{form.cleaned_data['descricao']}' gerados com sucesso!")
                 else:
                     divida = form.save(commit=False)
                     divida.usuario = request.user
                     divida.valor = valor_total - entrada
-                    divida.tipo_recorrencia = 'UNICA'
+                    divida.tipo_recorrencia = 'RECORRENTE' if tipo == 'RECORRENTE' else 'UNICA'
                     divida.save()
                     messages.success(request, f"Dívida adicionada com sucesso! Lembre-se de lançar a entrada no fluxo diário se houver.")
                 return redirect('teddyfinanca:dashboard')
