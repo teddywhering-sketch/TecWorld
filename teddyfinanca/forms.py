@@ -28,12 +28,24 @@ class TransacaoForm(forms.ModelForm):
         }
 
 class DividaForm(forms.ModelForm):
+    TIPO_CHOICES = (
+        ('UNICA', 'Única'),
+        ('PARCELADA', 'Parcelada'),
+        ('RECORRENTE', 'Fixa Mensal (Recorrente)'),
+    )
+    tipo_divida = forms.ChoiceField(choices=TIPO_CHOICES, initial='UNICA', label="Tipo de Dívida")
+    quantidade_parcelas = forms.IntegerField(min_value=2, required=False, label="Quantidade de Parcelas (Se Parcelada)")
+
     class Meta:
         model = Divida
-        fields = ['descricao', 'valor', 'data_vencimento', 'status']
+        fields = ['descricao', 'valor', 'data_vencimento', 'tipo_recorrencia', 'status']
         widgets = {
             'data_vencimento': forms.DateInput(attrs={'type': 'date'}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['tipo_recorrencia'].required = False
 
 class EmprestimoForm(forms.ModelForm):
     class Meta:

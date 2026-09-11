@@ -662,5 +662,23 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tipoSelect = document.querySelector('select[name="tipo_divida"]');
+    if (tipoSelect) {
+        const qtdDiv = document.querySelector('input[name="quantidade_parcelas"]').closest('.mb-3');
+        function toggleQtd() {
+            if (tipoSelect.value === 'PARCELADA') {
+                qtdDiv.style.display = 'block';
+            } else {
+                qtdDiv.style.display = 'none';
+                document.querySelector('input[name="quantidade_parcelas"]').value = '';
+            }
+        }
+        tipoSelect.addEventListener('change', toggleQtd);
+        toggleQtd();
+    }
+});
+</script>
 </body>
 </html>

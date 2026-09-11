@@ -51,10 +51,27 @@ def dashboard(request):
         elif 'btn_divida' in request.POST:
             form = DividaForm(request.POST)
             if form.is_valid():
-                divida = form.save(commit=False)
-                divida.usuario = request.user
-                divida.save()
-                messages.success(request, "Dívida adicionada com sucesso!")
+                from datetime import timedelta
+                tipo = form.cleaned_data.get('tipo_divida')
+                if tipo == 'PARCELADA':
+                    qtd = form.cleaned_data.get('quantidade_parcelas') or 2
+                    for i in range(qtd):
+                        Divida.objects.create(
+                            usuario=request.user,
+                            descricao=f"{form.cleaned_data['descricao']} ({i+1}/{qtd})",
+                            valor=form.cleaned_data['valor'],
+                            data_vencimento=form.cleaned_data['data_vencimento'] + timedelta(days=30*i),
+                            tipo_recorrencia='UNICA',
+                            status=form.cleaned_data['status']
+                        )
+                    messages.success(request, f"{qtd} parcelas da dívida geradas com sucesso!")
+                else:
+                    divida = form.save(commit=False)
+                    divida.usuario = request.user
+                    # RECORRENTE already comes from the model form field since it's mapped directly
+                    divida.tipo_recorrencia = 'RECORRENTE' if tipo == 'RECORRENTE' else 'UNICA'
+                    divida.save()
+                    messages.success(request, "Dívida adicionada com sucesso!")
                 return redirect('teddyfinanca:dashboard')
         elif 'btn_emprestimo' in request.POST:
             form = EmprestimoForm(request.POST)
@@ -184,20 +201,37 @@ def dashboard(request):
 @login_required(login_url='teddyfinanca:login')
 def pagar_divida(request, id):
     from decimal import Decimal
+    from datetime import timedelta
     try:
         divida = Divida.objects.get(id=id, usuario=request.user)
+        is_fully_paid = False
+        
         if request.method == 'POST':
             valor = Decimal(request.POST.get('valor_pagamento', 0))
             divida.valor_pago += valor
             if divida.restante <= 0:
                 divida.status = 'PAGO'
+                is_fully_paid = True
             divida.save()
             messages.success(request, f"Pagamento de R$ {valor} registrado em '{divida.descricao}'.")
         else:
             divida.status = 'PAGO'
             divida.valor_pago = divida.valor
             divida.save()
+            is_fully_paid = True
             messages.success(request, f"Dívida '{divida.descricao}' quitada!")
+            
+        # Gera próxima fatura se for recorrente
+        if is_fully_paid and divida.tipo_recorrencia == 'RECORRENTE':
+            Divida.objects.create(
+                usuario=request.user,
+                descricao=divida.descricao,
+                valor=divida.valor,
+                data_vencimento=divida.data_vencimento + timedelta(days=30),
+                tipo_recorrencia='RECORRENTE',
+                status='PENDENTE'
+            )
+            
     except Divida.DoesNotExist:
         messages.error(request, "Dívida não encontrada.")
     return redirect('teddyfinanca:dashboard')

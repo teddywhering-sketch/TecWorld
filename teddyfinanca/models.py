@@ -154,10 +154,15 @@ class Divida(models.Model):
         ('PENDENTE', 'Pendente'),
         ('PAGO', 'Pago'),
     )
+    TIPO_RECORRENCIA_CHOICES = (
+        ('UNICA', 'Única'),
+        ('RECORRENTE', 'Fixa Mensal (Recorrente)'),
+    )
     descricao = models.CharField(max_length=255, verbose_name="Descrição da Dívida")
     valor = models.DecimalField(max_digits=12, decimal_places=2)
     valor_pago = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     data_vencimento = models.DateField()
+    tipo_recorrencia = models.CharField(max_length=15, choices=TIPO_RECORRENCIA_CHOICES, default='UNICA')
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDENTE')
     arquivado = models.BooleanField(default=False)
 
