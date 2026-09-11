@@ -39,17 +39,13 @@ class DividaForm(forms.ModelForm):
 
     class Meta:
         model = Divida
-        fields = ['descricao', 'valor', 'data_vencimento', 'tipo_recorrencia', 'status']
+        fields = ['descricao', 'valor', 'data_vencimento', 'status']
         widgets = {
             'data_vencimento': forms.DateInput(attrs={'type': 'date'}),
         }
         labels = {
             'valor': 'Valor Total (Ou Mensalidade)'
         }
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['tipo_recorrencia'].required = False
 
 class EmprestimoForm(forms.ModelForm):
     class Meta:
