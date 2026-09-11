@@ -565,20 +565,27 @@
     });
 </script>
 <script>
-document.querySelectorAll('.btn-pagamento').forEach(btn => {
-    btn.addEventListener('click', function(e) {
-        e.preventDefault();
-        const actionUrl = this.getAttribute('href');
-        let maxVal = this.getAttribute('data-restante');
-        if (maxVal) maxVal = maxVal.replace(',', '.');
-        document.getElementById('formPagamentoParcial').action = actionUrl;
-        document.getElementById('inputValorPagamento').value = maxVal;
-        document.getElementById('inputValorPagamento').max = maxVal;
-        document.getElementById('textoRestante').innerText = 'Faltava: R$ ' + maxVal;
-        
-        const modalEl = document.getElementById('modalPagamento');
-        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-        modal.show();
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.btn-pagamento').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            try {
+                const actionUrl = this.getAttribute('href');
+                let maxVal = this.getAttribute('data-restante');
+                if (maxVal) maxVal = maxVal.replace(',', '.');
+                document.getElementById('formPagamentoParcial').action = actionUrl;
+                document.getElementById('inputValorPagamento').value = maxVal;
+                document.getElementById('inputValorPagamento').max = maxVal;
+                document.getElementById('textoRestante').innerText = 'Faltava: R$ ' + maxVal;
+                const modalEl = document.getElementById('modalPagamento');
+                let modal = bootstrap.Modal.getInstance(modalEl);
+                if (!modal) { modal = new bootstrap.Modal(modalEl); }
+                modal.show();
+            } catch (err) {
+                alert('Erro: ' + err.message);
+            }
+        });
     });
 });
 </script>
@@ -631,6 +638,34 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Inicializa na página 1
         showPage(1);
+    });
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.btn-pagamento').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            try {
+                const actionUrl = this.getAttribute('href');
+                let maxVal = this.getAttribute('data-restante');
+                if (maxVal) maxVal = maxVal.replace(',', '.');
+                document.getElementById('formPagamentoParcial').action = actionUrl;
+                document.getElementById('inputValorPagamento').value = maxVal;
+                document.getElementById('inputValorPagamento').max = maxVal;
+                document.getElementById('textoRestante').innerText = 'Faltava: R$ ' + maxVal;
+                
+                const modalEl = document.getElementById('modalPagamento');
+                let modal = bootstrap.Modal.getInstance(modalEl);
+                if (!modal) {
+                    modal = new bootstrap.Modal(modalEl);
+                }
+                modal.show();
+            } catch (err) {
+                console.error(err);
+                alert('Erro ao abrir tela de pagamento: ' + err.message);
+            }
+        });
     });
 });
 </script>
