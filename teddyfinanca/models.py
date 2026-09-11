@@ -1,0 +1,129 @@
+from django.db import models
+from django.utils import timezone
+from datetime import date
+from django.contrib.auth.models import User
+
+class Banco(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    nome = models.CharField(max_length=100, verbose_name="Nome do Banco")
+    saldo_atual = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, verbose_name="Saldo Atual")
+    limite_cheque_especial = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, verbose_name="Limite Cheque Especial")
+    limite_credito = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, verbose_name="Limite de Crédito")
+
+    def __str__(self):
+        return f"{self.nome} (Saldo: R$ {self.saldo_atual})"
+
+class Categoria(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    TIPO_CHOICES = (
+        ('ENTRADA', 'Entrada'),
+        ('SAIDA', 'Saída'),
+        ('AMBOS', 'Ambos'),
+    )
+    nome = models.CharField(max_length=100)
+    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES, default='AMBOS')
+
+    class Meta:
+        verbose_name = "Categoria"
+        verbose_name_plural = "Categorias"
+
+    def __str__(self):
+        return f"{self.nome} ({self.get_tipo_display()})"
+
+class Transacao(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    TIPO_CHOICES = (
+        ('ENTRADA', 'Entrada'),
+        ('SAIDA', 'Saída'),
+    )
+    STATUS_CHOICES = (
+        ('PENDENTE', 'Pendente'),
+        ('PAGO', 'Pago'),
+    )
+    banco = models.ForeignKey(Banco, on_delete=models.SET_NULL, null=True, blank=True, related_name='transacoes')
+    categoria = models.ForeignKey(Categoria, on_delete=models.SET_NULL, null=True, blank=True)
+    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES)
+    valor = models.DecimalField(max_digits=12, decimal_places=2)
+    descricao = models.CharField(max_length=255, verbose_name="Descrição")
+    data = models.DateField(default=timezone.now)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PAGO')
+    
+    # Campos para vincular transações geradas automaticamente
+    venda_origem = models.ForeignKey('VendaParcelada', on_delete=models.SET_NULL, null=True, blank=True)
+    emprestimo_origem = models.ForeignKey('Emprestimo', on_delete=models.SET_NULL, null=True, blank=True)
+    divida_origem = models.ForeignKey('Divida', on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Transação"
+        verbose_name_plural = "Transações"
+
+    def __str__(self):
+        return f"{self.descricao} - R$ {self.valor}"
+
+class VendaParcelada(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    cliente = models.CharField(max_length=200)
+    descricao = models.TextField(verbose_name="Descrição da Venda")
+    valor_total = models.DecimalField(max_digits=12, decimal_places=2)
+    quantidade_parcelas = models.PositiveIntegerField()
+    data_venda = models.DateField(default=timezone.now)
+
+    class Meta:
+        verbose_name = "Venda Parcelada"
+        verbose_name_plural = "Vendas Parceladas"
+
+    def __str__(self):
+        return f"Venda para {self.cliente} - R$ {self.valor_total}"
+
+class Emprestimo(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    STATUS_CHOICES = (
+        ('PENDENTE', 'Pendente'),
+        ('PAGO', 'Pago/Devolvido'),
+    )
+    nome_pessoa = models.CharField(max_length=150, verbose_name="Amigo/Familiar")
+    valor = models.DecimalField(max_digits=12, decimal_places=2)
+    data_emprestimo = models.DateField(default=timezone.now)
+    data_devolucao = models.DateField(verbose_name="Data de Devolução Prometida")
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDENTE')
+    observacao = models.TextField(blank=True, null=True)
+
+    class Meta:
+        verbose_name_plural = "Empréstimos"
+
+    @property
+    def dias_para_receber(self):
+        if self.status == 'PAGO':
+            return 0
+        hoje = date.today()
+        diferenca = (self.data_devolucao - hoje).days
+        return diferenca
+
+    def __str__(self):
+        return f"Empréstimo: {self.nome_pessoa} - R$ {self.valor}"
+
+class Divida(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    STATUS_CHOICES = (
+        ('PENDENTE', 'Pendente'),
+        ('PAGO', 'Pago'),
+    )
+    descricao = models.CharField(max_length=255, verbose_name="Descrição da Dívida")
+    valor = models.DecimalField(max_digits=12, decimal_places=2)
+    data_vencimento = models.DateField()
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDENTE')
+
+    class Meta:
+        verbose_name = "Dívida"
+        verbose_name_plural = "Dívidas"
+
+    @property
+    def dias_para_vencer(self):
+        if self.status == 'PAGO':
+            return 0
+        hoje = date.today()
+        diferenca = (self.data_vencimento - hoje).days
+        return diferenca
+
+    def __str__(self):
+        return f"Dívida: {self.descricao} - R$ {self.valor}"
