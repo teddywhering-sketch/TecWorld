@@ -52,6 +52,7 @@ def dashboard(request):
             form = DividaForm(request.POST)
             if form.is_valid():
                 from datetime import timedelta
+                from decimal import Decimal
                 tipo = form.cleaned_data.get('tipo_divida')
                 entrada = form.cleaned_data.get('entrada') or Decimal('0.00')
                 valor_total = form.cleaned_data['valor']
