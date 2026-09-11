@@ -35,12 +35,16 @@ class DividaForm(forms.ModelForm):
     )
     tipo_divida = forms.ChoiceField(choices=TIPO_CHOICES, initial='UNICA', label="Tipo de Dívida")
     quantidade_parcelas = forms.IntegerField(min_value=2, required=False, label="Quantidade de Parcelas (Se Parcelada)")
+    entrada = forms.DecimalField(max_digits=12, decimal_places=2, required=False, initial=0.00, label="Valor de Entrada (Se houver)")
 
     class Meta:
         model = Divida
         fields = ['descricao', 'valor', 'data_vencimento', 'tipo_recorrencia', 'status']
         widgets = {
             'data_vencimento': forms.DateInput(attrs={'type': 'date'}),
+        }
+        labels = {
+            'valor': 'Valor Total da Dívida'
         }
     
     def __init__(self, *args, **kwargs):

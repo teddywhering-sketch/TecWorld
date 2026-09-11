@@ -53,25 +53,30 @@ def dashboard(request):
             if form.is_valid():
                 from datetime import timedelta
                 tipo = form.cleaned_data.get('tipo_divida')
+                entrada = form.cleaned_data.get('entrada') or Decimal('0.00')
+                valor_total = form.cleaned_data['valor']
+                
                 if tipo == 'PARCELADA':
                     qtd = form.cleaned_data.get('quantidade_parcelas') or 2
+                    valor_parcela = (valor_total - entrada) / qtd
                     for i in range(qtd):
                         Divida.objects.create(
                             usuario=request.user,
                             descricao=f"{form.cleaned_data['descricao']} ({i+1}/{qtd})",
-                            valor=form.cleaned_data['valor'],
+                            valor=valor_parcela,
                             data_vencimento=form.cleaned_data['data_vencimento'] + timedelta(days=30*i),
                             tipo_recorrencia='UNICA',
                             status=form.cleaned_data['status']
                         )
-                    messages.success(request, f"{qtd} parcelas da dívida geradas com sucesso!")
+                    messages.success(request, f"{qtd} parcelas de R$ {valor_parcela:.2f} geradas com sucesso! Lembre-se de lançar a entrada de R$ {entrada:.2f} no fluxo diário se ela saiu hoje.")
                 else:
                     divida = form.save(commit=False)
                     divida.usuario = request.user
+                    divida.valor = valor_total - entrada
                     # RECORRENTE already comes from the model form field since it's mapped directly
                     divida.tipo_recorrencia = 'RECORRENTE' if tipo == 'RECORRENTE' else 'UNICA'
                     divida.save()
-                    messages.success(request, "Dívida adicionada com sucesso!")
+                    messages.success(request, f"Dívida adicionada com sucesso! Lembre-se de lançar a entrada no fluxo diário se houver.")
                 return redirect('teddyfinanca:dashboard')
         elif 'btn_emprestimo' in request.POST:
             form = EmprestimoForm(request.POST)
