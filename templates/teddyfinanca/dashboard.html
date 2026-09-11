@@ -569,12 +569,16 @@ document.querySelectorAll('.btn-pagamento').forEach(btn => {
     btn.addEventListener('click', function(e) {
         e.preventDefault();
         const actionUrl = this.getAttribute('href');
-        const maxVal = this.getAttribute('data-restante');
+        let maxVal = this.getAttribute('data-restante');
+        if (maxVal) maxVal = maxVal.replace(',', '.');
         document.getElementById('formPagamentoParcial').action = actionUrl;
         document.getElementById('inputValorPagamento').value = maxVal;
         document.getElementById('inputValorPagamento').max = maxVal;
         document.getElementById('textoRestante').innerText = 'Faltava: R$ ' + maxVal;
-        new bootstrap.Modal(document.getElementById('modalPagamento')).show();
+        
+        const modalEl = document.getElementById('modalPagamento');
+        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
     });
 });
 </script>
