@@ -9,6 +9,39 @@ from .forms import TransacaoForm, DividaForm, EmprestimoForm, BancoForm, VendaPa
 
 from django.contrib.auth.models import User
 
+from functools import wraps
+from django.shortcuts import redirect
+from datetime import date
+from .models import Assinatura
+
+def check_assinatura(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if not request.user.is_superuser:
+            assinatura, _ = Assinatura.objects.get_or_create(usuario=request.user)
+            dias_uso = (date.today() - request.user.date_joined.date()).days
+            
+            # Se for ativa ou estiver nos 30 dias de teste, libera.
+            # Se a assinatura estiver ativa, garantimos que não está vencida (data_expiracao).
+            if assinatura.ativa and assinatura.data_expiracao and assinatura.data_expiracao < date.today():
+                assinatura.ativa = False
+                assinatura.save()
+                
+            if not assinatura.ativa and dias_uso > 30:
+                return redirect('teddyfinanca:bloqueado')
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
+@login_required(login_url='teddyfinanca:login')
+def bloqueado(request):
+    from datetime import date
+    assinatura, _ = Assinatura.objects.get_or_create(usuario=request.user)
+    dias_uso = (date.today() - request.user.date_joined.date()).days
+    if assinatura.ativa or dias_uso <= 30:
+        return redirect('teddyfinanca:dashboard')
+    
+    return render(request, 'teddyfinanca/bloqueado.html')
+
 def financeiro_login(request):
     if request.method == 'POST':
         usuario = request.POST.get('usuario')
