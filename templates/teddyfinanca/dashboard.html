@@ -358,7 +358,7 @@
                             <div class="accordion-body p-0">
                                 <ul class="list-group list-group-flush bg-light">
                                     {% for parcela in venda.parcelas.all %}
-                                    <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center" style="font-size: 0.85rem;">
+                                    <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center parcela-row" style="font-size: 0.85rem;">
                                         <div>
                                             <span>Parcela {{ parcela.numero }}</span><br>
                                             {% if parcela.status == 'PAGO' %}
@@ -575,6 +575,58 @@ document.querySelectorAll('.btn-pagamento').forEach(btn => {
         document.getElementById('inputValorPagamento').max = maxVal;
         document.getElementById('textoRestante').innerText = 'Faltava: R$ ' + maxVal;
         new bootstrap.Modal(document.getElementById('modalPagamento')).show();
+    });
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Paginação do lado do cliente para as faturas (5 por página)
+    const ITEMS_PER_PAGE = 5;
+    
+    document.querySelectorAll('.accordion-collapse').forEach(collapseEl => {
+        const listItems = collapseEl.querySelectorAll('.parcela-row');
+        if (listItems.length === 0) return;
+        
+        const totalPages = Math.ceil(listItems.length / ITEMS_PER_PAGE);
+        if (totalPages <= 1) return; // Não precisa de paginação
+        
+        // Cria container da paginação
+        const paginationContainer = document.createElement('div');
+        paginationContainer.className = 'd-flex justify-content-center py-2 bg-light border-top';
+        const paginationUl = document.createElement('ul');
+        paginationUl.className = 'pagination pagination-sm mb-0';
+        paginationContainer.appendChild(paginationUl);
+        collapseEl.querySelector('.accordion-body').appendChild(paginationContainer);
+        
+        function showPage(page) {
+            listItems.forEach((item, index) => {
+                if (index >= (page - 1) * ITEMS_PER_PAGE && index < page * ITEMS_PER_PAGE) {
+                    item.style.setProperty('display', 'flex', 'important');
+                } else {
+                    item.style.setProperty('display', 'none', 'important');
+                }
+            });
+            
+            // Atualiza botões
+            paginationUl.innerHTML = '';
+            for (let i = 1; i <= totalPages; i++) {
+                const li = document.createElement('li');
+                li.className = `page-item ${i === page ? 'active' : ''}`;
+                const a = document.createElement('a');
+                a.className = `page-link ${i === page ? 'bg-info border-info text-dark' : 'text-info'}`;
+                a.href = '#';
+                a.innerText = i;
+                a.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    showPage(i);
+                });
+                li.appendChild(a);
+                paginationUl.appendChild(li);
+            }
+        }
+        
+        // Inicializa na página 1
+        showPage(1);
     });
 });
 </script>
