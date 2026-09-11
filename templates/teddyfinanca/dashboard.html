@@ -231,10 +231,11 @@
                         </div>
                         <div class="text-end">
                             <strong>R$ {{ divida.restante|floatformat:"2g" }}</strong><br><small class="text-muted" style="font-size:0.65rem;">de R$ {{ divida.valor|floatformat:"2g" }}</small><br>
+                            <a href="{% url 'teddyfinanca:deletar_divida' divida.id %}" class="btn btn-outline-danger btn-sm mt-1" style="font-size: 0.7rem;" onclick="return confirm('Deletar divida?');"><i class="bi bi-trash"></i></a>
                             {% if divida.status == 'PAGO' %}
                             <a href="{% url 'teddyfinanca:arquivar_divida' divida.id %}" class="btn btn-outline-secondary btn-sm mt-1" style="font-size: 0.7rem;"><i class="bi bi-archive"></i> Arquivar</a>
                             {% else %}
-                            <a href="{% url 'teddyfinanca:deletar_divida' divida.id %}" class="btn btn-outline-danger btn-sm mt-1" style="font-size: 0.7rem;" onclick="return confirm('Deletar divida?');"><i class="bi bi-trash"></i></a>
+                            
                             <a href="{% url 'teddyfinanca:pagar_divida' divida.id %}" class="btn btn-success btn-sm mt-1 btn-pagamento" data-restante="{{ divida.restante|unlocalize }}" style="font-size: 0.7rem;">Pagar</a>
                             {% endif %}
                         </div>
@@ -291,10 +292,11 @@
                         </div>
                         <div class="text-end">
                             <strong>R$ {{ emp.restante|floatformat:"2g" }}</strong><br><small class="text-muted" style="font-size:0.65rem;">de R$ {{ emp.valor|floatformat:"2g" }}</small><br>
+                            <a href="{% url 'teddyfinanca:deletar_emprestimo' emp.id %}" class="btn btn-outline-danger btn-sm mt-1" style="font-size: 0.7rem;" onclick="return confirm('Deletar emprestimo?');"><i class="bi bi-trash"></i></a>
                             {% if emp.status == 'PAGO' %}
                             <a href="{% url 'teddyfinanca:arquivar_emprestimo' emp.id %}" class="btn btn-outline-secondary btn-sm mt-1" style="font-size: 0.7rem;"><i class="bi bi-archive"></i> Arquivar</a>
                             {% else %}
-                            <a href="{% url 'teddyfinanca:deletar_emprestimo' emp.id %}" class="btn btn-outline-danger btn-sm mt-1" style="font-size: 0.7rem;" onclick="return confirm('Deletar emprestimo?');"><i class="bi bi-trash"></i></a>
+                            
                             <a href="{% url 'teddyfinanca:receber_emprestimo' emp.id %}" class="btn btn-success btn-sm mt-1 btn-pagamento" data-restante="{{ emp.restante|unlocalize }}" style="font-size: 0.7rem;">Receber</a>
                             {% endif %}
                         </div>
