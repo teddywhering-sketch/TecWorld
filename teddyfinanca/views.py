@@ -4,8 +4,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Sum
-from .models import Banco, Transacao, Divida, Emprestimo, VendaParcelada
-from .forms import TransacaoForm, DividaForm, EmprestimoForm, BancoForm, VendaParceladaForm
+from .models import Banco, Transacao, Divida, Emprestimo, VendaParcelada, Categoria
+from .forms import TransacaoForm, DividaForm, EmprestimoForm, BancoForm, VendaParceladaForm, CategoriaForm
 
 from django.contrib.auth.models import User
 
