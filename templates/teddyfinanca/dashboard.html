@@ -667,12 +667,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const tipoSelect = document.querySelector('select[name="tipo_divida"]');
     if (tipoSelect) {
         const qtdDiv = document.querySelector('input[name="quantidade_parcelas"]').closest('.mb-3');
+        const anosDiv = document.querySelector('input[name="quantidade_anos"]').closest('.mb-3');
         function toggleQtd() {
+            qtdDiv.style.display = 'none';
+            anosDiv.style.display = 'none';
+            document.querySelector('input[name="quantidade_parcelas"]').value = '';
+            document.querySelector('input[name="quantidade_anos"]').value = '';
+            
             if (tipoSelect.value === 'PARCELADA') {
                 qtdDiv.style.display = 'block';
-            } else {
-                qtdDiv.style.display = 'none';
-                document.querySelector('input[name="quantidade_parcelas"]').value = '';
+            } else if (tipoSelect.value === 'RECORRENTE') {
+                anosDiv.style.display = 'block';
             }
         }
         tipoSelect.addEventListener('change', toggleQtd);
@@ -680,5 +685,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
 </body>
 </html>

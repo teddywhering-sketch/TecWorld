@@ -34,7 +34,8 @@ class DividaForm(forms.ModelForm):
         ('RECORRENTE', 'Fixa Mensal (Recorrente)'),
     )
     tipo_divida = forms.ChoiceField(choices=TIPO_CHOICES, initial='UNICA', label="Tipo de Dívida")
-    quantidade_parcelas = forms.IntegerField(min_value=2, required=False, label="Quantidade de Parcelas (Se Parcelada)")
+    quantidade_parcelas = forms.IntegerField(min_value=2, required=False, label="Quantas parcelas? (Se Parcelada)")
+    quantidade_anos = forms.IntegerField(min_value=1, required=False, label="Por quantos anos? (Se Recorrente)")
     entrada = forms.DecimalField(max_digits=12, decimal_places=2, required=False, initial=0.00, label="Valor de Entrada (Se houver)")
 
     class Meta:
@@ -44,7 +45,7 @@ class DividaForm(forms.ModelForm):
             'data_vencimento': forms.DateInput(attrs={'type': 'date'}),
         }
         labels = {
-            'valor': 'Valor Total da Dívida'
+            'valor': 'Valor Total (Ou Mensalidade)'
         }
     
     def __init__(self, *args, **kwargs):
