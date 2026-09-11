@@ -65,6 +65,7 @@ class VendaParcelada(models.Model):
     cliente = models.CharField(max_length=200)
     descricao = models.TextField(verbose_name="Descrição da Venda")
     valor_total = models.DecimalField(max_digits=12, decimal_places=2)
+    entrada = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, verbose_name="Valor de Entrada")
     quantidade_parcelas = models.PositiveIntegerField()
     data_venda = models.DateField(default=timezone.now)
 
@@ -74,6 +75,27 @@ class VendaParcelada(models.Model):
 
     def __str__(self):
         return f"Venda para {self.cliente} - R$ {self.valor_total}"
+
+class ParcelaVenda(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    venda = models.ForeignKey(VendaParcelada, on_delete=models.CASCADE, related_name='parcelas')
+    numero = models.PositiveIntegerField()
+    valor = models.DecimalField(max_digits=12, decimal_places=2)
+    data_vencimento = models.DateField()
+    status = models.CharField(max_length=10, choices=(('PENDENTE', 'Pendente'), ('PAGO', 'Pago')), default='PENDENTE')
+
+    class Meta:
+        ordering = ['data_vencimento']
+
+    @property
+    def dias_para_vencer(self):
+        if self.status == 'PAGO':
+            return 0
+        hoje = date.today()
+        return (self.data_vencimento - hoje).days
+
+    def __str__(self):
+        return f"Parcela {self.numero} de {self.venda.cliente}"
 
 class Emprestimo(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)

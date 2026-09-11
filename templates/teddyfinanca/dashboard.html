@@ -113,7 +113,7 @@
                     <div class="card summary-card bg-primary text-white h-100">
                         <div class="card-body p-3 text-center">
                             <small>Em Bancos</small>
-                            <h5 class="mb-0 mt-1">R$ {{ total_saldo }}</h5>
+                            <h5 class="mb-0 mt-1">R$ {{ total_saldo|floatformat:"2g" }}</h5>
                         </div>
                     </div>
                 </div>
@@ -121,7 +121,7 @@
                     <div class="card summary-card bg-danger text-white h-100">
                         <div class="card-body p-3 text-center">
                             <small>Total Dívidas</small>
-                            <h5 class="mb-0 mt-1">R$ {{ total_pagar }}</h5>
+                            <h5 class="mb-0 mt-1">R$ {{ total_pagar|floatformat:"2g" }}</h5>
                         </div>
                     </div>
                 </div>
@@ -129,7 +129,7 @@
                     <div class="card summary-card bg-warning text-dark h-100">
                         <div class="card-body p-3 text-center d-flex justify-content-between align-items-center">
                             <span>A Receber (Empréstimos):</span>
-                            <h5 class="mb-0">R$ {{ total_receber }}</h5>
+                            <h5 class="mb-0">R$ {{ total_receber|floatformat:"2g" }}</h5>
                         </div>
                     </div>
                 </div>
@@ -149,8 +149,8 @@
                         <div class="col-5 text-center">
                             <canvas id="miniPie"></canvas>
                             <div class="mt-2" style="font-size: 0.75rem; line-height: 1.2;">
-                                <span class="text-success fw-bold"><i class="bi bi-arrow-up-short"></i> R$ {{ entradas_mes }}</span><br>
-                                <span class="text-danger fw-bold"><i class="bi bi-arrow-down-short"></i> R$ {{ saidas_mes }}</span>
+                                <span class="text-success fw-bold"><i class="bi bi-arrow-up-short"></i> R$ {{ entradas_mes|floatformat:"2g" }}</span><br>
+                                <span class="text-danger fw-bold"><i class="bi bi-arrow-down-short"></i> R$ {{ saidas_mes|floatformat:"2g" }}</span>
                             </div>
                         </div>
                         <!-- Coluna do Extrato -->
@@ -161,9 +161,9 @@
                                     <div class="d-flex justify-content-between align-items-center">
                                         <span class="text-truncate fw-semibold" style="max-width: 90px;">{{ t.descricao }}</span>
                                         {% if t.tipo == 'ENTRADA' %}
-                                        <span class="text-success fw-bold text-nowrap">+ R$ {{ t.valor }}</span>
+                                        <span class="text-success fw-bold text-nowrap">+ R$ {{ t.valor|floatformat:"2g" }}</span>
                                         {% else %}
-                                        <span class="text-danger fw-bold text-nowrap">- R$ {{ t.valor }}</span>
+                                        <span class="text-danger fw-bold text-nowrap">- R$ {{ t.valor|floatformat:"2g" }}</span>
                                         {% endif %}
                                     </div>
                                     <small class="text-muted" style="font-size: 0.7rem;">{{ t.data|date:"d/m/Y" }}</small>
@@ -193,10 +193,10 @@
                     <div class="card summary-card border-primary" style="border-left: 5px solid #0d6efd !important;">
                         <div class="card-body">
                             <h5 class="card-title">{{ banco.nome }}</h5>
-                            <h3 class="text-primary mb-2">R$ {{ banco.saldo_atual }}</h3>
+                            <h3 class="text-primary mb-2">R$ {{ banco.saldo_atual|floatformat:"2g" }}</h3>
                             <div class="d-flex justify-content-between text-muted small">
-                                <span>Cheque Especial: R$ {{ banco.limite_cheque_especial }}</span>
-                                <span>Crédito: R$ {{ banco.limite_credito }}</span>
+                                <span>Cheque Especial: R$ {{ banco.limite_cheque_especial|floatformat:"2g" }}</span>
+                                <span>Crédito: R$ {{ banco.limite_credito|floatformat:"2g" }}</span>
                             </div>
                         </div>
                     </div>
@@ -225,7 +225,7 @@
                             <small class="text-danger">Vence em {{ divida.dias_para_vencer }} dias</small>
                         </div>
                         <div class="text-end">
-                            <strong>R$ {{ divida.valor }}</strong><br>
+                            <strong>R$ {{ divida.valor|floatformat:"2g" }}</strong><br>
                             <a href="{% url 'teddyfinanca:pagar_divida' divida.id %}" class="btn btn-success btn-sm mt-1" style="font-size: 0.7rem;">Pagar</a>
                         </div>
                     </li>
@@ -274,7 +274,7 @@
                             <small class="text-warning text-dark">Receber em {{ emp.dias_para_receber }} dias</small>
                         </div>
                         <div class="text-end">
-                            <strong>R$ {{ emp.valor }}</strong><br>
+                            <strong>R$ {{ emp.valor|floatformat:"2g" }}</strong><br>
                             <a href="{% url 'teddyfinanca:receber_emprestimo' emp.id %}" class="btn btn-success btn-sm mt-1" style="font-size: 0.7rem;">Receber</a>
                         </div>
                     </li>
@@ -315,19 +315,54 @@
                     <h6 class="text-info mb-0"><i class="bi bi-bag-check"></i> Vendas Parceladas</h6>
                     <button class="btn btn-outline-info text-dark btn-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#modalVenda">+ Venda</button>
                 </div>
-                <ul class="list-group list-group-flush">
+                <div class="accordion" id="accordionVendas">
                     {% for venda in vendas %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>{{ venda.cliente }}</strong><br>
-                            <small class="text-muted">{{ venda.quantidade_parcelas }} parcelas</small>
+                    <div class="accordion-item border-0 border-bottom">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed px-3 py-3" type="button" data-bs-toggle="collapse" data-bs-target="#venda{{ venda.id }}">
+                                <div class="d-flex justify-content-between w-100 me-2">
+                                    <div>
+                                        <strong>{{ venda.cliente }}</strong><br>
+                                        <small class="text-muted">{{ venda.quantidade_parcelas }} parcelas</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <strong>R$ {{ venda.valor_total|floatformat:"2g" }}</strong><br>
+                                        <small class="text-muted" style="font-size: 0.7rem;">{% if venda.entrada > 0 %}Entrada: R$ {{ venda.entrada|floatformat:"2g" }}{% endif %}</small>
+                                    </div>
+                                </div>
+                            </button>
+                        </h2>
+                        <div id="venda{{ venda.id }}" class="accordion-collapse collapse" data-bs-parent="#accordionVendas">
+                            <div class="accordion-body p-0">
+                                <ul class="list-group list-group-flush bg-light">
+                                    {% for parcela in venda.parcelas.all %}
+                                    <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center" style="font-size: 0.85rem;">
+                                        <div>
+                                            <span>Parcela {{ parcela.numero }}</span><br>
+                                            {% if parcela.status == 'PAGO' %}
+                                                <small class="text-success">Recebida</small>
+                                            {% else %}
+                                                <small class="text-danger">Vence em {{ parcela.dias_para_vencer }} dias</small>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-end">
+                                            <strong>R$ {{ parcela.valor|floatformat:"2g" }}</strong><br>
+                                            {% if parcela.status == 'PENDENTE' %}
+                                                <a href="{% url 'teddyfinanca:receber_parcela' parcela.id %}" class="btn btn-outline-success btn-sm mt-1" style="font-size: 0.7rem; padding: 2px 5px;">Receber</a>
+                                            {% else %}
+                                                <i class="bi bi-check-circle-fill text-success mt-1 d-block"></i>
+                                            {% endif %}
+                                        </div>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
                         </div>
-                        <strong>R$ {{ venda.valor_total }}</strong>
-                    </li>
+                    </div>
                     {% empty %}
-                    <li class="list-group-item text-muted">Nenhuma venda parcelada.</li>
+                    <div class="text-center text-muted py-4">Nenhuma venda parcelada registrada.</div>
                     {% endfor %}
-                </ul>
+                </div>
                 {% if vendas.has_other_pages %}
                 <div class="card-footer bg-white text-center border-0">
                     <ul class="pagination pagination-sm justify-content-center mb-0">

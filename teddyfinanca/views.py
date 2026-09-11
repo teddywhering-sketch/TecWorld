@@ -78,7 +78,24 @@ def dashboard(request):
                 venda = form.save(commit=False)
                 venda.usuario = request.user
                 venda.save()
-                messages.success(request, "Venda Parcelada adicionada com sucesso!")
+                
+                # Gerar as parcelas
+                from datetime import timedelta
+                valor_parcela = (venda.valor_total - venda.entrada) / venda.quantidade_parcelas
+                for i in range(venda.quantidade_parcelas):
+                    # aproximação de 30 dias para cada parcela
+                    data_venc = venda.data_venda + timedelta(days=30*(i+1))
+                    from .models import ParcelaVenda
+                    ParcelaVenda.objects.create(
+                        usuario=request.user,
+                        venda=venda,
+                        numero=i+1,
+                        valor=valor_parcela,
+                        data_vencimento=data_venc,
+                        status='PENDENTE'
+                    )
+
+                messages.success(request, "Venda Parcelada adicionada com sucesso e parcelas geradas!")
                 return redirect('teddyfinanca:dashboard')
         elif 'btn_trocar_senha' in request.POST:
             nova_senha = request.POST.get('nova_senha')
@@ -106,7 +123,13 @@ def dashboard(request):
     total_pagar = dividas_pendentes.aggregate(total=Sum('valor'))['total'] or 0
     
     emprestimos_pendentes = Emprestimo.objects.filter(usuario=request.user, status='PENDENTE')
-    total_receber = emprestimos_pendentes.aggregate(total=Sum('valor'))['total'] or 0
+    total_receber_emp = emprestimos_pendentes.aggregate(total=Sum('valor'))['total'] or 0
+    
+    from .models import ParcelaVenda
+    parcelas_pendentes = ParcelaVenda.objects.filter(usuario=request.user, status='PENDENTE')
+    total_receber_parcelas = parcelas_pendentes.aggregate(total=Sum('valor'))['total'] or 0
+    
+    total_receber = total_receber_emp + total_receber_parcelas
     
     saldo_liquido = total_saldo - total_pagar + total_receber
 
@@ -172,4 +195,16 @@ def receber_emprestimo(request, id):
         messages.success(request, f"Empréstimo de '{emp.nome_pessoa}' marcado como recebido!")
     except Emprestimo.DoesNotExist:
         messages.error(request, "Empréstimo não encontrado.")
+    return redirect('teddyfinanca:dashboard')
+
+@login_required(login_url='teddyfinanca:login')
+def receber_parcela(request, id):
+    from .models import ParcelaVenda
+    try:
+        parcela = ParcelaVenda.objects.get(id=id, usuario=request.user)
+        parcela.status = 'PAGO'
+        parcela.save()
+        messages.success(request, f"Parcela {parcela.numero} de '{parcela.venda.cliente}' marcada como recebida!")
+    except ParcelaVenda.DoesNotExist:
+        messages.error(request, "Parcela não encontrada.")
     return redirect('teddyfinanca:dashboard')

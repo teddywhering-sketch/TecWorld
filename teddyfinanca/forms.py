@@ -14,7 +14,7 @@ class CategoriaForm(forms.ModelForm):
 class VendaParceladaForm(forms.ModelForm):
     class Meta:
         model = VendaParcelada
-        fields = ['cliente', 'descricao', 'valor_total', 'quantidade_parcelas', 'data_venda']
+        fields = ['cliente', 'descricao', 'valor_total', 'entrada', 'quantidade_parcelas', 'data_venda']
         widgets = {
             'data_venda': forms.DateInput(attrs={'type': 'date'}),
         }
