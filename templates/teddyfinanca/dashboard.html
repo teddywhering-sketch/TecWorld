@@ -517,6 +517,28 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Modal de Pagamento Parcial -->
+<div class="modal fade" id="modalPagamento" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0" style="border-radius:15px;">
+      <div class="modal-header bg-success text-white border-0" style="border-radius:15px 15px 0 0;">
+        <h5 class="modal-title">Registrar Pagamento</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form method="POST" id="formPagamentoParcial">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label text-muted small mb-1">Valor a ser pago/recebido (R$)</label>
+                <input type="number" step="0.01" name="valor_pagamento" id="inputValorPagamento" class="form-control bg-light border-0" required>
+                <small class="text-muted mt-1 d-block" id="textoRestante"></small>
+            </div>
+            <button type="submit" class="btn btn-success w-100 rounded-pill py-2">Confirmar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 <script>
     // Gráfico Mini Pie de Fluxo Diário
     var entradasMes = {{ entradas_mes|stringformat:"f"|default:"0" }};
@@ -638,34 +660,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Inicializa na página 1
         showPage(1);
-    });
-});
-</script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.btn-pagamento').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            try {
-                const actionUrl = this.getAttribute('href');
-                let maxVal = this.getAttribute('data-restante');
-                if (maxVal) maxVal = maxVal.replace(',', '.');
-                document.getElementById('formPagamentoParcial').action = actionUrl;
-                document.getElementById('inputValorPagamento').value = maxVal;
-                document.getElementById('inputValorPagamento').max = maxVal;
-                document.getElementById('textoRestante').innerText = 'Faltava: R$ ' + maxVal;
-                
-                const modalEl = document.getElementById('modalPagamento');
-                let modal = bootstrap.Modal.getInstance(modalEl);
-                if (!modal) {
-                    modal = new bootstrap.Modal(modalEl);
-                }
-                modal.show();
-            } catch (err) {
-                console.error(err);
-                alert('Erro ao abrir tela de pagamento: ' + err.message);
-            }
-        });
     });
 });
 </script>
