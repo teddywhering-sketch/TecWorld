@@ -184,3 +184,11 @@ class Divida(models.Model):
 
     def __str__(self):
         return f"Dívida: {self.descricao} - R$ {self.valor}"
+
+class Assinatura(models.Model):
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='assinatura_financa')
+    ativa = models.BooleanField(default=False)
+    data_expiracao = models.DateField(null=True, blank=True)
+    
+    def __str__(self):
+        return f"Assinatura: {self.usuario.username} - Ativa: {self.ativa}"

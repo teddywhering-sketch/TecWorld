@@ -38,6 +38,7 @@ def financeiro_logout(request):
     return redirect('teddyfinanca:login')
 
 @login_required(login_url='teddyfinanca:login')
+@check_assinatura
 def dashboard(request):
     from datetime import date
     # -- LÓGICA DE GERAÇÃO PREGUIÇOSA DE RECORRENTES --
@@ -247,6 +248,7 @@ def dashboard(request):
     return render(request, 'teddyfinanca/dashboard.html', context)
 
 @login_required(login_url='teddyfinanca:login')
+@check_assinatura
 def pagar_divida(request, id):
     from decimal import Decimal
     try:
@@ -270,6 +272,7 @@ def pagar_divida(request, id):
     return redirect('teddyfinanca:dashboard')
 
 @login_required(login_url='teddyfinanca:login')
+@check_assinatura
 def receber_emprestimo(request, id):
     from decimal import Decimal
     try:
@@ -291,6 +294,7 @@ def receber_emprestimo(request, id):
     return redirect('teddyfinanca:dashboard')
 
 @login_required(login_url='teddyfinanca:login')
+@check_assinatura
 def receber_parcela(request, id):
     from .models import ParcelaVenda
     from decimal import Decimal
@@ -313,6 +317,7 @@ def receber_parcela(request, id):
     return redirect('teddyfinanca:dashboard')
 
 @login_required(login_url='teddyfinanca:login')
+@check_assinatura
 def deletar_venda(request, id):
     try:
         venda = VendaParcelada.objects.get(id=id, usuario=request.user)
@@ -323,6 +328,7 @@ def deletar_venda(request, id):
     return redirect('teddyfinanca:dashboard')
 
 @login_required(login_url='teddyfinanca:login')
+@check_assinatura
 def arquivar_venda(request, id):
     try:
         venda = VendaParcelada.objects.get(id=id, usuario=request.user)
@@ -334,6 +340,7 @@ def arquivar_venda(request, id):
     return redirect('teddyfinanca:dashboard')
 
 @login_required(login_url='teddyfinanca:login')
+@check_assinatura
 def arquivar_emprestimo(request, id):
     try:
         emp = Emprestimo.objects.get(id=id, usuario=request.user)
@@ -345,6 +352,7 @@ def arquivar_emprestimo(request, id):
     return redirect('teddyfinanca:dashboard')
 
 @login_required(login_url='teddyfinanca:login')
+@check_assinatura
 def arquivar_divida(request, id):
     try:
         divida = Divida.objects.get(id=id, usuario=request.user)
@@ -355,6 +363,7 @@ def arquivar_divida(request, id):
         messages.error(request, "Dívida não encontrada.")
     return redirect('teddyfinanca:dashboard')
 @login_required(login_url='teddyfinanca:login')
+@check_assinatura
 def deletar_divida(request, id):
     try:
         divida = Divida.objects.get(id=id, usuario=request.user)
@@ -365,6 +374,7 @@ def deletar_divida(request, id):
     return redirect('teddyfinanca:dashboard')
 
 @login_required(login_url='teddyfinanca:login')
+@check_assinatura
 def deletar_emprestimo(request, id):
     try:
         emp = Emprestimo.objects.get(id=id, usuario=request.user)
@@ -374,6 +384,7 @@ def deletar_emprestimo(request, id):
         messages.error(request, "Empréstimo não encontrado.")
     return redirect('teddyfinanca:dashboard')
 @login_required(login_url='teddyfinanca:login')
+@check_assinatura
 def deletar_categoria(request, id):
     try:
         categoria = Categoria.objects.get(id=id, usuario=request.user)
@@ -382,3 +393,34 @@ def deletar_categoria(request, id):
     except Categoria.DoesNotExist:
         messages.error(request, "Categoria não encontrada.")
     return redirect('teddyfinanca:dashboard')
+from django.shortcuts import redirect
+from datetime import date
+from .models import Assinatura
+
+def check_assinatura(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if not request.user.is_superuser:
+            assinatura, _ = Assinatura.objects.get_or_create(usuario=request.user)
+            dias_uso = (date.today() - request.user.date_joined.date()).days
+            
+            # Se for ativa ou estiver nos 30 dias de teste, libera.
+            # Se a assinatura estiver ativa, garantimos que não está vencida (data_expiracao).
+            if assinatura.ativa and assinatura.data_expiracao and assinatura.data_expiracao < date.today():
+                assinatura.ativa = False
+                assinatura.save()
+                
+            if not assinatura.ativa and dias_uso > 30:
+                return redirect('teddyfinanca:bloqueado')
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
+@login_required(login_url='teddyfinanca:login')
+def bloqueado(request):
+    from datetime import date
+    assinatura, _ = Assinatura.objects.get_or_create(usuario=request.user)
+    dias_uso = (date.today() - request.user.date_joined.date()).days
+    if assinatura.ativa or dias_uso <= 30:
+        return redirect('teddyfinanca:dashboard')
+    
+    return render(request, 'teddyfinanca/bloqueado.html')
