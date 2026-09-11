@@ -208,3 +208,13 @@ def receber_parcela(request, id):
     except ParcelaVenda.DoesNotExist:
         messages.error(request, "Parcela não encontrada.")
     return redirect('teddyfinanca:dashboard')
+
+@login_required(login_url='teddyfinanca:login')
+def deletar_venda(request, id):
+    try:
+        venda = VendaParcelada.objects.get(id=id, usuario=request.user)
+        venda.delete()
+        messages.success(request, "Venda parcelada e todas as suas faturas foram apagadas com sucesso!")
+    except VendaParcelada.DoesNotExist:
+        messages.error(request, "Venda não encontrada.")
+    return redirect('teddyfinanca:dashboard')

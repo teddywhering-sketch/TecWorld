@@ -356,6 +356,11 @@
                                     </li>
                                     {% endfor %}
                                 </ul>
+                                <div class="p-2 text-center bg-light border-top">
+                                    <a href="{% url 'teddyfinanca:deletar_venda' venda.id %}" class="btn btn-outline-danger btn-sm rounded-pill px-4" onclick="return confirm('Tem certeza que deseja apagar essa venda e TODAS as suas faturas?');">
+                                        <i class="bi bi-trash"></i> Apagar Venda
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
