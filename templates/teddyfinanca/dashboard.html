@@ -676,25 +676,24 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('DOMContentLoaded', function() {
     const tipoSelect = document.querySelector('select[name="tipo_divida"]');
     if (tipoSelect) {
-        const qtdDiv = document.querySelector('input[name="quantidade_parcelas"]').closest('.mb-3');
-        const anosDiv = document.querySelector('input[name="quantidade_anos"]').closest('.mb-3');
-        function toggleQtd() {
-            qtdDiv.style.display = 'none';
-            anosDiv.style.display = 'none';
-            document.querySelector('input[name="quantidade_parcelas"]').value = '';
-            document.querySelector('input[name="quantidade_anos"]').value = '';
-            
-            if (tipoSelect.value === 'PARCELADA') {
-                qtdDiv.style.display = 'block';
-            } else if (tipoSelect.value === 'RECORRENTE') {
-                anosDiv.style.display = 'block';
+        const qtdInput = document.querySelector('input[name="quantidade_parcelas"]');
+        if (qtdInput) {
+            const qtdDiv = qtdInput.closest('.mb-3');
+            function toggleQtd() {
+                qtdDiv.style.display = 'none';
+                qtdInput.value = '';
+                
+                if (tipoSelect.value === 'PARCELADA') {
+                    qtdDiv.style.display = 'block';
+                }
             }
+            tipoSelect.addEventListener('change', toggleQtd);
+            toggleQtd();
         }
-        tipoSelect.addEventListener('change', toggleQtd);
-        toggleQtd();
     }
 });
 </script>
+
 
 </body>
 </html>
