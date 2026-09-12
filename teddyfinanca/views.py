@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Sum
-from .models import Banco, Transacao, Divida, Emprestimo, VendaParcelada, Categoria
+from .models import Banco, Transacao, Divida, Emprestimo, VendaParcelada, Categoria, CompraParcelada
 from .forms import TransacaoForm, DividaForm, EmprestimoForm, BancoForm, VendaParceladaForm, CategoriaForm
 
 from django.contrib.auth.models import User
@@ -186,16 +186,29 @@ def dashboard(request):
                 if tipo == 'PARCELADA':
                     qtd = form.cleaned_data.get('quantidade_parcelas') or 2
                     valor_parcela = (valor_total - entrada) / qtd
+                    
+                    compra = CompraParcelada.objects.create(
+                        usuario=request.user,
+                        descricao=form.cleaned_data['descricao'],
+                        observacao=form.cleaned_data.get('observacao', ''),
+                        valor_total=valor_total,
+                        entrada=entrada,
+                        quantidade_parcelas=qtd,
+                        data_compra=form.cleaned_data['data_vencimento']
+                    )
+                    
                     for i in range(qtd):
                         Divida.objects.create(
+                            compra_vinculada=compra,
                             usuario=request.user,
-                            descricao=f"{form.cleaned_data['descricao']} ({i+1}/{qtd})",
+                            descricao=f"Parcela {i+1}",
+                            observacao=form.cleaned_data.get('observacao', ''),
                             valor=valor_parcela,
                             data_vencimento=form.cleaned_data['data_vencimento'] + timedelta(days=30*i),
                             tipo_recorrencia='UNICA',
                             status=form.cleaned_data['status']
                         )
-                    messages.success(request, f"{qtd} parcelas de R$ {valor_parcela:.2f} geradas com sucesso! Lembre-se de lançar a entrada de R$ {entrada:.2f} no fluxo diário se ela saiu hoje.")
+                    messages.success(request, f"{qtd} parcelas de R$ {valor_parcela:.2f} geradas e agrupadas com sucesso! Lembre-se de lançar a entrada de R$ {entrada:.2f} no fluxo diário se ela saiu hoje.")
                 else:
                     divida = form.save(commit=False)
                     divida.usuario = request.user
@@ -324,13 +337,19 @@ def dashboard(request):
     categorias_labels_json = json.dumps(categorias_labels)
     categorias_valores_json = json.dumps(categorias_valores)
     
-    # Dívidas com paginação (5 por página) - Mostra todas não arquivadas
-    dividas_list = Divida.objects.filter(usuario=request.user, arquivado=False).order_by('data_vencimento')
+    # Dívidas Simples com paginação (5 por página) - Mostra todas não arquivadas e que NÃO estão vinculadas a uma compra parcelada
+    dividas_list = Divida.objects.filter(usuario=request.user, arquivado=False, compra_vinculada__isnull=True).order_by('data_vencimento')
     paginator_dividas = Paginator(dividas_list, 5)
     page_divida = request.GET.get('page_divida')
     dividas = paginator_dividas.get_page(page_divida)
-
-    # Empréstimos com paginação (5 por página) - Mostra todos não arquivados
+    
+    # Compras Parceladas (Agrupadas)
+    compras_list = CompraParcelada.objects.filter(usuario=request.user, arquivado=False).order_by('-data_compra')
+    paginator_compras = Paginator(compras_list, 5)
+    page_compra = request.GET.get('page_compra')
+    compras = paginator_compras.get_page(page_compra)
+    
+    # Empréstimos com paginação (5 por página) - Mostra todas não arquivadas
     emprestimos_list = Emprestimo.objects.filter(usuario=request.user, arquivado=False).order_by('data_devolucao')
     paginator_emprestimos = Paginator(emprestimos_list, 5)
     page_emprestimo = request.GET.get('page_emprestimo')
@@ -363,6 +382,7 @@ def dashboard(request):
         'saidas_mes': saidas_mes,
         'categorias_labels_json': categorias_labels_json,
         'categorias_valores_json': categorias_valores_json,
+        'compras': compras,
         'transacao_form': transacao_form,
         'divida_form': divida_form,
         'emprestimo_form': emprestimo_form,
@@ -616,3 +636,27 @@ def bloqueado(request):
         return redirect('teddyfinanca:dashboard')
     
     return render(request, 'teddyfinanca/bloqueado.html')
+
+@login_required(login_url='teddyfinanca:login')
+@check_assinatura
+def deletar_compra(request, id):
+    try:
+        compra = CompraParcelada.objects.get(id=id, usuario=request.user)
+        compra.delete()
+        messages.success(request, f"Compra '{compra.descricao}' e todas as suas parcelas foram deletadas!")
+    except CompraParcelada.DoesNotExist:
+        messages.error(request, "Compra não encontrada.")
+    return redirect('teddyfinanca:dashboard')
+
+@login_required(login_url='teddyfinanca:login')
+@check_assinatura
+def arquivar_compra(request, id):
+    try:
+        compra = CompraParcelada.objects.get(id=id, usuario=request.user)
+        compra.arquivado = True
+        compra.save()
+        compra.parcelas.update(arquivado=True)
+        messages.success(request, f"Compra '{compra.descricao}' arquivada!")
+    except CompraParcelada.DoesNotExist:
+        messages.error(request, "Compra não encontrada.")
+    return redirect('teddyfinanca:dashboard')

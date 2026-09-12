@@ -157,7 +157,37 @@ class Emprestimo(models.Model):
     def __str__(self):
         return f"Empréstimo: {self.nome_pessoa} - R$ {self.valor}"
 
+class CompraParcelada(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    descricao = models.CharField(max_length=255, verbose_name="Nome da Compra")
+    observacao = models.TextField(null=True, blank=True, verbose_name="Descrição (Opcional)")
+    valor_total = models.DecimalField(max_digits=12, decimal_places=2)
+    entrada = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    quantidade_parcelas = models.PositiveIntegerField()
+    data_compra = models.DateField(default=timezone.now)
+    arquivado = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = "Compra Parcelada"
+        verbose_name_plural = "Compras Parceladas"
+
+    @property
+    def todas_parcelas_pagas(self):
+        return self.parcelas.exists() and not self.parcelas.filter(status='PENDENTE').exists()
+
+    @property
+    def valor_restante(self):
+        from django.db.models import Sum
+        pendentes = self.parcelas.filter(status='PENDENTE')
+        total = pendentes.aggregate(total=Sum('valor'))['total'] or 0
+        pago = pendentes.aggregate(pago=Sum('valor_pago'))['pago'] or 0
+        return total - pago
+
+    def __str__(self):
+        return f"Compra: {self.descricao} - {self.quantidade_parcelas}x"
+
 class Divida(models.Model):
+    compra_vinculada = models.ForeignKey(CompraParcelada, on_delete=models.CASCADE, null=True, blank=True, related_name='parcelas')
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     STATUS_CHOICES = (
         ('PENDENTE', 'Pendente'),
@@ -167,7 +197,8 @@ class Divida(models.Model):
         ('UNICA', 'Única'),
         ('RECORRENTE', 'Fixa Mensal (Recorrente)'),
     )
-    descricao = models.CharField(max_length=255, verbose_name="Descrição da Dívida")
+    descricao = models.CharField(max_length=255, verbose_name="Nome da Dívida")
+    observacao = models.TextField(null=True, blank=True, verbose_name="Descrição (Opcional)")
     valor = models.DecimalField(max_digits=12, decimal_places=2)
     valor_pago = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     data_vencimento = models.DateField()

@@ -347,10 +347,18 @@
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <div>
                             <strong>{{ divida.descricao }}</strong><br>
+                            {% if divida.observacao %}<small class="text-muted">{{ divida.observacao }}</small><br>{% endif %}
                             {% if divida.status == 'PAGO' %}
                             <small class="text-success">Paga</small>
                             {% else %}
-                            <small class="text-danger">Vence em {{ divida.dias_para_vencer }} dias</small>
+                                {% if divida.dias_para_vencer < 0 %}
+                                    <small class="text-danger fw-bold">Vencida há {{ divida.dias_para_vencer|stringformat:"+d"|slice:"1:" }} dias</small>
+                                {% elif divida.dias_para_vencer == 0 %}
+                                    <small class="text-warning fw-bold text-dark">Vence hoje</small>
+                                {% else %}
+                                    <small class="text-info text-dark">Vence em {{ divida.dias_para_vencer }} dias</small>
+                                {% endif %}
+                                <br><small class="text-muted" style="font-size: 0.7rem;"><i class="bi bi-calendar-event"></i> Data: {{ divida.data_vencimento|date:"d/m/Y" }}</small>
                             {% endif %}
                         </div>
                         <div class="text-end">
@@ -397,6 +405,111 @@
                 {% endif %}
             </div>
 
+            <!-- Compras Parceladas (Dívidas Agrupadas) -->
+            <div class="card summary-card mb-4 border-danger" style="border-left: 5px solid #dc3545 !important;">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center border-0 pt-3">
+                    <h6 class="text-danger mb-0"><i class="bi bi-cart-check"></i> Compras Parceladas</h6>
+                </div>
+                <div class="accordion" id="accordionCompras">
+                    {% for compra in compras %}
+                    <div class="accordion-item border-0 border-bottom">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed px-3 py-3" type="button" data-bs-toggle="collapse" data-bs-target="#compra{{ compra.id }}">
+                                <div class="d-flex justify-content-between w-100 me-2">
+                                    <div>
+                                        <strong>{{ compra.descricao }}</strong><br>
+                                        {% if compra.observacao %}<small class="text-muted d-block">{{ compra.observacao }}</small>{% endif %}
+                                        <small class="text-muted">{{ compra.quantidade_parcelas }} parcelas</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <strong>R$ {{ compra.valor_total|floatformat:"2g" }}</strong><br>
+                                        <small class="text-muted d-block" style="font-size: 0.7rem;">{% if compra.entrada > 0 %}Entrada: R$ {{ compra.entrada|floatformat:"2g" }}{% endif %}</small>
+                                        {% if not compra.todas_parcelas_pagas %}
+                                        <small class="text-danger fw-bold" style="font-size: 0.75rem;">Resta: R$ {{ compra.valor_restante|floatformat:"2g" }}</small>
+                                        {% else %}
+                                        <small class="text-success fw-bold" style="font-size: 0.75rem;">Quitada!</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </button>
+                        </h2>
+                        <div id="compra{{ compra.id }}" class="accordion-collapse collapse" data-bs-parent="#accordionCompras">
+                            <div class="accordion-body p-0">
+                                <ul class="list-group list-group-flush bg-light">
+                                    {% for parcela in compra.parcelas.all %}
+                                    <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center parcela-row" style="font-size: 0.85rem;">
+                                        <div>
+                                            <span>{{ parcela.descricao }}</span><br>
+                                            {% if parcela.status == 'PAGO' %}
+                                                <small class="text-success">Paga</small>
+                                            {% else %}
+                                                {% if parcela.dias_para_vencer < 0 %}
+                                                    <small class="text-danger fw-bold">Vencida há {{ parcela.dias_para_vencer|stringformat:"+d"|slice:"1:" }} dias</small>
+                                                {% elif parcela.dias_para_vencer == 0 %}
+                                                    <small class="text-warning fw-bold text-dark">Vence hoje</small>
+                                                {% else %}
+                                                    <small class="text-info text-dark">Vence em {{ parcela.dias_para_vencer }} dias</small>
+                                                {% endif %}
+                                                <br><small class="text-muted" style="font-size: 0.7rem;"><i class="bi bi-calendar-event"></i> Data: {{ parcela.data_vencimento|date:"d/m/Y" }}</small>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-end">
+                                            <strong>R$ {{ parcela.restante|floatformat:"2g" }}</strong><br><small class="text-muted" style="font-size:0.65rem;">de R$ {{ parcela.valor|floatformat:"2g" }}</small><br>
+                                            {% if parcela.status == 'PENDENTE' %}
+                                                <a href="{% url 'teddyfinanca:pagar_divida' parcela.id %}" class="btn btn-outline-success btn-sm mt-1 btn-pagamento" data-restante="{{ parcela.restante|unlocalize }}" style="font-size: 0.7rem; padding: 2px 5px;">Pagar</a>
+                                            {% else %}
+                                                <i class="bi bi-check-circle-fill text-success mt-1 d-block"></i>
+                                            {% endif %}
+                                        </div>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                                <div class="p-2 text-center bg-light border-top d-flex justify-content-between">
+                                    <a href="{% url 'teddyfinanca:deletar_compra' compra.id %}" class="btn btn-danger rounded-pill fw-bold shadow-sm px-3" onclick="return confirm('Tem certeza que deseja apagar essa compra e TODAS as suas faturas?');">
+                                        <i class="bi bi-trash"></i> Apagar Compra
+                                    </a>
+                                    {% if compra.todas_parcelas_pagas %}
+                                    <a href="{% url 'teddyfinanca:arquivar_compra' compra.id %}" class="btn btn-success rounded-pill fw-bold shadow-sm px-3">
+                                        <i class="bi bi-archive"></i> Arquivar Compra
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted small py-4">Nenhuma compra parcelada.</div>
+                    {% endfor %}
+                </div>
+                {% if compras.has_other_pages %}
+                <div class="card-footer bg-white text-center border-0">
+                    <ul class="pagination pagination-sm justify-content-center mb-0">
+                        {% if compras.has_previous %}
+                        <li class="page-item"><a class="page-link text-danger" href="?page_compra={{ compras.previous_page_number }}">&laquo;</a></li>
+                        {% else %}
+                        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                        {% endif %}
+                        
+                        {% for i in compras.paginator.page_range %}
+                            {% if i >= compras.number|add:"-2" and i <= compras.number|add:"2" %}
+                            {% if compras.number == i %}
+                            <li class="page-item active"><span class="page-link bg-danger border-danger">{{ i }}</span></li>
+                            {% else %}
+                            <li class="page-item"><a class="page-link text-danger" href="?page_compra={{ i }}">{{ i }}</a></li>
+                            {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if compras.has_next %}
+                        <li class="page-item"><a class="page-link text-danger" href="?page_compra={{ compras.next_page_number }}">&raquo;</a></li>
+                        {% else %}
+                        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                        {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+
             <!-- Empréstimos -->
             <div class="card summary-card mb-4 border-warning" style="border-left: 5px solid #ffc107 !important;">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center border-0 pt-3">
@@ -411,7 +524,14 @@
                             {% if emp.status == 'PAGO' %}
                             <small class="text-success">Recebido</small>
                             {% else %}
-                            <small class="text-warning text-dark">Receber em {{ emp.dias_para_receber }} dias</small>
+                                {% if emp.dias_para_receber < 0 %}
+                                    <small class="text-danger fw-bold">Atrasado há {{ emp.dias_para_receber|stringformat:"+d"|slice:"1:" }} dias</small>
+                                {% elif emp.dias_para_receber == 0 %}
+                                    <small class="text-warning fw-bold text-dark">Receber hoje</small>
+                                {% else %}
+                                    <small class="text-info text-dark">Receber em {{ emp.dias_para_receber }} dias</small>
+                                {% endif %}
+                                <br><small class="text-muted" style="font-size: 0.7rem;"><i class="bi bi-calendar-event"></i> Data: {{ emp.data_devolucao|date:"d/m/Y" }}</small>
                             {% endif %}
                         </div>
                         <div class="text-end">
@@ -496,7 +616,14 @@
                                             {% if parcela.status == 'PAGO' %}
                                                 <small class="text-success">Recebida</small>
                                             {% else %}
-                                                <small class="text-danger">Vence em {{ parcela.dias_para_vencer }} dias</small>
+                                                {% if parcela.dias_para_vencer < 0 %}
+                                                    <small class="text-danger fw-bold">Vencida há {{ parcela.dias_para_vencer|stringformat:"+d"|slice:"1:" }} dias</small>
+                                                {% elif parcela.dias_para_vencer == 0 %}
+                                                    <small class="text-warning fw-bold text-dark">Vence hoje</small>
+                                                {% else %}
+                                                    <small class="text-info text-dark">Vence em {{ parcela.dias_para_vencer }} dias</small>
+                                                {% endif %}
+                                                <br><small class="text-muted" style="font-size: 0.7rem;"><i class="bi bi-calendar-event"></i> Data: {{ parcela.data_vencimento|date:"d/m/Y" }}</small>
                                             {% endif %}
                                         </div>
                                         <div class="text-end">

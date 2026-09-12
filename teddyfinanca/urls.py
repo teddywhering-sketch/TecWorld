@@ -23,4 +23,6 @@ urlpatterns = [
     path('sw.js', views.sw_js, name='sw'),
     path('banco/<int:id>/deletar/', views.deletar_banco, name='deletar_banco'),
     path('banco/<int:id>/editar/', views.editar_banco, name='editar_banco'),
+    path('compra/<int:id>/deletar/', views.deletar_compra, name='deletar_compra'),
+    path('compra/<int:id>/arquivar/', views.arquivar_compra, name='arquivar_compra'),
 ]

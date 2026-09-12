@@ -39,7 +39,7 @@ class DividaForm(forms.ModelForm):
 
     class Meta:
         model = Divida
-        fields = ['descricao', 'valor', 'data_vencimento', 'status']
+        fields = ['descricao', 'observacao', 'valor', 'data_vencimento', 'status']
         widgets = {
             'data_vencimento': forms.DateInput(attrs={'type': 'date'}),
         }
