@@ -516,39 +516,67 @@
                     <h6 class="text-warning text-dark mb-0"><i class="bi bi-people"></i> Dinheiro Emprestado</h6>
                     <button class="btn btn-warning text-dark rounded-pill fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalEmprestimo">+ Emprestar</button>
                 </div>
-                <ul class="list-group list-group-flush">
-                    {% for emp in emprestimos %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>{{ emp.nome_pessoa }}</strong><br>
-                            {% if emp.status == 'PAGO' %}
-                            <small class="text-success">Recebido</small>
-                            {% else %}
-                                {% if emp.dias_para_receber < 0 %}
-                                    <small class="text-danger fw-bold">Atrasado há {{ emp.dias_para_receber|stringformat:"+d"|slice:"1:" }} dias</small>
-                                {% elif emp.dias_para_receber == 0 %}
-                                    <small class="text-warning fw-bold text-dark">Receber hoje</small>
-                                {% else %}
-                                    <small class="text-info text-dark">Receber em {{ emp.dias_para_receber }} dias</small>
-                                {% endif %}
-                                <br><small class="text-muted" style="font-size: 0.7rem;"><i class="bi bi-calendar-event"></i> Data: {{ emp.data_devolucao|date:"d/m/Y" }}</small>
-                            {% endif %}
+                <div class="accordion" id="accordionEmprestimos">
+                    {% for grupo in emprestimos %}
+                    <div class="accordion-item border-0 border-bottom">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed px-3 py-3" type="button" data-bs-toggle="collapse" data-bs-target="#{{ grupo.id_str }}">
+                                <div class="d-flex justify-content-between w-100 me-2">
+                                    <div>
+                                        <strong>{{ grupo.nome }}</strong><br>
+                                        <small class="text-muted">{{ grupo.itens|length }} empréstimo(s)</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <strong>R$ {{ grupo.total_geral|floatformat:"2g" }}</strong><br>
+                                        {% if not grupo.todas_pagas %}
+                                        <small class="text-danger fw-bold" style="font-size: 0.75rem;">Falta Receber: R$ {{ grupo.total_restante|floatformat:"2g" }}</small>
+                                        {% else %}
+                                        <small class="text-success fw-bold" style="font-size: 0.75rem;">Tudo Recebido!</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </button>
+                        </h2>
+                        <div id="{{ grupo.id_str }}" class="accordion-collapse collapse" data-bs-parent="#accordionEmprestimos">
+                            <div class="accordion-body p-0">
+                                <ul class="list-group list-group-flush bg-light">
+                                    {% for emp in grupo.itens %}
+                                    <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center parcela-row" style="font-size: 0.85rem;">
+                                        <div>
+                                            <strong>Empréstimo #{{ forloop.counter }}</strong><br>
+                                            {% if emp.observacao %}<small class="text-muted d-block" style="font-size: 0.75rem;">{{ emp.observacao }}</small>{% endif %}
+                                            {% if emp.status == 'PAGO' %}
+                                            <small class="text-success">Recebido</small>
+                                            {% else %}
+                                                {% if emp.dias_para_receber < 0 %}
+                                                    <small class="text-danger fw-bold">Atrasado há {{ emp.dias_para_receber|stringformat:"+d"|slice:"1:" }} dias</small>
+                                                {% elif emp.dias_para_receber == 0 %}
+                                                    <small class="text-warning fw-bold text-dark">Receber hoje</small>
+                                                {% else %}
+                                                    <small class="text-info text-dark">Receber em {{ emp.dias_para_receber }} dias</small>
+                                                {% endif %}
+                                                <br><small class="text-muted" style="font-size: 0.7rem;"><i class="bi bi-calendar-event"></i> Data: {{ emp.data_devolucao|date:"d/m/Y" }}</small>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-end">
+                                            <strong>R$ {{ emp.restante|floatformat:"2g" }}</strong><br><small class="text-muted" style="font-size:0.65rem;">de R$ {{ emp.valor|floatformat:"2g" }}</small><br>
+                                            <a href="{% url 'teddyfinanca:deletar_emprestimo' emp.id %}" class="btn btn-outline-danger btn-sm mt-1" style="font-size: 0.7rem;" onclick="return confirm('Deletar emprestimo?');"><i class="bi bi-trash"></i></a>
+                                            {% if emp.status == 'PAGO' %}
+                                            <a href="{% url 'teddyfinanca:arquivar_emprestimo' emp.id %}" class="btn btn-outline-secondary btn-sm mt-1" style="font-size: 0.7rem;"><i class="bi bi-archive"></i> Arquivar</a>
+                                            {% else %}
+                                            <a href="{% url 'teddyfinanca:receber_emprestimo' emp.id %}" class="btn btn-success btn-sm mt-1 btn-pagamento" data-restante="{{ emp.restante|unlocalize }}" style="font-size: 0.7rem;">Receber</a>
+                                            {% endif %}
+                                        </div>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
                         </div>
-                        <div class="text-end">
-                            <strong>R$ {{ emp.restante|floatformat:"2g" }}</strong><br><small class="text-muted" style="font-size:0.65rem;">de R$ {{ emp.valor|floatformat:"2g" }}</small><br>
-                            <a href="{% url 'teddyfinanca:deletar_emprestimo' emp.id %}" class="btn btn-outline-danger btn-sm mt-1" style="font-size: 0.7rem;" onclick="return confirm('Deletar emprestimo?');"><i class="bi bi-trash"></i></a>
-                            {% if emp.status == 'PAGO' %}
-                            <a href="{% url 'teddyfinanca:arquivar_emprestimo' emp.id %}" class="btn btn-outline-secondary btn-sm mt-1" style="font-size: 0.7rem;"><i class="bi bi-archive"></i> Arquivar</a>
-                            {% else %}
-                            
-                            <a href="{% url 'teddyfinanca:receber_emprestimo' emp.id %}" class="btn btn-success btn-sm mt-1 btn-pagamento" data-restante="{{ emp.restante|unlocalize }}" style="font-size: 0.7rem;">Receber</a>
-                            {% endif %}
-                        </div>
-                    </li>
+                    </div>
                     {% empty %}
-                    <li class="list-group-item text-muted">Nenhum empréstimo.</li>
+                    <div class="text-center text-muted small py-4">Nenhum dinheiro emprestado.</div>
                     {% endfor %}
-                </ul>
+                </div>
                 {% if emprestimos.has_other_pages %}
                 <div class="card-footer bg-white text-center border-0">
                     <ul class="pagination pagination-sm justify-content-center mb-0">

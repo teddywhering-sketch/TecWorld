@@ -349,9 +349,31 @@ def dashboard(request):
     page_compra = request.GET.get('page_compra')
     compras = paginator_compras.get_page(page_compra)
     
-    # Empréstimos com paginação (5 por página) - Mostra todas não arquivadas
-    emprestimos_list = Emprestimo.objects.filter(usuario=request.user, arquivado=False).order_by('data_devolucao')
-    paginator_emprestimos = Paginator(emprestimos_list, 5)
+    # Empréstimos Agrupados por Pessoa
+    emprestimos_list_raw = Emprestimo.objects.filter(usuario=request.user, arquivado=False).order_by('nome_pessoa', 'data_devolucao')
+    emprestimos_agrupados = {}
+    
+    for emp in emprestimos_list_raw:
+        nome = emp.nome_pessoa.strip()
+        if nome not in emprestimos_agrupados:
+            emprestimos_agrupados[nome] = {
+                'nome': nome,
+                'itens': [],
+                'total_geral': 0,
+                'total_restante': 0,
+                'todas_pagas': True,
+                'id_str': f"emp_{len(emprestimos_agrupados)}"
+            }
+        
+        grupo = emprestimos_agrupados[nome]
+        grupo['itens'].append(emp)
+        grupo['total_geral'] += emp.valor
+        grupo['total_restante'] += emp.restante
+        if emp.status == 'PENDENTE':
+            grupo['todas_pagas'] = False
+
+    emprestimos_groups_list = list(emprestimos_agrupados.values())
+    paginator_emprestimos = Paginator(emprestimos_groups_list, 5)
     page_emprestimo = request.GET.get('page_emprestimo')
     emprestimos = paginator_emprestimos.get_page(page_emprestimo)
     
