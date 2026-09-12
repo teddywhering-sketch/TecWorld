@@ -19,4 +19,8 @@ urlpatterns = [
     path('categoria/<int:id>/deletar/', views.deletar_categoria, name='deletar_categoria'),
     path('emprestimo/<int:id>/arquivar/', views.arquivar_emprestimo, name='arquivar_emprestimo'),
     path('divida/<int:id>/arquivar/', views.arquivar_divida, name='arquivar_divida'),
+    path('manifest.json', views.manifest_json, name='manifest'),
+    path('sw.js', views.sw_js, name='sw'),
+    path('banco/<int:id>/deletar/', views.deletar_banco, name='deletar_banco'),
+    path('banco/<int:id>/editar/', views.editar_banco, name='editar_banco'),
 ]

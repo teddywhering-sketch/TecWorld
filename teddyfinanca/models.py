@@ -13,6 +13,10 @@ class Banco(models.Model):
     def __str__(self):
         return f"{self.nome} (Saldo: R$ {self.saldo_atual})"
 
+    @property
+    def disponivel(self):
+        return self.saldo_atual + self.limite_cheque_especial
+
 class Categoria(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     TIPO_CHOICES = (
@@ -40,7 +44,12 @@ class Transacao(models.Model):
         ('PENDENTE', 'Pendente'),
         ('PAGO', 'Pago'),
     )
+    FORMA_PAGAMENTO_CHOICES = (
+        ('DEBITO', 'Conta/Débito'),
+        ('CREDITO', 'Cartão de Crédito'),
+    )
     banco = models.ForeignKey(Banco, on_delete=models.SET_NULL, null=True, blank=True, related_name='transacoes')
+    forma_pagamento = models.CharField(max_length=10, choices=FORMA_PAGAMENTO_CHOICES, default='DEBITO')
     categoria = models.ForeignKey(Categoria, on_delete=models.SET_NULL, null=True, blank=True)
     tipo = models.CharField(max_length=10, choices=TIPO_CHOICES)
     valor = models.DecimalField(max_digits=12, decimal_places=2)

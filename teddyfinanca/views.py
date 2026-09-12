@@ -108,7 +108,70 @@ def dashboard(request):
             if form.is_valid():
                 transacao = form.save(commit=False)
                 transacao.usuario = request.user
+                
+                # Categoria Automática
+                if not transacao.categoria:
+                    desc_lower = transacao.descricao.lower()
+                    CATEGORIAS_MAP = {
+                        'pao': 'Alimentação',
+                        'pão': 'Alimentação',
+                        'mercado': 'Alimentação',
+                        'comida': 'Alimentação',
+                        'lanche': 'Alimentação',
+                        'pizza': 'Alimentação',
+                        'ifood': 'Alimentação',
+                        'restaurante': 'Alimentação',
+                        'gasolina': 'Combustível',
+                        'combustivel': 'Combustível',
+                        'combustível': 'Combustível',
+                        'alcool': 'Combustível',
+                        'álcool': 'Combustível',
+                        'diesel': 'Combustível',
+                        'posto': 'Combustível',
+                        'farmacia': 'Saúde',
+                        'farmácia': 'Saúde',
+                        'remedio': 'Saúde',
+                        'remédio': 'Saúde',
+                        'medico': 'Saúde',
+                        'médico': 'Saúde',
+                        'luz': 'Contas da Casa',
+                        'energia': 'Contas da Casa',
+                        'agua': 'Contas da Casa',
+                        'água': 'Contas da Casa',
+                        'internet': 'Contas da Casa',
+                        'aluguel': 'Contas da Casa'
+                    }
+                    
+                    cat_nome = None
+                    for palavra, categoria_alvo in CATEGORIAS_MAP.items():
+                        if palavra in desc_lower:
+                            cat_nome = categoria_alvo
+                            break
+                    
+                    if cat_nome:
+                        categoria_obj, created = Categoria.objects.get_or_create(
+                            usuario=request.user, 
+                            nome=cat_nome,
+                            defaults={'tipo': 'SAIDA' if transacao.tipo == 'SAIDA' else 'ENTRADA'}
+                        )
+                        transacao.categoria = categoria_obj
+
                 transacao.save()
+                
+                # Desconta ou adiciona ao saldo do banco
+                if transacao.banco and transacao.status == 'PAGO':
+                    if transacao.forma_pagamento == 'CREDITO':
+                        if transacao.tipo == 'ENTRADA':
+                            transacao.banco.limite_credito += transacao.valor
+                        elif transacao.tipo == 'SAIDA':
+                            transacao.banco.limite_credito -= transacao.valor
+                    else:
+                        if transacao.tipo == 'ENTRADA':
+                            transacao.banco.saldo_atual += transacao.valor
+                        elif transacao.tipo == 'SAIDA':
+                            transacao.banco.saldo_atual -= transacao.valor
+                    transacao.banco.save()
+
                 messages.success(request, "Transação adicionada com sucesso!")
                 return redirect('teddyfinanca:dashboard')
         elif 'btn_divida' in request.POST:
@@ -211,10 +274,12 @@ def dashboard(request):
     # Filtra tudo pelo usuário logado
     bancos = Banco.objects.filter(usuario=request.user)
     vendas = VendaParcelada.objects.filter(usuario=request.user)
-    transacoes = Transacao.objects.filter(usuario=request.user).order_by('-data')[:10]
 
     # Cálculos dos mini-cards
-    total_saldo = bancos.aggregate(total=Sum('saldo_atual'))['total'] or 0
+    total_saldo_atual = bancos.aggregate(total=Sum('saldo_atual'))['total'] or 0
+    total_limite = bancos.aggregate(total=Sum('limite_cheque_especial'))['total'] or 0
+    total_saldo = total_saldo_atual + total_limite
+    total_credito = bancos.aggregate(total=Sum('limite_credito'))['total'] or 0
     
     dividas_pendentes = Divida.objects.filter(usuario=request.user, status='PENDENTE')
     total_divida = dividas_pendentes.aggregate(total=Sum('valor'))['total'] or 0
@@ -235,10 +300,29 @@ def dashboard(request):
     total_receber = total_receber_emp + total_receber_parcelas
     
     saldo_liquido = total_saldo - total_pagar + total_receber
+    
+    # Atrasados
+    hoje = date.today()
+    dividas_atrasadas = dividas_pendentes.filter(data_vencimento__lt=hoje).order_by('data_vencimento')
+    emprestimos_atrasados = emprestimos_pendentes.filter(data_devolucao__lt=hoje).order_by('data_devolucao')
+    parcelas_atrasadas = parcelas_pendentes.filter(data_vencimento__lt=hoje).order_by('data_vencimento')
 
     # Dados para os Gráficos
     entradas_mes = Transacao.objects.filter(usuario=request.user, tipo='ENTRADA').aggregate(total=Sum('valor'))['total'] or 0
     saidas_mes = Transacao.objects.filter(usuario=request.user, tipo='SAIDA').aggregate(total=Sum('valor'))['total'] or 0
+    
+    # Agrupamento para gráfico de pizza de categorias
+    import json
+    saidas_por_categoria = Transacao.objects.filter(usuario=request.user, tipo='SAIDA').values('categoria__nome').annotate(total=Sum('valor')).order_by('-total')
+    categorias_labels = []
+    categorias_valores = []
+    for item in saidas_por_categoria:
+        cat = item['categoria__nome'] or 'Outros'
+        categorias_labels.append(cat)
+        categorias_valores.append(float(item['total']))
+    
+    categorias_labels_json = json.dumps(categorias_labels)
+    categorias_valores_json = json.dumps(categorias_valores)
     
     # Dívidas com paginação (5 por página) - Mostra todas não arquivadas
     dividas_list = Divida.objects.filter(usuario=request.user, arquivado=False).order_by('data_vencimento')
@@ -258,6 +342,12 @@ def dashboard(request):
     page_venda = request.GET.get('page_venda')
     vendas = paginator_vendas.get_page(page_venda)
     
+    # Transações (Fluxo) com paginação (10 por página)
+    transacoes_list = Transacao.objects.filter(usuario=request.user).order_by('-data', '-id')
+    paginator_transacoes = Paginator(transacoes_list, 10)
+    page_transacao = request.GET.get('page_transacao')
+    transacoes = paginator_transacoes.get_page(page_transacao)
+    
     context = {
         'bancos': bancos,
         'dividas': dividas,
@@ -265,11 +355,14 @@ def dashboard(request):
         'vendas': vendas,
         'transacoes': transacoes,
         'total_saldo': total_saldo,
+        'total_credito': total_credito,
         'total_pagar': total_pagar,
         'total_receber': total_receber,
         'saldo_liquido': saldo_liquido,
         'entradas_mes': entradas_mes,
         'saidas_mes': saidas_mes,
+        'categorias_labels_json': categorias_labels_json,
+        'categorias_valores_json': categorias_valores_json,
         'transacao_form': transacao_form,
         'divida_form': divida_form,
         'emprestimo_form': emprestimo_form,
@@ -277,6 +370,9 @@ def dashboard(request):
         'venda_form': venda_form,
         'categoria_form': categoria_form,
         'categorias': Categoria.objects.filter(usuario=request.user),
+        'dividas_atrasadas': dividas_atrasadas,
+        'emprestimos_atrasados': emprestimos_atrasados,
+        'parcelas_atrasadas': parcelas_atrasadas,
     }
     return render(request, 'teddyfinanca/dashboard.html', context)
 
@@ -426,6 +522,69 @@ def deletar_categoria(request, id):
     except Categoria.DoesNotExist:
         messages.error(request, "Categoria não encontrada.")
     return redirect('teddyfinanca:dashboard')
+
+@login_required(login_url='teddyfinanca:login')
+@check_assinatura
+def deletar_banco(request, id):
+    try:
+        banco = Banco.objects.get(id=id, usuario=request.user)
+        banco.delete()
+        messages.success(request, f"Banco '{banco.nome}' deletado!")
+    except Banco.DoesNotExist:
+        messages.error(request, "Banco não encontrado.")
+    return redirect('teddyfinanca:dashboard')
+
+@login_required(login_url='teddyfinanca:login')
+@check_assinatura
+def editar_banco(request, id):
+    try:
+        banco = Banco.objects.get(id=id, usuario=request.user)
+        if request.method == 'POST':
+            banco.nome = request.POST.get('nome')
+            banco.saldo_atual = request.POST.get('saldo_atual')
+            banco.limite_cheque_especial = request.POST.get('limite_cheque_especial')
+            banco.limite_credito = request.POST.get('limite_credito')
+            banco.save()
+            messages.success(request, f"Banco '{banco.nome}' atualizado!")
+            return redirect('teddyfinanca:dashboard')
+    except Banco.DoesNotExist:
+        messages.error(request, "Banco não encontrado.")
+    return redirect('teddyfinanca:dashboard')
+
+from django.http import JsonResponse
+
+def manifest_json(request):
+    manifest = {
+        "name": "Teddy Finanças",
+        "short_name": "Finanças",
+        "description": "Aplicativo de gestão financeira.",
+        "start_url": "/financeiro/painel/",
+        "display": "standalone",
+        "background_color": "#198754",
+        "theme_color": "#198754",
+        "icons": [
+            {
+                "src": "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
+                "sizes": "512x512",
+                "type": "image/png"
+            }
+        ]
+    }
+    return JsonResponse(manifest)
+
+from django.http import HttpResponse
+
+def sw_js(request):
+    sw_code = """
+self.addEventListener('install', (e) => {
+    // console.log('[Service Worker] Install');
+});
+
+self.addEventListener('fetch', (e) => {
+    // Passar reto (não fazer cache offline pesado, só permitir que o navegador identifique o app)
+});
+    """
+    return HttpResponse(sw_code, content_type='application/javascript')
 from django.shortcuts import redirect
 from datetime import date
 from .models import Assinatura

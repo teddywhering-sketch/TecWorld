@@ -22,7 +22,7 @@ class VendaParceladaForm(forms.ModelForm):
 class TransacaoForm(forms.ModelForm):
     class Meta:
         model = Transacao
-        fields = ['banco', 'categoria', 'tipo', 'valor', 'descricao', 'data', 'status']
+        fields = ['banco', 'forma_pagamento', 'categoria', 'tipo', 'valor', 'descricao', 'data', 'status']
         widgets = {
             'data': forms.DateInput(attrs={'type': 'date'}),
         }
