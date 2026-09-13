@@ -747,17 +747,106 @@ def pluggy_webhook(request):
 
 def process_pluggy_webhook(event):
     event_type = event.get('event')
-    item_id = event.get('itemId')
+    item_id = event.get('itemId') or event.get('id')
     
-    if event_type == 'item/created':
-        print(f"--> [NOVO BANCO CONECTADO] Sincronizando dados do item {item_id}...")
-        # Aqui, no próximo passo, faremos o código para puxar as transações e salvar no banco de dados.
-    elif event_type == 'item/updated':
-        print(f"--> [BANCO ATUALIZADO] Buscando novas transações do item {item_id}...")
+    if not item_id:
+        return
+        
+    print(f"--> [WEBHOOK] Evento {event_type} para item {item_id}")
+    
+    if event_type in ['item/created', 'item/updated', 'transactions/updated']:
+        print(f"--> [SINCRONIZANDO] Buscando dados do item {item_id}...")
+        try:
+            import urllib.request
+            import os
+            import json
+            from django.contrib.auth import get_user_model
+            from .models import Banco, Transacao
+            
+            User = get_user_model()
+            
+            client_id = os.getenv('PLUGGY_CLIENT_ID')
+            client_secret = os.getenv('PLUGGY_CLIENT_SECRET')
+
+            auth_data = json.dumps({"clientId": client_id, "clientSecret": client_secret}).encode('utf-8')
+            auth_req = urllib.request.Request("https://api.pluggy.ai/auth", data=auth_data, headers={'Content-Type': 'application/json'})
+            with urllib.request.urlopen(auth_req) as response:
+                api_key = json.loads(response.read().decode('utf-8')).get('apiKey')
+                
+            # 1. Pegar infos do Item (para descobrir quem é o dono/clientUserId)
+            item_req = urllib.request.Request(f"https://api.pluggy.ai/items/{item_id}", headers={
+                'Accept': 'application/json',
+                'X-API-KEY': api_key
+            })
+            with urllib.request.urlopen(item_req) as response:
+                item_data = json.loads(response.read().decode('utf-8'))
+                
+            client_user_id = item_data.get('clientUserId')
+            usuario = None
+            if client_user_id and client_user_id.isdigit():
+                usuario = User.objects.filter(id=client_user_id).first()
+                
+            # 2. Pegar Contas
+            accounts_req = urllib.request.Request(f"https://api.pluggy.ai/accounts?itemId={item_id}", headers={
+                'Accept': 'application/json',
+                'X-API-KEY': api_key
+            })
+            with urllib.request.urlopen(accounts_req) as response:
+                accounts_data = json.loads(response.read().decode('utf-8'))
+                
+            resultados = accounts_data.get('results', [])
+            
+            for acc in resultados:
+                nome_banco = acc.get('name', 'Banco Sincronizado')
+                saldo = acc.get('balance', 0)
+                acc_id = acc.get('id')
+                
+                banco_obj, created = Banco.objects.update_or_create(
+                    pluggy_account_id=acc_id,
+                    defaults={
+                        'usuario': usuario,
+                        'nome': f"{nome_banco} (Pluggy)",
+                        'saldo_atual': saldo,
+                        'pluggy_item_id': item_id,
+                    }
+                )
+                
+                # 3. Pegar Transacoes
+                trans_req = urllib.request.Request(f"https://api.pluggy.ai/v2/transactions?accountId={acc_id}", headers={
+                    'Accept': 'application/json',
+                    'X-API-KEY': api_key
+                })
+                with urllib.request.urlopen(trans_req) as response:
+                    trans_data = json.loads(response.read().decode('utf-8'))
+                    
+                for t in trans_data.get('results', []):
+                    t_id = t.get('id')
+                    amount = t.get('amount', 0)
+                    descricao = t.get('description', 'Transação')
+                    data_string = t.get('date')
+                    data_transacao = data_string.split('T')[0] if data_string else None
+                    
+                    tipo = 'ENTRADA' if amount >= 0 else 'SAIDA'
+                    valor = abs(amount)
+                    
+                    if data_transacao:
+                        Transacao.objects.get_or_create(
+                            pluggy_transaction_id=t_id,
+                            defaults={
+                                'usuario': usuario,
+                                'banco': banco_obj,
+                                'tipo': tipo,
+                                'valor': valor,
+                                'descricao': descricao[:250],
+                                'data': data_transacao,
+                                'status': 'PAGO'
+                            }
+                        )
+            print("--> [SINCRONIZACAO CONCLUIDA]")
+        except Exception as e:
+            print(f"--> [ERRO NO WEBHOOK] Falha ao processar item {item_id}: {e}")
     elif event_type == 'item/error':
         print(f"--> [ERRO NA CONEXÃO] A conexão do item {item_id} falhou. Motivo: {event.get('error')}")
-    else:
-        print(f"--> [OUTRO EVENTO] {event_type}")
 
 
 @csrf_exempt
