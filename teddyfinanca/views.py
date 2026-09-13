@@ -733,20 +733,18 @@ import threading
 
 @csrf_exempt
 def pluggy_webhook(request):
-    if request.method == 'POST':
-        try:
+    # Aceita GET e POST para garantir que qualquer ping de validação da Pluggy passe com sucesso 200
+    try:
+        if request.body:
             event = json.loads(request.body)
-            print(f"\n[PLUGGY WEBHOOK] Recebido evento: {event.get('event')} (ID: {event.get('id') or event.get('itemId')})")
-            
-            # Processa de forma assíncrona para responder rápido (Pluggy exige resposta em menos de 5s)
+            print(f"
+[PLUGGY WEBHOOK] Recebido evento: {event.get('event')}")
             thread = threading.Thread(target=process_pluggy_webhook, args=(event,))
             thread.start()
-            
-            return JsonResponse({'received': True}, status=200)
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=400)
-            
-    return JsonResponse({'error': 'Method Not Allowed'}, status=405)
+    except Exception as e:
+        print(f"[PLUGGY WEBHOOK] Erro ao ler payload: {e}")
+        
+    return JsonResponse({'received': True, 'status': 'ok'}, status=200)
 
 def process_pluggy_webhook(event):
     event_type = event.get('event')
