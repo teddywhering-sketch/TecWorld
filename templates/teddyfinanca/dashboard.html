@@ -128,15 +128,23 @@
                         <div class="card-body p-3 text-center">
                             <small>Em Bancos</small>
                             <h5 class="mb-0 mt-1">R$ {{ total_saldo|floatformat:"2g" }}</h5>
-                            <small class="d-block mt-1" style="font-size: 0.75rem; opacity: 0.9;">Crédito Disponível: R$ {{ total_credito|floatformat:"2g" }}</small>
+                            <small class="d-block mt-1" style="font-size: 0.75rem; opacity: 0.9;">Crédito Disp: R$ {{ total_credito|floatformat:"2g" }}</small>
                         </div>
                     </div>
                 </div>
                 <div class="col-6">
-                    <div class="card summary-card bg-danger text-white h-100">
+                    <div class="card summary-card bg-success text-white h-100">
                         <div class="card-body p-3 text-center">
-                            <small>Total Dívidas</small>
-                            <h5 class="mb-0 mt-1">R$ {{ total_pagar|floatformat:"2g" }}</h5>
+                            <small>Entradas (Mês)</small>
+                            <h5 class="mb-0 mt-1">+ R$ {{ entradas_mes|floatformat:"2g" }}</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="card summary-card bg-info text-white h-100">
+                        <div class="card-body p-3 text-center">
+                            <small>Gastos (Mês)</small>
+                            <h5 class="mb-0 mt-1">- R$ {{ saidas_mes|floatformat:"2g" }}</h5>
                         </div>
                     </div>
                 </div>
@@ -148,11 +156,11 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-6">
-                    <div class="card summary-card bg-info text-white h-100">
+                <div class="col-12">
+                    <div class="card summary-card bg-danger text-white h-100">
                         <div class="card-body p-3 text-center">
-                            <small>Gastos</small>
-                            <h5 class="mb-0 mt-1">R$ {{ saidas_mes|floatformat:"2g" }}</h5>
+                            <small>Total Dívidas Pendentes</small>
+                            <h5 class="mb-0 mt-1">R$ {{ total_pagar|floatformat:"2g" }}</h5>
                         </div>
                     </div>
                 </div>
@@ -271,9 +279,14 @@
         <div class="tab-pane fade" id="bancos" role="tabpanel">
             <div class="d-flex justify-content-between align-items-center mb-3 mt-2">
                 <h5 class="mb-0">Minhas Contas</h5>
-                <button class="btn btn-primary btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalBanco">
-                    + Cadastrar Banco
-                </button>
+                <div>
+                    <button class="btn btn-outline-success btn-sm rounded-pill px-3 me-2" id="btn-conectar-pluggy">
+                        <i class="bi bi-bank"></i> Sincronizar (Pluggy)
+                    </button>
+                    <button class="btn btn-primary btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalBanco">
+                        + Cadastrar Banco
+                    </button>
+                </div>
             </div>
             
             <div class="row g-3 mb-4">
@@ -1012,5 +1025,79 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 
+
+<!-- Pluggy SDK -->
+<script src="https://cdn.pluggy.ai/pluggy-connect/latest/pluggy-connect.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const btnPluggy = document.getElementById('btn-conectar-pluggy');
+    if (btnPluggy) {
+        btnPluggy.addEventListener('click', async () => {
+            try {
+                // Altera o botão para loading
+                btnPluggy.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Conectando...';
+                btnPluggy.disabled = true;
+
+                // 1. Pega o Connect Token do nosso backend Django
+                const response = await fetch('/financeiro/api/connect-token/', { 
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '' }
+                });
+                
+                const data = await response.json();
+
+                if (data.accessToken) {
+                    // 2. Inicializa o Widget da Pluggy
+                    const pluggyConnect = new window.PluggyConnect({
+                        connectToken: data.accessToken,
+                        includeSandbox: true,
+                        onSuccess: async (itemData) => {
+                            console.log('Banco Conectado!', itemData);
+                            try {
+                                btnPluggy.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
+                                
+                                const resVincular = await fetch('/financeiro/api/banco/vincular/', {
+                                    method: 'POST',
+                                    headers: { 
+                                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({ item_id: itemData.item.id })
+                                });
+                                
+                                if (resVincular.ok) {
+                                    alert('Conta conectada e salva com sucesso!');
+                                    window.location.reload();
+                                } else {
+                                    const errData = await resVincular.json();
+                                    alert('Erro ao salvar no sistema: ' + (errData.error || 'Erro desconhecido'));
+                                }
+                            } catch(e) {
+                                alert('Erro de comunicação ao salvar a conta.');
+                            }
+                        },
+                        onError: (error) => {
+                            console.error('Falha na conexão:', error);
+                            alert('A conexão falhou ou foi cancelada.');
+                        }
+                    });
+                    
+                    pluggyConnect.init();
+                } else {
+                    alert('Erro ao gerar token da Pluggy: ' + (data.error || 'Erro desconhecido'));
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Erro detalhado: ' + (error.message || error));
+            } finally {
+                // Restaura o botão
+                btnPluggy.innerHTML = '<i class="bi bi-bank"></i> Sincronizar (Pluggy)';
+                btnPluggy.disabled = false;
+            }
+        });
+    }
+});
+</script>
 </body>
+
 </html>

@@ -9,6 +9,10 @@ class Banco(models.Model):
     saldo_atual = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, verbose_name="Saldo Atual")
     limite_cheque_especial = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, verbose_name="Limite Cheque Especial")
     limite_credito = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, verbose_name="Limite de Crédito")
+    
+    # Integração Pluggy
+    pluggy_item_id = models.CharField(max_length=255, null=True, blank=True, verbose_name="ID Conexão Pluggy (Item)")
+    pluggy_account_id = models.CharField(max_length=255, null=True, blank=True, verbose_name="ID Conta Pluggy (Account)")
 
     def __str__(self):
         return f"{self.nome} (Saldo: R$ {self.saldo_atual})"
@@ -57,6 +61,9 @@ class Transacao(models.Model):
     data = models.DateField(default=timezone.now)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PAGO')
     
+    # Integração Pluggy
+    pluggy_transaction_id = models.CharField(max_length=255, null=True, blank=True, unique=True, verbose_name="ID Transação Pluggy")
+
     # Campos para vincular transações geradas automaticamente
     venda_origem = models.ForeignKey('VendaParcelada', on_delete=models.SET_NULL, null=True, blank=True)
     emprestimo_origem = models.ForeignKey('Emprestimo', on_delete=models.SET_NULL, null=True, blank=True)

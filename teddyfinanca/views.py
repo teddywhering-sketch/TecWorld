@@ -682,3 +682,178 @@ def arquivar_compra(request, id):
     except CompraParcelada.DoesNotExist:
         messages.error(request, "Compra não encontrada.")
     return redirect('teddyfinanca:dashboard')
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+import os
+from pluggy_sdk import AuthApi, ApiClient, Configuration, AuthRequest, ConnectTokenRequest
+
+@csrf_exempt
+def get_connect_token(request):
+    import urllib.request
+    import urllib.error
+    
+    if request.method == 'POST':
+        try:
+            client_id = os.getenv('PLUGGY_CLIENT_ID')
+            client_secret = os.getenv('PLUGGY_CLIENT_SECRET')
+
+            if not client_id or not client_secret:
+                return JsonResponse({"error": "Credenciais não configuradas"}, status=500)
+            
+            # 1. Pegar a API Key
+            auth_data = json.dumps({"clientId": client_id, "clientSecret": client_secret}).encode('utf-8')
+            auth_req = urllib.request.Request("https://api.pluggy.ai/auth", data=auth_data, headers={'Content-Type': 'application/json'})
+            
+            with urllib.request.urlopen(auth_req) as response:
+                api_key = json.loads(response.read().decode('utf-8')).get('apiKey')
+            
+            # 2. Pegar o Connect Token
+            client_user_id = str(request.user.id) if request.user.is_authenticated else "anon"
+            token_data = json.dumps({"clientUserId": client_user_id}).encode('utf-8')
+            token_req = urllib.request.Request("https://api.pluggy.ai/connect_token", data=token_data, headers={
+                'Content-Type': 'application/json',
+                'X-API-KEY': api_key
+            })
+            
+            with urllib.request.urlopen(token_req) as response:
+                access_token = json.loads(response.read().decode('utf-8')).get('accessToken')
+                
+            return JsonResponse({"accessToken": access_token})
+            
+        except urllib.error.HTTPError as e:
+            return JsonResponse({"error": f"Erro Pluggy HTTP {e.code}: {e.read().decode('utf-8')}"}, status=e.code)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+    
+    return JsonResponse({"error": "Method Not Allowed"}, status=405)
+
+import threading
+
+@csrf_exempt
+def pluggy_webhook(request):
+    if request.method == 'POST':
+        try:
+            event = json.loads(request.body)
+            print(f"\n[PLUGGY WEBHOOK] Recebido evento: {event.get('event')} (ID: {event.get('id') or event.get('itemId')})")
+            
+            # Processa de forma assíncrona para responder rápido (Pluggy exige resposta em menos de 5s)
+            thread = threading.Thread(target=process_pluggy_webhook, args=(event,))
+            thread.start()
+            
+            return JsonResponse({'received': True}, status=200)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+            
+    return JsonResponse({'error': 'Method Not Allowed'}, status=405)
+
+def process_pluggy_webhook(event):
+    event_type = event.get('event')
+    item_id = event.get('itemId')
+    
+    if event_type == 'item/created':
+        print(f"--> [NOVO BANCO CONECTADO] Sincronizando dados do item {item_id}...")
+        # Aqui, no próximo passo, faremos o código para puxar as transações e salvar no banco de dados.
+    elif event_type == 'item/updated':
+        print(f"--> [BANCO ATUALIZADO] Buscando novas transações do item {item_id}...")
+    elif event_type == 'item/error':
+        print(f"--> [ERRO NA CONEXÃO] A conexão do item {item_id} falhou. Motivo: {event.get('error')}")
+    else:
+        print(f"--> [OUTRO EVENTO] {event_type}")
+
+
+@csrf_exempt
+def vincular_banco_pluggy(request):
+    import urllib.request
+    import urllib.error
+    
+    if request.method == 'POST':
+        try:
+            body = json.loads(request.body)
+            item_id = body.get('item_id')
+            
+            client_id = os.getenv('PLUGGY_CLIENT_ID')
+            client_secret = os.getenv('PLUGGY_CLIENT_SECRET')
+
+            # 1. Pegar a API Key
+            auth_data = json.dumps({"clientId": client_id, "clientSecret": client_secret}).encode('utf-8')
+            auth_req = urllib.request.Request("https://api.pluggy.ai/auth", data=auth_data, headers={'Content-Type': 'application/json'})
+            with urllib.request.urlopen(auth_req) as response:
+                api_key = json.loads(response.read().decode('utf-8')).get('apiKey')
+                
+            # 2. Buscar as Contas (Accounts) desse Item
+            accounts_req = urllib.request.Request(f"https://api.pluggy.ai/accounts?itemId={item_id}", headers={
+                'Accept': 'application/json',
+                'X-API-KEY': api_key
+            })
+            
+            with urllib.request.urlopen(accounts_req) as response:
+                accounts_data = json.loads(response.read().decode('utf-8'))
+            
+            resultados = accounts_data.get('results', [])
+            if not resultados:
+                return JsonResponse({"error": "Nenhuma conta encontrada neste banco."}, status=400)
+                
+            # Cria um banco no TecWorld para cada conta encontrada
+            from .models import Banco
+            for acc in resultados:
+                nome_banco = acc.get('name', 'Banco Sincronizado')
+                saldo = acc.get('balance', 0)
+                acc_id = acc.get('id')
+                
+                banco_obj, created = Banco.objects.update_or_create(
+                    pluggy_account_id=acc_id,
+                    usuario=request.user if request.user.is_authenticated else None,
+                    defaults={
+                        'nome': f"{nome_banco} (Pluggy)",
+                        'saldo_atual': saldo,
+                        'pluggy_item_id': item_id,
+                    }
+                )
+                
+                # 3. Buscar as Transações (Extrato) dessa Conta
+                try:
+                    trans_req = urllib.request.Request(f"https://api.pluggy.ai/v2/transactions?accountId={acc_id}", headers={
+                        'Accept': 'application/json',
+                        'X-API-KEY': api_key
+                    })
+                    with urllib.request.urlopen(trans_req) as response:
+                        trans_data = json.loads(response.read().decode('utf-8'))
+                        
+                    from .models import Transacao
+                    for t in trans_data.get('results', []):
+                        t_id = t.get('id')
+                        amount = t.get('amount', 0)
+                        descricao = t.get('description', 'Transação')
+                        data_string = t.get('date') # Ex: "2023-01-01T00:00:00.000Z"
+                        data_transacao = data_string.split('T')[0] if data_string else None
+                        
+                        tipo = 'ENTRADA' if amount >= 0 else 'SAIDA'
+                        valor = abs(amount)
+                        
+                        if data_transacao:
+                            Transacao.objects.get_or_create(
+                                pluggy_transaction_id=t_id,
+                                defaults={
+                                    'usuario': request.user if request.user.is_authenticated else None,
+                                    'banco': banco_obj,
+                                    'tipo': tipo,
+                                    'valor': valor,
+                                    'descricao': descricao[:250],
+                                    'data': data_transacao,
+                                    'status': 'PAGO'
+                                }
+                            )
+                except Exception as e:
+                    print(f"Erro ao buscar transacoes da conta {acc_id}: {e}")
+
+                
+            return JsonResponse({"status": "sucesso"})
+
+        except urllib.error.HTTPError as e:
+            return JsonResponse({"error": f"Erro Pluggy HTTP {e.code}: {e.read().decode('utf-8')}"}, status=e.code)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+            
+    return JsonResponse({"error": "Method Not Allowed"}, status=405)

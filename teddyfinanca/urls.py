@@ -25,4 +25,7 @@ urlpatterns = [
     path('banco/<int:id>/editar/', views.editar_banco, name='editar_banco'),
     path('compra/<int:id>/deletar/', views.deletar_compra, name='deletar_compra'),
     path('compra/<int:id>/arquivar/', views.arquivar_compra, name='arquivar_compra'),
+    path('api/connect-token/', views.get_connect_token, name='get_connect_token'),
+    path('api/webhooks/pluggy/', views.pluggy_webhook, name='pluggy_webhook'),
+    path('api/banco/vincular/', views.vincular_banco_pluggy, name='vincular_banco_pluggy'),
 ]
