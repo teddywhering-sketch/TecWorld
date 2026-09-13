@@ -28,5 +28,6 @@ urlpatterns = [
     path('api/connect-token/', views.get_connect_token, name='get_connect_token'),
     path('api/webhooks/pluggy/', views.pluggy_webhook, name='pluggy_webhook'),
     path('api/webhooks/pluggy', views.pluggy_webhook, name='pluggy_webhook_no_slash'),
+    path('api/logan/', views.api_logan, name='api_logan'),
     path('api/banco/vincular/', views.vincular_banco_pluggy, name='vincular_banco_pluggy'),
 ]
