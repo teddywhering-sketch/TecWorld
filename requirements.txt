@@ -5,3 +5,4 @@ django-widget-tweaks>=1.5
 Pillow>=10.4
 pluggy-sdk
 google-generativeai
+python-dateutil
