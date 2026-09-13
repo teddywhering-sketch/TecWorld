@@ -737,8 +737,7 @@ def pluggy_webhook(request):
     try:
         if request.body:
             event = json.loads(request.body)
-            print(f"
-[PLUGGY WEBHOOK] Recebido evento: {event.get('event')}")
+            print(f"\n[PLUGGY WEBHOOK] Recebido evento: {event.get('event')}")
             thread = threading.Thread(target=process_pluggy_webhook, args=(event,))
             thread.start()
     except Exception as e:
