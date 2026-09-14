@@ -948,13 +948,14 @@ def vincular_banco_pluggy(request):
 def api_logan(request):
     import json
     from django.http import JsonResponse
-    from .logan import processar_comando_logan
     
-    if request.method == 'POST':
-        if not request.user.is_authenticated:
-            return JsonResponse({'error': 'Não autenticado'}, status=403)
-            
-        try:
+    try:
+        from .logan import processar_comando_logan
+        
+        if request.method == 'POST':
+            if not request.user.is_authenticated:
+                return JsonResponse({'error': 'Não autenticado'}, status=403)
+                
             body = json.loads(request.body)
             texto = body.get('texto', '')
             if not texto:
@@ -962,7 +963,8 @@ def api_logan(request):
                 
             fala, acoes = processar_comando_logan(texto, request.user)
             return JsonResponse({'fala': fala, 'acoes': acoes})
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
             
-    return JsonResponse({'error': 'Method Not Allowed'}, status=405)
+        return JsonResponse({'error': 'Method Not Allowed'}, status=405)
+    except Exception as e:
+        import traceback
+        return JsonResponse({'error': str(e), 'traceback': traceback.format_exc()}, status=500)
