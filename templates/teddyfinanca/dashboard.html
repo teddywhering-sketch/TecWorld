@@ -1302,33 +1302,32 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Guarda na memória global para o Android não "matar" a voz no meio
+    let lunaVozGlobal = null; 
+
     function falar(texto, recarregar = false) {
         if ('speechSynthesis' in window) {
-            const utterance = new SpeechSynthesisUtterance(texto);
-            utterance.lang = 'pt-BR';
-            utterance.rate = 0.9; // Deixei mais suave e calma (0.9) para não atropelar as palavras
-            utterance.pitch = 1.0; 
+            lunaVozGlobal = new SpeechSynthesisUtterance(texto);
+            lunaVozGlobal.lang = 'pt-BR';
+            lunaVozGlobal.rate = 0.9;
+            lunaVozGlobal.pitch = 1.0; 
             
-            utterance.onend = function() {
-                if (recarregar) {
-                    window.location.reload();
-                }
-            };
-            
-            // Fallback de segurança caso o Android não dispare o evento onend
+            // O Android tem um bug severo que aciona o 'onend' antes da hora ou corta o áudio.
+            // A forma mais segura é calcular matematicamente o tempo que ela leva para falar.
+            // Média de 85ms por caractere (com taxa 0.9)
             if (recarregar) {
-                setTimeout(() => window.location.reload(), 15000); // Força recarregar depois de 15s no máximo
+                const tempoMatematico = Math.max(texto.length * 85, 3000) + 1000; 
+                setTimeout(() => window.location.reload(), tempoMatematico);
             }
             
-            // Corrige problema no Android onde as vozes demoram a carregar
             if (window.speechSynthesis.getVoices().length === 0) {
                 window.speechSynthesis.onvoiceschanged = function() {
-                    setBestVoice(utterance);
-                    window.speechSynthesis.speak(utterance);
+                    setBestVoice(lunaVozGlobal);
+                    window.speechSynthesis.speak(lunaVozGlobal);
                 };
             } else {
-                setBestVoice(utterance);
-                window.speechSynthesis.speak(utterance);
+                setBestVoice(lunaVozGlobal);
+                window.speechSynthesis.speak(lunaVozGlobal);
             }
         } else if (recarregar) {
             setTimeout(() => window.location.reload(), 2000);
