@@ -1,17 +1,15 @@
 import os
 import json
-import google.generativeai as genai
+from google import genai
 from datetime import date
 from .models import Transacao, CompraParcelada, ParcelaCompra, VendaParcelada, ParcelaVenda, Divida
 
-def configurar_gemini():
+def processar_comando_logan(texto_usuario, usuario):
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         raise ValueError("Chave da API do Gemini não configurada.")
-    genai.configure(api_key=api_key)
-
-def processar_comando_logan(texto_usuario, usuario):
-    configurar_gemini()
+    
+    client = genai.Client(api_key=api_key)
     
     # Busca contexto atual do usuário para deixar o Logan inteligente
     hoje = date.today().strftime("%d/%m/%Y")
@@ -49,13 +47,14 @@ Usuário: "Logan, comprei 5 reais de pão, lança em gastos pra mim."
 Retorno: {{"fala": "Prontinho! Já anotei o gasto de 5 reais com pão. Nada melhor que um pãozinho fresco, né? Se precisar de mais alguma coisa, é só falar.", "acoes": [{{"tipo": "registrar_gasto", "descricao": "Pão", "valor": 5.00}}]}}
 """
 
-    model = genai.GenerativeModel(
-        model_name="gemini-2.5-flash",
-        system_instruction=system_prompt,
-        generation_config={"response_mime_type": "application/json"}
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=texto_usuario,
+        config={
+            "system_instruction": system_prompt,
+            "response_mime_type": "application/json"
+        }
     )
-    
-    response = model.generate_content(texto_usuario)
     
     try:
         resultado = json.loads(response.text)

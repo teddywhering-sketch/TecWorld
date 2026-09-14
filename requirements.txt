@@ -4,5 +4,5 @@ gunicorn>=23.0
 django-widget-tweaks>=1.5
 Pillow>=10.4
 pluggy-sdk
-google-generativeai
+google-genai
 python-dateutil
