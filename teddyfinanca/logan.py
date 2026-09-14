@@ -66,7 +66,9 @@ Retorno: {{"fala": "Prontinho! Já anotei o gasto de 5 reais com pão. Nada melh
                 cat_nome = acao.get("categoria")
                 cat_obj = None
                 if cat_nome:
-                    cat_obj, _ = Categoria.objects.get_or_create(usuario=usuario, nome__iexact=cat_nome, defaults={'nome': cat_nome.capitalize(), 'tipo': 'SAIDA'})
+                    cat_obj = Categoria.objects.filter(usuario=usuario, nome__iexact=cat_nome).first()
+                    if not cat_obj:
+                        cat_obj = Categoria.objects.create(usuario=usuario, nome=cat_nome.capitalize(), tipo='SAIDA')
                 
                 Transacao.objects.create(
                     usuario=usuario,
@@ -82,7 +84,9 @@ Retorno: {{"fala": "Prontinho! Já anotei o gasto de 5 reais com pão. Nada melh
                 cat_nome = acao.get("categoria")
                 cat_obj = None
                 if cat_nome:
-                    cat_obj, _ = Categoria.objects.get_or_create(usuario=usuario, nome__iexact=cat_nome, defaults={'nome': cat_nome.capitalize(), 'tipo': 'ENTRADA'})
+                    cat_obj = Categoria.objects.filter(usuario=usuario, nome__iexact=cat_nome).first()
+                    if not cat_obj:
+                        cat_obj = Categoria.objects.create(usuario=usuario, nome=cat_nome.capitalize(), tipo='ENTRADA')
 
                 Transacao.objects.create(
                     usuario=usuario,

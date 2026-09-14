@@ -109,52 +109,34 @@ def dashboard(request):
                 transacao = form.save(commit=False)
                 transacao.usuario = request.user
                 
-                # Categoria Automática
-                if not transacao.categoria:
+                # Pega a categoria digitada
+                cat_nome = form.cleaned_data.get('categoria_texto')
+                
+                # Se não digitou, tenta auto-categorizar
+                if not cat_nome and transacao.descricao:
                     desc_lower = transacao.descricao.lower()
                     CATEGORIAS_MAP = {
-                        'pao': 'Alimentação',
-                        'pão': 'Alimentação',
-                        'mercado': 'Alimentação',
-                        'comida': 'Alimentação',
-                        'lanche': 'Alimentação',
-                        'pizza': 'Alimentação',
-                        'ifood': 'Alimentação',
-                        'restaurante': 'Alimentação',
-                        'gasolina': 'Combustível',
-                        'combustivel': 'Combustível',
-                        'combustível': 'Combustível',
-                        'alcool': 'Combustível',
-                        'álcool': 'Combustível',
-                        'diesel': 'Combustível',
-                        'posto': 'Combustível',
-                        'farmacia': 'Saúde',
-                        'farmácia': 'Saúde',
-                        'remedio': 'Saúde',
-                        'remédio': 'Saúde',
-                        'medico': 'Saúde',
-                        'médico': 'Saúde',
-                        'luz': 'Contas da Casa',
-                        'energia': 'Contas da Casa',
-                        'agua': 'Contas da Casa',
-                        'água': 'Contas da Casa',
-                        'internet': 'Contas da Casa',
-                        'aluguel': 'Contas da Casa'
+                        'mercado': 'Alimentação', 'supermercado': 'Alimentação', 'ifood': 'Alimentação', 
+                        'restaurante': 'Alimentação', 'padaria': 'Alimentação', 'lanche': 'Alimentação',
+                        'pizza': 'Alimentação', 'gasolina': 'Combustível', 
+                        'combustivel': 'Combustível', 'uber': 'Transporte', 'posto': 'Combustível', 
+                        'farmacia': 'Saúde', 'remedio': 'Saúde', 'luz': 'Contas da Casa', 
+                        'energia': 'Contas da Casa', 'agua': 'Contas da Casa', 'internet': 'Contas da Casa'
                     }
-                    
-                    cat_nome = None
                     for palavra, categoria_alvo in CATEGORIAS_MAP.items():
                         if palavra in desc_lower:
                             cat_nome = categoria_alvo
                             break
-                    
-                    if cat_nome:
-                        categoria_obj, created = Categoria.objects.get_or_create(
-                            usuario=request.user, 
-                            nome=cat_nome,
-                            defaults={'tipo': 'SAIDA' if transacao.tipo == 'SAIDA' else 'ENTRADA'}
+                
+                if cat_nome:
+                    categoria_obj = Categoria.objects.filter(usuario=request.user, nome__iexact=cat_nome).first()
+                    if not categoria_obj:
+                        categoria_obj = Categoria.objects.create(
+                            usuario=request.user,
+                            nome=cat_nome.capitalize(),
+                            tipo='SAIDA' if transacao.tipo == 'SAIDA' else 'ENTRADA'
                         )
-                        transacao.categoria = categoria_obj
+                    transacao.categoria = categoria_obj
 
                 transacao.save()
                 
