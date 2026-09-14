@@ -257,7 +257,6 @@ def dashboard(request):
                 return redirect('teddyfinanca:login')
 
     transacao_form = TransacaoForm()
-    transacao_form.fields['categoria'].queryset = Categoria.objects.filter(usuario=request.user)
     transacao_form.fields['banco'].queryset = Banco.objects.filter(usuario=request.user)
     
     divida_form = DividaForm()
