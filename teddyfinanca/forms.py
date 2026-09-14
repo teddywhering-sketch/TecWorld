@@ -20,9 +20,11 @@ class VendaParceladaForm(forms.ModelForm):
         }
 
 class TransacaoForm(forms.ModelForm):
+    categoria_texto = forms.CharField(max_length=100, required=False, label="Categoria", help_text="Digite para criar nova ou use uma existente", widget=forms.TextInput(attrs={'list': 'categorias-datalist', 'autocomplete': 'off'}))
+    
     class Meta:
         model = Transacao
-        fields = ['banco', 'forma_pagamento', 'categoria', 'tipo', 'valor', 'descricao', 'data', 'status']
+        fields = ['banco', 'forma_pagamento', 'tipo', 'valor', 'descricao', 'data', 'status']
         widgets = {
             'data': forms.DateInput(attrs={'type': 'date'}),
         }
