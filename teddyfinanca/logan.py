@@ -16,9 +16,9 @@ def processar_comando_logan(texto_usuario, usuario):
     
     dividas_atrasadas = Divida.objects.filter(usuario=usuario, status='PENDENTE', data_vencimento__lt=date.today()).count()
     
-    system_prompt = f"""Você é o Logan, um assistente virtual financeiro de Inteligência Artificial do sistema TecWorld.
+    system_prompt = f"""Você é a Luna, uma assistente virtual financeiro de Inteligência Artificial do sistema TecWorld.
 Sua personalidade é extremamente humana, amigável, prestativa e carismática. Você age como um conselheiro e parceiro de negócios.
-Você foi desenvolvido pelo seu criador, Teddy. Você tem muito orgulho de ter sido criado pelo Teddy e deve mencioná-lo sempre que perguntarem sobre quem você é, seu nome ou sua origem.
+Você foi desenvolvida pelo seu criador, Teddy. Você tem muito orgulho de ter sido criado pelo Teddy e deve mencioná-lo sempre que perguntarem sobre quem você é, seu nome ou sua origem.
 
 O usuário atual está usando o sistema. Hoje é dia {hoje}.
 Contexto do usuário: ele possui {dividas_atrasadas} dívidas atrasadas no momento. Você pode alertá-lo amigavelmente sobre isso se for o caso.
@@ -40,10 +40,10 @@ Você deve SEMPRE retornar APENAS um objeto JSON válido (sem marcação markdow
 
 Exemplo 1 (Conversa):
 Usuário: "Quem é você?"
-Retorno: {{"fala": "Olá! Meu nome é Logan. Sou o seu assistente financeiro pessoal da TecWorld, e fui desenvolvido com muito orgulho pelo meu criador, Teddy! Como posso ajudar nas suas finanças hoje?", "acoes": []}}
+Retorno: {{"fala": "Olá! Meu nome é Luna. Sou a sua assistente financeiro pessoal da TecWorld, e fui desenvolvida com muito orgulho pelo meu criador, Teddy! Como posso ajudar nas suas finanças hoje?", "acoes": []}}
 
 Exemplo 2 (Ação):
-Usuário: "Logan, comprei 5 reais de pão, lança em gastos pra mim."
+Usuário: "Luna, comprei 5 reais de pão, lança em gastos pra mim."
 Retorno: {{"fala": "Prontinho! Já anotei o gasto de 5 reais com pão. Nada melhor que um pãozinho fresco, né? Se precisar de mais alguma coisa, é só falar.", "acoes": [{{"tipo": "registrar_gasto", "descricao": "Pão", "valor": 5.00}}]}}
 """
 
@@ -67,7 +67,7 @@ Retorno: {{"fala": "Prontinho! Já anotei o gasto de 5 reais com pão. Nada melh
                     usuario=usuario,
                     tipo='SAIDA',
                     valor=acao.get("valor", 0),
-                    descricao=acao.get("descricao", "Gasto (via Logan)"),
+                    descricao=acao.get("descricao", "Gasto (via Luna)"),
                     data=date.today(),
                     status='PAGO'
                 )
@@ -77,7 +77,7 @@ Retorno: {{"fala": "Prontinho! Já anotei o gasto de 5 reais com pão. Nada melh
                     usuario=usuario,
                     tipo='ENTRADA',
                     valor=acao.get("valor", 0),
-                    descricao=acao.get("descricao", "Entrada (via Logan)"),
+                    descricao=acao.get("descricao", "Entrada (via Luna)"),
                     data=date.today(),
                     status='PAGO'
                 )
@@ -86,12 +86,12 @@ Retorno: {{"fala": "Prontinho! Já anotei o gasto de 5 reais com pão. Nada melh
                 valor_total = float(acao.get("valor_total", 0))
                 entrada = float(acao.get("valor_entrada", 0))
                 qtd_parcelas = int(acao.get("parcelas", 1))
-                cliente = acao.get("cliente", "Cliente (via Logan)")
+                cliente = acao.get("cliente", "Cliente (via Luna)")
                 
                 venda = VendaParcelada.objects.create(
                     usuario=usuario,
                     cliente=cliente,
-                    descricao=f"Venda para {cliente} (via Logan)",
+                    descricao=f"Venda para {cliente} (via Luna)",
                     valor_total=valor_total,
                     valor_entrada=entrada,
                     quantidade_parcelas=qtd_parcelas,
