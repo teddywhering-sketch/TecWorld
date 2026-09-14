@@ -19,6 +19,23 @@
             .receipt-box { border: none; box-shadow: none; width: 100%; max-width: 100%; }
             .btn-print { display: none; }
         }
+    
+        .btn-whatsapp {
+            display: inline-block;
+            background-color: #25D366;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -35,6 +52,21 @@
                 <small>Gerado pelo Sistema TecWorld</small>
             {% endif %}
         </div>
+    <div class="no-print" style="text-align: center; margin-top: 20px;">
+        {% if tipo == 'venda' and obj.venda.telefone_cliente %}
+            <a href="https://wa.me/55{{ obj.venda.telefone_cliente|cut:' '|cut:'-'|cut:'('|cut:')' }}?text=Ol%C3%A1%20{{ obj.venda.cliente|urlencode }}!%20Aqui%20est%C3%A1%20a%20confirma%C3%A7%C3%A3o%20do%20seu%20pagamento%20de%20R%24%20{{ obj.valor_pago|floatformat:'2' }}.%20Muito%20obrigado!" target="_blank" class="btn-whatsapp">
+                Enviar Confirmação no WhatsApp
+            </a>
+        {% elif tipo == 'emprestimo' and obj.telefone_contato %}
+            <a href="https://wa.me/55{{ obj.telefone_contato|cut:' '|cut:'-'|cut:'('|cut:')' }}?text=Ol%C3%A1%20{{ obj.nome_pessoa|urlencode }}!%20Aqui%20est%C3%A1%20a%20confirma%C3%A7%C3%A3o%20do%20seu%20pagamento%20de%20R%24%20{{ obj.valor_pago|floatformat:'2' }}.%20Muito%20obrigado!" target="_blank" class="btn-whatsapp">
+                Enviar Confirmação no WhatsApp
+            </a>
+        {% else %}
+            <p style="color: #666; font-size: 0.9em;">(Cadastre o WhatsApp do cliente na transação para exibir o botão de envio rápido)</p>
+        {% endif %}
+        <br><br>
+        <button onclick="window.print()" style="padding: 8px 15px; cursor: pointer;">Imprimir / Salvar PDF</button>
+    </div>
         
         <div class="details">
             {% if tipo == 'venda' %}
@@ -50,14 +82,74 @@
             
             <p><span>Data do Recibo:</span> {% now "d/m/Y H:i" %}</p>
         </div>
+    <div class="no-print" style="text-align: center; margin-top: 20px;">
+        {% if tipo == 'venda' and obj.venda.telefone_cliente %}
+            <a href="https://wa.me/55{{ obj.venda.telefone_cliente|cut:' '|cut:'-'|cut:'('|cut:')' }}?text=Ol%C3%A1%20{{ obj.venda.cliente|urlencode }}!%20Aqui%20est%C3%A1%20a%20confirma%C3%A7%C3%A3o%20do%20seu%20pagamento%20de%20R%24%20{{ obj.valor_pago|floatformat:'2' }}.%20Muito%20obrigado!" target="_blank" class="btn-whatsapp">
+                Enviar Confirmação no WhatsApp
+            </a>
+        {% elif tipo == 'emprestimo' and obj.telefone_contato %}
+            <a href="https://wa.me/55{{ obj.telefone_contato|cut:' '|cut:'-'|cut:'('|cut:')' }}?text=Ol%C3%A1%20{{ obj.nome_pessoa|urlencode }}!%20Aqui%20est%C3%A1%20a%20confirma%C3%A7%C3%A3o%20do%20seu%20pagamento%20de%20R%24%20{{ obj.valor_pago|floatformat:'2' }}.%20Muito%20obrigado!" target="_blank" class="btn-whatsapp">
+                Enviar Confirmação no WhatsApp
+            </a>
+        {% else %}
+            <p style="color: #666; font-size: 0.9em;">(Cadastre o WhatsApp do cliente na transação para exibir o botão de envio rápido)</p>
+        {% endif %}
+        <br><br>
+        <button onclick="window.print()" style="padding: 8px 15px; cursor: pointer;">Imprimir / Salvar PDF</button>
+    </div>
 
         <div class="total">
             VALOR PAGO: R$ {{ obj.valor_pago }}
         </div>
+    <div class="no-print" style="text-align: center; margin-top: 20px;">
+        {% if tipo == 'venda' and obj.venda.telefone_cliente %}
+            <a href="https://wa.me/55{{ obj.venda.telefone_cliente|cut:' '|cut:'-'|cut:'('|cut:')' }}?text=Ol%C3%A1%20{{ obj.venda.cliente|urlencode }}!%20Aqui%20est%C3%A1%20a%20confirma%C3%A7%C3%A3o%20do%20seu%20pagamento%20de%20R%24%20{{ obj.valor_pago|floatformat:'2' }}.%20Muito%20obrigado!" target="_blank" class="btn-whatsapp">
+                Enviar Confirmação no WhatsApp
+            </a>
+        {% elif tipo == 'emprestimo' and obj.telefone_contato %}
+            <a href="https://wa.me/55{{ obj.telefone_contato|cut:' '|cut:'-'|cut:'('|cut:')' }}?text=Ol%C3%A1%20{{ obj.nome_pessoa|urlencode }}!%20Aqui%20est%C3%A1%20a%20confirma%C3%A7%C3%A3o%20do%20seu%20pagamento%20de%20R%24%20{{ obj.valor_pago|floatformat:'2' }}.%20Muito%20obrigado!" target="_blank" class="btn-whatsapp">
+                Enviar Confirmação no WhatsApp
+            </a>
+        {% else %}
+            <p style="color: #666; font-size: 0.9em;">(Cadastre o WhatsApp do cliente na transação para exibir o botão de envio rápido)</p>
+        {% endif %}
+        <br><br>
+        <button onclick="window.print()" style="padding: 8px 15px; cursor: pointer;">Imprimir / Salvar PDF</button>
+    </div>
         
         <div class="footer">
             <p>Recebemos o valor acima especificado.<br>Obrigado!</p>
         </div>
+    <div class="no-print" style="text-align: center; margin-top: 20px;">
+        {% if tipo == 'venda' and obj.venda.telefone_cliente %}
+            <a href="https://wa.me/55{{ obj.venda.telefone_cliente|cut:' '|cut:'-'|cut:'('|cut:')' }}?text=Ol%C3%A1%20{{ obj.venda.cliente|urlencode }}!%20Aqui%20est%C3%A1%20a%20confirma%C3%A7%C3%A3o%20do%20seu%20pagamento%20de%20R%24%20{{ obj.valor_pago|floatformat:'2' }}.%20Muito%20obrigado!" target="_blank" class="btn-whatsapp">
+                Enviar Confirmação no WhatsApp
+            </a>
+        {% elif tipo == 'emprestimo' and obj.telefone_contato %}
+            <a href="https://wa.me/55{{ obj.telefone_contato|cut:' '|cut:'-'|cut:'('|cut:')' }}?text=Ol%C3%A1%20{{ obj.nome_pessoa|urlencode }}!%20Aqui%20est%C3%A1%20a%20confirma%C3%A7%C3%A3o%20do%20seu%20pagamento%20de%20R%24%20{{ obj.valor_pago|floatformat:'2' }}.%20Muito%20obrigado!" target="_blank" class="btn-whatsapp">
+                Enviar Confirmação no WhatsApp
+            </a>
+        {% else %}
+            <p style="color: #666; font-size: 0.9em;">(Cadastre o WhatsApp do cliente na transação para exibir o botão de envio rápido)</p>
+        {% endif %}
+        <br><br>
+        <button onclick="window.print()" style="padding: 8px 15px; cursor: pointer;">Imprimir / Salvar PDF</button>
+    </div>
+    </div>
+    <div class="no-print" style="text-align: center; margin-top: 20px;">
+        {% if tipo == 'venda' and obj.venda.telefone_cliente %}
+            <a href="https://wa.me/55{{ obj.venda.telefone_cliente|cut:' '|cut:'-'|cut:'('|cut:')' }}?text=Ol%C3%A1%20{{ obj.venda.cliente|urlencode }}!%20Aqui%20est%C3%A1%20a%20confirma%C3%A7%C3%A3o%20do%20seu%20pagamento%20de%20R%24%20{{ obj.valor_pago|floatformat:'2' }}.%20Muito%20obrigado!" target="_blank" class="btn-whatsapp">
+                Enviar Confirmação no WhatsApp
+            </a>
+        {% elif tipo == 'emprestimo' and obj.telefone_contato %}
+            <a href="https://wa.me/55{{ obj.telefone_contato|cut:' '|cut:'-'|cut:'('|cut:')' }}?text=Ol%C3%A1%20{{ obj.nome_pessoa|urlencode }}!%20Aqui%20est%C3%A1%20a%20confirma%C3%A7%C3%A3o%20do%20seu%20pagamento%20de%20R%24%20{{ obj.valor_pago|floatformat:'2' }}.%20Muito%20obrigado!" target="_blank" class="btn-whatsapp">
+                Enviar Confirmação no WhatsApp
+            </a>
+        {% else %}
+            <p style="color: #666; font-size: 0.9em;">(Cadastre o WhatsApp do cliente na transação para exibir o botão de envio rápido)</p>
+        {% endif %}
+        <br><br>
+        <button onclick="window.print()" style="padding: 8px 15px; cursor: pointer;">Imprimir / Salvar PDF</button>
     </div>
     
     <button class="btn-print" onclick="window.print()">Imprimir / Salvar PDF</button>

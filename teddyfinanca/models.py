@@ -79,6 +79,7 @@ class Transacao(models.Model):
 class VendaParcelada(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     cliente = models.CharField(max_length=200)
+    telefone_cliente = models.CharField(max_length=25, blank=True, null=True, verbose_name="WhatsApp do Cliente")
     descricao = models.TextField(verbose_name="Descrição da Venda")
     valor_total = models.DecimalField(max_digits=12, decimal_places=2)
     entrada = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, verbose_name="Valor de Entrada")
@@ -138,6 +139,7 @@ class Emprestimo(models.Model):
         ('PAGO', 'Pago/Devolvido'),
     )
     nome_pessoa = models.CharField(max_length=150, verbose_name="Amigo/Familiar")
+    telefone_contato = models.CharField(max_length=25, blank=True, null=True, verbose_name="WhatsApp do Contato")
     valor = models.DecimalField(max_digits=12, decimal_places=2)
     valor_pago = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     data_emprestimo = models.DateField(default=timezone.now)

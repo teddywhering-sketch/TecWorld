@@ -640,6 +640,9 @@
                                             {% if emp.status == 'PAGO' %}
                                             <a href="{% url 'teddyfinanca:arquivar_emprestimo' emp.id %}" class="btn btn-outline-secondary btn-sm mt-1" style="font-size: 0.7rem;"><i class="bi bi-archive"></i> Arquivar</a>
                                             {% else %}
+                                            {% if emp.telefone_contato %}
+                                                <a href="https://wa.me/55{{ emp.telefone_contato|cut:' '|cut:'-'|cut:'('|cut:')' }}?text=Ol%C3%A1%20{{ emp.nome_pessoa|urlencode }}%2C%20lembrando%20que%20nosso%20combinado%20de%20R%24%20{{ emp.restante|floatformat:'2' }}%20est%C3%A1%20pendente." target="_blank" class="btn btn-success btn-sm mt-1" style="font-size: 0.7rem; background-color:#25D366; border-color:#25D366;"><i class="bi bi-whatsapp"></i></a>
+                                            {% endif %}
                                             <a href="{% url 'teddyfinanca:receber_emprestimo' emp.id %}" class="btn btn-success btn-sm mt-1 btn-pagamento" data-restante="{{ emp.restante|unlocalize }}" style="font-size: 0.7rem;">Receber</a>
                                             {% endif %}
                                         </div>
@@ -733,8 +736,14 @@
                                         <div class="text-end">
                                             <strong>R$ {{ parcela.restante|floatformat:"2g" }}</strong><br><small class="text-muted" style="font-size:0.65rem;">de R$ {{ parcela.valor|floatformat:"2g" }}</small><br>
                                             {% if parcela.status == 'PENDENTE' %}
+                                                {% if venda.telefone_cliente %}
+                                                    <a href="https://wa.me/55{{ venda.telefone_cliente|cut:' '|cut:'-'|cut:'('|cut:')' }}?text=Ol%C3%A1%20{{ venda.cliente|urlencode }}%2C%20lembrando%20que%20a%20sua%20fatura%20%28Parcela%20{{ parcela.numero }}%29%20no%20valor%20de%20R%24%20{{ parcela.restante|floatformat:'2' }}%20vence%20em%20{{ parcela.data_vencimento|date:'d/m/Y' }}." target="_blank" class="btn btn-success btn-sm mt-1" style="font-size: 0.7rem; padding: 2px 5px; background-color:#25D366; border-color:#25D366;"><i class="bi bi-whatsapp"></i></a>
+                                                {% endif %}
                                                 <a href="{% url 'teddyfinanca:receber_parcela' parcela.id %}" class="btn btn-outline-success btn-sm mt-1 btn-pagamento" data-restante="{{ parcela.restante|unlocalize }}" style="font-size: 0.7rem; padding: 2px 5px;">Receber</a>
                                             {% else %}
+                                                {% if parcela.valor_pago > 0 %}
+                                                <a href="{% url 'teddyfinanca:recibo_venda' parcela.id %}" target="_blank" class="btn btn-outline-dark btn-sm mt-1" style="font-size: 0.7rem; padding: 2px 5px;"><i class="bi bi-receipt"></i> Recibo</a>
+                                                {% endif %}
                                                 <i class="bi bi-check-circle-fill text-success mt-1 d-block"></i>
                                             {% endif %}
                                         </div>
