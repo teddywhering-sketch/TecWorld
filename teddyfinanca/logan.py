@@ -2,7 +2,7 @@ import os
 import json
 from google import genai
 from datetime import date
-from .models import Transacao, CompraParcelada, VendaParcelada, ParcelaVenda, Divida
+from .models import Transacao, CompraParcelada, VendaParcelada, ParcelaVenda, Divida, Categoria
 
 def processar_comando_logan(texto_usuario, usuario):
     api_key = os.environ.get("GEMINI_API_KEY")
@@ -63,21 +63,33 @@ Retorno: {{"fala": "Prontinho! Já anotei o gasto de 5 reais com pão. Nada melh
         for acao in resultado.get("acoes", []):
             tipo = acao.get("tipo")
             if tipo == "registrar_gasto":
+                cat_nome = acao.get("categoria")
+                cat_obj = None
+                if cat_nome:
+                    cat_obj, _ = Categoria.objects.get_or_create(usuario=usuario, nome__iexact=cat_nome, defaults={'nome': cat_nome.capitalize(), 'tipo': 'SAIDA'})
+                
                 Transacao.objects.create(
                     usuario=usuario,
                     tipo='SAIDA',
                     valor=acao.get("valor", 0),
                     descricao=acao.get("descricao", "Gasto (via Luna)"),
+                    categoria=cat_obj,
                     data=date.today(),
                     status='PAGO'
                 )
                 acoes_executadas.append(acao)
             elif tipo == "registrar_entrada":
+                cat_nome = acao.get("categoria")
+                cat_obj = None
+                if cat_nome:
+                    cat_obj, _ = Categoria.objects.get_or_create(usuario=usuario, nome__iexact=cat_nome, defaults={'nome': cat_nome.capitalize(), 'tipo': 'ENTRADA'})
+
                 Transacao.objects.create(
                     usuario=usuario,
                     tipo='ENTRADA',
                     valor=acao.get("valor", 0),
                     descricao=acao.get("descricao", "Entrada (via Luna)"),
+                    categoria=cat_obj,
                     data=date.today(),
                     status='PAGO'
                 )
