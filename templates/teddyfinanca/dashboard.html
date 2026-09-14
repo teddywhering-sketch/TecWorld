@@ -1277,12 +1277,50 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    function setBestVoice(utterance) {
+        const voices = window.speechSynthesis.getVoices();
+        // Nomes de vozes premium/naturais mais comuns nos celulares e PCs
+        const preferredVoices = [
+            'Google português do Brasil',
+            'Microsoft Antonio',
+            'Microsoft Francisca',
+            'Luciana',
+            'Thiago'
+        ];
+        
+        let selectedVoice = null;
+        for (let pv of preferredVoices) {
+            selectedVoice = voices.find(v => v.name.includes(pv) && (v.lang === 'pt-BR' || v.lang === 'pt_BR'));
+            if (selectedVoice) break;
+        }
+        
+        // Se não achou uma premium, pega a primeira do Brasil que achar
+        if (!selectedVoice) {
+            selectedVoice = voices.find(v => v.lang === 'pt-BR' || v.lang === 'pt_BR');
+        }
+        
+        if (selectedVoice) {
+            utterance.voice = selectedVoice;
+        }
+    }
+
     function falar(texto) {
         if ('speechSynthesis' in window) {
             const utterance = new SpeechSynthesisUtterance(texto);
             utterance.lang = 'pt-BR';
-            utterance.rate = 1.1; // Fala um pouco mais dinâmico
-            window.speechSynthesis.speak(utterance);
+            utterance.rate = 1.0; // Velocidade normal (1.1 estava acelerado e travando)
+            utterance.pitch = 1.0; 
+            
+            // Corrige problema no Android onde as vozes demoram a carregar
+            if (window.speechSynthesis.getVoices().length === 0) {
+                window.speechSynthesis.onvoiceschanged = function() {
+                    setBestVoice(utterance);
+                    window.speechSynthesis.speak(utterance);
+                };
+            } else {
+                setBestVoice(utterance);
+                window.speechSynthesis.speak(utterance);
+            }
         }
     }
     </script>
