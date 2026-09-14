@@ -370,7 +370,11 @@ def dashboard(request):
     page_transacao = request.GET.get('page_transacao')
     transacoes = paginator_transacoes.get_page(page_transacao)
     
+    from .models import Perfil
+    perfil_obj, _ = Perfil.objects.get_or_create(usuario=request.user)
+
     context = {
+        'perfil': perfil_obj,
         'bancos': bancos,
         'dividas': dividas,
         'emprestimos': emprestimos,
@@ -977,3 +981,16 @@ def recibo_emprestimo(request, id):
     emprestimo = get_object_or_404(Emprestimo, id=id, usuario=request.user)
     return render(request, 'teddyfinanca/recibo.html', {'tipo': 'emprestimo', 'obj': emprestimo})
 
+
+@login_required(login_url='teddyfinanca:login')
+def salvar_perfil(request):
+    from .models import Perfil
+    if request.method == 'POST':
+        perfil, created = Perfil.objects.get_or_create(usuario=request.user)
+        perfil.nome_completo = request.POST.get('nome_completo', '')
+        perfil.cpf = request.POST.get('cpf', '')
+        perfil.telefone = request.POST.get('telefone', '')
+        perfil.endereco = request.POST.get('endereco', '')
+        perfil.save()
+        messages.success(request, "Cadastro atualizado com sucesso!")
+    return redirect('teddyfinanca:dashboard')

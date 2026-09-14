@@ -15,6 +15,7 @@ urlpatterns = [
     path('emprestimo/<int:id>/receber/', views.receber_emprestimo, name='receber_emprestimo'),
     path('emprestimo/<int:id>/deletar/', views.deletar_emprestimo, name='deletar_emprestimo'),
     path('parcela/<int:id>/receber/', views.receber_parcela, name='receber_parcela'),
+    path('perfil/salvar/', views.salvar_perfil, name='salvar_perfil'),
     path('recibo/venda/<int:id>/', views.recibo_venda, name='recibo_venda'),
     path('recibo/emprestimo/<int:id>/', views.recibo_emprestimo, name='recibo_emprestimo'),
     path('venda/<int:id>/deletar/', views.deletar_venda, name='deletar_venda'),

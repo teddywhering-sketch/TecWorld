@@ -25,7 +25,15 @@
     <div class="receipt-box">
         <div class="header">
             <h2>RECIBO DE PAGAMENTO</h2>
-            <small>Gerado pelo Sistema TecWorld</small>
+            {% if obj.venda.usuario.perfil.nome_completo %}
+                <small>Emitido por: {{ obj.venda.usuario.perfil.nome_completo }}</small><br>
+                <small>Contato: {{ obj.venda.usuario.perfil.telefone|default:"" }}</small>
+            {% elif obj.usuario.perfil.nome_completo %}
+                <small>Emitido por: {{ obj.usuario.perfil.nome_completo }}</small><br>
+                <small>Contato: {{ obj.usuario.perfil.telefone|default:"" }}</small>
+            {% else %}
+                <small>Gerado pelo Sistema TecWorld</small>
+            {% endif %}
         </div>
         
         <div class="details">

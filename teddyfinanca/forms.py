@@ -1,5 +1,5 @@
 from django import forms
-from .models import Transacao, Divida, Emprestimo, VendaParcelada, Banco, Categoria
+from .models import Perfil, Transacao, Divida, Emprestimo, VendaParcelada, Banco, Categoria
 
 class BancoForm(forms.ModelForm):
     class Meta:
@@ -57,3 +57,8 @@ class EmprestimoForm(forms.ModelForm):
             'data_emprestimo': forms.DateInput(attrs={'type': 'date'}),
             'data_devolucao': forms.DateInput(attrs={'type': 'date'}),
         }
+
+class PerfilForm(forms.ModelForm):
+    class Meta:
+        model = Perfil
+        fields = ['nome_completo', 'cpf', 'telefone', 'endereco']
