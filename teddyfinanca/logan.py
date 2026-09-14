@@ -48,7 +48,7 @@ Retorno: {{"fala": "Prontinho! Já anotei o gasto de 5 reais com pão. Nada melh
 """
 
     response = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-3.6-flash",
         contents=texto_usuario,
         config={
             "system_instruction": system_prompt,
