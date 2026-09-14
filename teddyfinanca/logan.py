@@ -2,7 +2,7 @@ import os
 import json
 from google import genai
 from datetime import date
-from .models import Transacao, CompraParcelada, ParcelaCompra, VendaParcelada, ParcelaVenda, Divida
+from .models import Transacao, CompraParcelada, VendaParcelada, ParcelaVenda, Divida
 
 def processar_comando_logan(texto_usuario, usuario):
     api_key = os.environ.get("GEMINI_API_KEY")
