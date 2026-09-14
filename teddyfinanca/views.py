@@ -977,3 +977,20 @@ def debug_git(request):
         return HttpResponse(out, content_type='text/plain')
     except Exception as e:
         return HttpResponse(str(e))
+
+@login_required(login_url='teddyfinanca:login')
+@check_assinatura
+def recibo_venda(request, id):
+    from .models import ParcelaVenda
+    from django.shortcuts import get_object_or_404, render
+    parcela = get_object_or_404(ParcelaVenda, id=id, venda__usuario=request.user)
+    return render(request, 'teddyfinanca/recibo.html', {'tipo': 'venda', 'obj': parcela})
+
+@login_required(login_url='teddyfinanca:login')
+@check_assinatura
+def recibo_emprestimo(request, id):
+    from .models import Emprestimo
+    from django.shortcuts import get_object_or_404, render
+    emprestimo = get_object_or_404(Emprestimo, id=id, usuario=request.user)
+    return render(request, 'teddyfinanca/recibo.html', {'tipo': 'emprestimo', 'obj': emprestimo})
+
