@@ -1264,10 +1264,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (data.fala) {
                 addLoganMessage(data.fala, false);
-                falar(data.fala);
-                if (data.acoes && data.acoes.length > 0) {
-                    setTimeout(() => window.location.reload(), 3000); // Recarrega a página após agir
-                }
+                let recarregar = (data.acoes && data.acoes.length > 0);
+                falar(data.fala, recarregar);
             } else {
                 addLoganMessage("Desculpe, ocorreu um erro.", false);
             }
@@ -1304,12 +1302,23 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function falar(texto) {
+    function falar(texto, recarregar = false) {
         if ('speechSynthesis' in window) {
             const utterance = new SpeechSynthesisUtterance(texto);
             utterance.lang = 'pt-BR';
-            utterance.rate = 1.0; // Velocidade normal (1.1 estava acelerado e travando)
+            utterance.rate = 0.9; // Deixei mais suave e calma (0.9) para não atropelar as palavras
             utterance.pitch = 1.0; 
+            
+            utterance.onend = function() {
+                if (recarregar) {
+                    window.location.reload();
+                }
+            };
+            
+            // Fallback de segurança caso o Android não dispare o evento onend
+            if (recarregar) {
+                setTimeout(() => window.location.reload(), 15000); // Força recarregar depois de 15s no máximo
+            }
             
             // Corrige problema no Android onde as vozes demoram a carregar
             if (window.speechSynthesis.getVoices().length === 0) {
@@ -1321,6 +1330,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 setBestVoice(utterance);
                 window.speechSynthesis.speak(utterance);
             }
+        } else if (recarregar) {
+            setTimeout(() => window.location.reload(), 2000);
         }
     }
     </script>
