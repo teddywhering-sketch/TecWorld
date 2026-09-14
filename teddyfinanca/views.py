@@ -955,8 +955,10 @@ def debug_git(request):
     import subprocess
     from django.http import HttpResponse
     try:
-        out = subprocess.check_output(['git', 'log', '-n', '5']).decode('utf-8')
+        out = subprocess.check_output(['python', 'manage.py', 'check'], stderr=subprocess.STDOUT).decode('utf-8')
         return HttpResponse(out, content_type='text/plain')
+    except subprocess.CalledProcessError as e:
+        return HttpResponse(e.output.decode('utf-8'), content_type='text/plain')
     except Exception as e:
         return HttpResponse(str(e))
 
