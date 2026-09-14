@@ -798,6 +798,36 @@
 
         </div>
 
+        <!-- ABA 4: PERFIL -->
+        <div class="tab-pane fade" id="perfil" role="tabpanel">
+            <h5 class="mb-3 text-secondary fw-bold"><i class="bi bi-person-badge me-2"></i>Meu Cadastro</h5>
+            <div class="card shadow-sm border-0 mb-4" style="border-radius:15px;">
+                <div class="card-body p-4">
+                    <p class="text-muted small mb-4">Preencha seus dados para que eles apareçam nos recibos gerados para seus clientes e em funcionalidades futuras do sistema.</p>
+                    <form method="POST" action="{% url 'teddyfinanca:salvar_perfil' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label text-muted small mb-1">Nome Completo ou Nome da Empresa</label>
+                            <input type="text" name="nome_completo" class="form-control bg-light border-0" value="{{ perfil.nome_completo|default:'' }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small mb-1">CPF ou CNPJ</label>
+                            <input type="text" name="cpf" class="form-control bg-light border-0" value="{{ perfil.cpf|default:'' }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small mb-1">Telefone / WhatsApp</label>
+                            <input type="text" name="telefone" class="form-control bg-light border-0" value="{{ perfil.telefone|default:'' }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small mb-1">Endereço Completo</label>
+                            <textarea name="endereco" class="form-control bg-light border-0" rows="3">{{ perfil.endereco|default:'' }}</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 rounded-pill py-2 fw-bold">Salvar Dados</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
     </div>
 </div>
 
