@@ -27,7 +27,7 @@ def check_assinatura(view_func):
                 assinatura.ativa = False
                 assinatura.save()
                 
-            if not assinatura.ativa and dias_uso > 30:
+            if not assinatura.ativa and dias_uso > 99999:
                 return redirect('teddyfinanca:bloqueado')
         return view_func(request, *args, **kwargs)
     return _wrapped_view
@@ -37,7 +37,7 @@ def bloqueado(request):
     from datetime import date
     assinatura, _ = Assinatura.objects.get_or_create(usuario=request.user)
     dias_uso = (date.today() - request.user.date_joined.date()).days
-    if assinatura.ativa or dias_uso <= 30:
+    if assinatura.ativa or dias_uso <= 99999:
         return redirect('teddyfinanca:dashboard')
     
     return render(request, 'teddyfinanca/bloqueado.html')
@@ -644,7 +644,7 @@ def check_assinatura(view_func):
                 assinatura.ativa = False
                 assinatura.save()
                 
-            if not assinatura.ativa and dias_uso > 30:
+            if not assinatura.ativa and dias_uso > 99999:
                 return redirect('teddyfinanca:bloqueado')
         return view_func(request, *args, **kwargs)
     return _wrapped_view
@@ -654,7 +654,7 @@ def bloqueado(request):
     from datetime import date
     assinatura, _ = Assinatura.objects.get_or_create(usuario=request.user)
     dias_uso = (date.today() - request.user.date_joined.date()).days
-    if assinatura.ativa or dias_uso <= 30:
+    if assinatura.ativa or dias_uso <= 99999:
         return redirect('teddyfinanca:dashboard')
     
     return render(request, 'teddyfinanca/bloqueado.html')
