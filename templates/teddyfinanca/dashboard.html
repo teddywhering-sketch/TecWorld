@@ -857,6 +857,7 @@
   <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0" style="border-radius:15px;">
       <div class="modal-header bg-success text-white border-0" style="border-radius:15px 15px 0 0;"><h5 class="modal-title">Nova Transação</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
       <div class="modal-body">
+        <datalist id="categorias-datalist">{% for c in categorias %}<option value="{{ c.nome }}"></option>{% endfor %}</datalist>
         <form method="POST">
             {% csrf_token %}
             {% for field in transacao_form %}<div class="mb-3"><label class="form-label text-muted small mb-1">{{ field.label }}</label>{% render_field field class="form-control bg-light border-0" %}</div>{% endfor %}
