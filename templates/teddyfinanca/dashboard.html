@@ -634,6 +634,9 @@
                                         <div class="text-end">
                                             <strong>R$ {{ emp.restante|floatformat:"2g" }}</strong><br><small class="text-muted" style="font-size:0.65rem;">de R$ {{ emp.valor|floatformat:"2g" }}</small><br>
                                             <a href="{% url 'teddyfinanca:deletar_emprestimo' emp.id %}" class="btn btn-outline-danger btn-sm mt-1" style="font-size: 0.7rem;" onclick="return confirm('Deletar emprestimo?');"><i class="bi bi-trash"></i></a>
+                                            {% if emp.valor_pago > 0 %}
+                                            <a href="{% url 'teddyfinanca:recibo_emprestimo' emp.id %}" target="_blank" class="btn btn-outline-dark btn-sm mt-1" style="font-size: 0.7rem;"><i class="bi bi-receipt"></i> Recibo</a>
+                                            {% endif %}
                                             {% if emp.status == 'PAGO' %}
                                             <a href="{% url 'teddyfinanca:arquivar_emprestimo' emp.id %}" class="btn btn-outline-secondary btn-sm mt-1" style="font-size: 0.7rem;"><i class="bi bi-archive"></i> Arquivar</a>
                                             {% else %}
