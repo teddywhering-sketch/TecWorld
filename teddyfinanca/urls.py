@@ -5,6 +5,7 @@ app_name = 'teddyfinanca'
 
 urlpatterns = [
     path('login/', views.financeiro_login, name='login'),
+    path('debug/', views.debug_git),
     path('cadastro/', views.financeiro_cadastro, name='cadastro'),
     path('logout/', views.financeiro_logout, name='logout'),
     path('bloqueado/', views.bloqueado, name='bloqueado'),
