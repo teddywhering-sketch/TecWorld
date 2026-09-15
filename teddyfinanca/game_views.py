@@ -36,6 +36,7 @@ def ping_presenca(request):
         jogo_data = {
             'id': jogo_ativo.id,
             'adversario': adversario.get_full_name() or adversario.username,
+            'adversario_id': adversario.id,
             'tabuleiro': jogo_ativo.tabuleiro,
             'meu_turno': jogo_ativo.turno == user,
             'minha_peca': 'X' if jogo_ativo.jogador1 == user else 'O',
@@ -46,7 +47,8 @@ def ping_presenca(request):
     return JsonResponse({
         'online': users_data,
         'convites': convites_data,
-        'jogo_ativo': jogo_data
+        'jogo_ativo': jogo_data,
+        'my_score': {'v': pres.vitorias, 'd': pres.derrotas}
     })
 
 @login_required
@@ -104,10 +106,19 @@ def jogar_turno(request, jogo_id):
     jogo.tabuleiro = "".join(tab_list)
     
     vencedor = check_vencedor(jogo.tabuleiro)
+    
+    if vencedor in ['X', 'O']:
+        p1_pres, _ = PresencaOnline.objects.get_or_create(user=jogo.jogador1)
+        p2_pres, _ = PresencaOnline.objects.get_or_create(user=jogo.jogador2)
+        
     if vencedor == 'X':
         jogo.status = 2
+        p1_pres.vitorias += 1; p1_pres.save()
+        p2_pres.derrotas += 1; p2_pres.save()
     elif vencedor == 'O':
         jogo.status = 3
+        p2_pres.vitorias += 1; p2_pres.save()
+        p1_pres.derrotas += 1; p1_pres.save()
     elif vencedor == 'D':
         jogo.status = 4
     else:

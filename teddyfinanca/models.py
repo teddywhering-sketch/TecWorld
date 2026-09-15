@@ -303,3 +303,5 @@ class JogoVelha(models.Model):
 class PresencaOnline(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     ultima_atividade = models.DateTimeField(auto_now=True)
+    vitorias = models.IntegerField(default=0)
+    derrotas = models.IntegerField(default=0)
