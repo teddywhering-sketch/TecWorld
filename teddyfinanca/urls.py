@@ -1,5 +1,7 @@
 from django.urls import path
 from . import views
+from . import game_views
+
 
 app_name = 'teddyfinanca'
 
@@ -35,4 +37,12 @@ urlpatterns = [
     path('api/logan/', views.api_logan, name='api_logan'),
     path('api/banco/vincular/', views.vincular_banco_pluggy, name='vincular_banco_pluggy'),
     path('limpar-pluggy/', views.limpar_pluggy_vps, name='limpar_pluggy_vps'),
+
+    path('game/ping/', game_views.ping_presenca, name='game_ping'),
+    path('game/convidar/<int:adversario_id>/', game_views.convidar_jogador, name='game_convidar'),
+    path('game/aceitar/<int:jogo_id>/', game_views.aceitar_convite, name='game_aceitar'),
+    path('game/recusar/<int:jogo_id>/', game_views.recusar_convite, name='game_recusar'),
+    path('game/jogar/<int:jogo_id>/', game_views.jogar_turno, name='game_jogar'),
+    path('game/status/<int:jogo_id>/', game_views.status_jogo, name='game_status'),
 ]
+

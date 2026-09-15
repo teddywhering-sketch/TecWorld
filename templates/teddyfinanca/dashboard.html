@@ -280,6 +280,42 @@
                         </div>
                     </div>
                     {% endif %}
+
+                    <!-- Jogo da Velha Multiplayer -->
+                    <div class="card border-0 shadow-sm mt-4" style="border-radius: 16px; background: linear-gradient(145deg, #f0f4f8, #e0e7f1);">
+                        <div class="card-body p-4 text-center">
+                            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-controller me-2"></i>Hora do Jogo! (Online)</h6>
+                            
+                            <div id="game-lobby">
+                                <p class="small text-muted mb-2">Colegas disponíveis:</p>
+                                <div id="online-users" class="d-flex flex-wrap gap-2 justify-content-center mb-3">
+                                    <span class="small text-muted">Buscando...</span>
+                                </div>
+                                <div id="game-invites"></div>
+                            </div>
+
+                            <div id="game-board-container" style="display: none;">
+                                <div class="d-flex justify-content-between align-items-center mb-2 px-3">
+                                    <span class="fw-bold text-primary fs-5" id="game-p1-label">P1</span>
+                                    <span class="fw-bold text-dark" id="game-status-text">Iniciando...</span>
+                                    <span class="fw-bold text-danger fs-5" id="game-p2-label">P2</span>
+                                </div>
+                                <div class="d-inline-flex flex-wrap justify-content-center" style="width: 170px;">
+                                    <button class="btn btn-white shadow-sm fw-bold fs-3 m-1 board-cell" data-pos="0" style="width: 48px; height: 48px; border-radius: 12px;"></button>
+                                    <button class="btn btn-white shadow-sm fw-bold fs-3 m-1 board-cell" data-pos="1" style="width: 48px; height: 48px; border-radius: 12px;"></button>
+                                    <button class="btn btn-white shadow-sm fw-bold fs-3 m-1 board-cell" data-pos="2" style="width: 48px; height: 48px; border-radius: 12px;"></button>
+                                    <button class="btn btn-white shadow-sm fw-bold fs-3 m-1 board-cell" data-pos="3" style="width: 48px; height: 48px; border-radius: 12px;"></button>
+                                    <button class="btn btn-white shadow-sm fw-bold fs-3 m-1 board-cell" data-pos="4" style="width: 48px; height: 48px; border-radius: 12px;"></button>
+                                    <button class="btn btn-white shadow-sm fw-bold fs-3 m-1 board-cell" data-pos="5" style="width: 48px; height: 48px; border-radius: 12px;"></button>
+                                    <button class="btn btn-white shadow-sm fw-bold fs-3 m-1 board-cell" data-pos="6" style="width: 48px; height: 48px; border-radius: 12px;"></button>
+                                    <button class="btn btn-white shadow-sm fw-bold fs-3 m-1 board-cell" data-pos="7" style="width: 48px; height: 48px; border-radius: 12px;"></button>
+                                    <button class="btn btn-white shadow-sm fw-bold fs-3 m-1 board-cell" data-pos="8" style="width: 48px; height: 48px; border-radius: 12px;"></button>
+                                </div>
+                                <button class="btn btn-sm btn-secondary w-100 mt-3 rounded-pill" onclick="sairJogo()" id="btn-sair-jogo" style="display:none;">Sair da Partida</button>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
                 <!-- Coluna Direita: Extrato -->
@@ -1531,6 +1567,148 @@ document.addEventListener("DOMContentLoaded", function() {
   </div>
 </div>
 
-    </body>
+    
+<!-- Scripts Jogo da Velha -->
+<script>
+const getCookie = (name) => {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+};
+const csrftoken = getCookie('csrftoken');\nlet currentJogoId = null;
+let minhaPeca = '';
+let meuTurno = false;
+
+function csrfFetch(url, data) {
+    const fd = new FormData();
+    for (const key in data) fd.append(key, data[key]);
+    return fetch(url, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') },
+        body: fd
+    });
+}
+
+function convidarJogador(id) {
+    csrfFetch(`/financeiro/game/convidar/${id}/`, {}).then(res=>res.json()).then(data=>{
+        if(data.status==='ok') alert('Convite enviado! Aguarde...');
+    });
+}
+
+function aceitarConvite(id) {
+    csrfFetch(`/financeiro/game/aceitar/${id}/`, {}).then(res=>res.json());
+}
+
+function recusarConvite(id) {
+    csrfFetch(`/financeiro/game/recusar/${id}/`, {});
+}
+
+function sairJogo() {
+    if (currentJogoId) {
+        csrfFetch(`/financeiro/game/recusar/${currentJogoId}/`, {}).then(() => {
+            currentJogoId = null;
+            document.getElementById('game-board-container').style.display = 'none';
+            document.getElementById('game-lobby').style.display = 'block';
+        });
+    }
+}
+
+document.querySelectorAll('.board-cell').forEach(btn => {
+    btn.addEventListener('click', function() {
+        if (!meuTurno) return;
+        if (this.innerText !== '') return;
+        
+        const pos = this.dataset.pos;
+        this.innerText = minhaPeca;
+        this.classList.add(minhaPeca === 'X' ? 'text-primary' : 'text-danger');
+        meuTurno = false;
+        document.getElementById('game-status-text').innerText = 'Aguarde...';
+        
+        csrfFetch(`/financeiro/game/jogar/${currentJogoId}/`, {pos: pos});
+    });
+});
+
+setInterval(() => {
+    fetch('/financeiro/game/ping/').then(r=>r.json()).then(data => {
+        if (!data.jogo_ativo) {
+            document.getElementById('game-board-container').style.display = 'none';
+            document.getElementById('game-lobby').style.display = 'block';
+            
+            const usersDiv = document.getElementById('online-users');
+            usersDiv.innerHTML = data.online.length === 0 ? '<span class="small text-muted">Nenhum colega online</span>' : '';
+            data.online.forEach(u => {
+                const b = document.createElement('button');
+                b.className = 'btn btn-sm btn-outline-success rounded-pill px-3';
+                b.innerHTML = `<i class="bi bi-play-circle me-1"></i> ${u.nome}`;
+                b.onclick = () => convidarJogador(u.id);
+                usersDiv.appendChild(b);
+            });
+            
+            const invitesDiv = document.getElementById('game-invites');
+            invitesDiv.innerHTML = '';
+            data.convites.forEach(c => {
+                invitesDiv.innerHTML += `<div class="alert alert-info py-2 small mb-2 d-flex justify-content-between align-items-center border-0 shadow-sm" style="border-radius: 12px;">
+                    <span class="fw-bold">${c.nome} chamou!</span>
+                    <div>
+                        <button class="btn btn-sm btn-success rounded-circle p-1 me-1" style="width: 28px; height: 28px;" onclick="aceitarConvite(${c.id})"><i class="bi bi-check"></i></button>
+                        <button class="btn btn-sm btn-danger rounded-circle p-1" style="width: 28px; height: 28px;" onclick="recusarConvite(${c.id})"><i class="bi bi-x"></i></button>
+                    </div>
+                </div>`;
+            });
+        }
+        
+        if (data.jogo_ativo) {
+            document.getElementById('game-lobby').style.display = 'none';
+            document.getElementById('game-board-container').style.display = 'block';
+            
+            currentJogoId = data.jogo_ativo.id;
+            meuTurno = data.jogo_ativo.status === 1 ? data.jogo_ativo.meu_turno : false;
+            minhaPeca = data.jogo_ativo.minha_peca;
+            
+            document.getElementById('game-p1-label').innerText = data.jogo_ativo.p1 ? 'Você (X)' : data.jogo_ativo.adversario + ' (X)';
+            document.getElementById('game-p2-label').innerText = !data.jogo_ativo.p1 ? 'Você (O)' : data.jogo_ativo.adversario + ' (O)';
+            
+            let stText = 'Aguarde...';
+            const st = data.jogo_ativo.status;
+            const btnSair = document.getElementById('btn-sair-jogo');
+            
+            if (st === 1) {
+                stText = meuTurno ? 'Sua vez!' : 'Vez do rival';
+                btnSair.style.display = 'none';
+            } else if (st === 2) {
+                stText = data.jogo_ativo.p1 ? 'Você venceu!' : 'Você perdeu!';
+                btnSair.style.display = 'block';
+            } else if (st === 3) {
+                stText = !data.jogo_ativo.p1 ? 'Você venceu!' : 'Você perdeu!';
+                btnSair.style.display = 'block';
+            } else if (st === 4) {
+                stText = 'Empate!';
+                btnSair.style.display = 'block';
+            }
+            
+            document.getElementById('game-status-text').innerText = stText;
+            
+            const board = data.jogo_ativo.tabuleiro;
+            document.querySelectorAll('.board-cell').forEach((btn, i) => {
+                btn.innerText = board[i] === ' ' ? '' : board[i];
+                btn.className = 'btn btn-white shadow-sm fw-bold fs-3 m-1 board-cell'; // reset
+                if (board[i] === 'X') btn.classList.add('text-primary');
+                if (board[i] === 'O') btn.classList.add('text-danger');
+            });
+        }
+    });
+}, 3000);
+</script>
+
+</body>
 
 </html>

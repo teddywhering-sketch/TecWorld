@@ -289,3 +289,17 @@ class Perfil(models.Model):
 
     def __str__(self):
         return f"Perfil de {self.usuario.username}"
+
+# --- Jogo da Velha (Easter Egg / Multiplayer) ---
+class JogoVelha(models.Model):
+    jogador1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='jogos_velha_p1')
+    jogador2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='jogos_velha_p2')
+    status = models.IntegerField(default=0) # 0=esperando, 1=jogando, 2=p1 venceu, 3=p2 venceu, 4=empate, 5=recusado
+    tabuleiro = models.CharField(max_length=9, default='         ')
+    turno = models.ForeignKey(User, on_delete=models.CASCADE, related_name='jogos_velha_turnos', null=True, blank=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+class PresencaOnline(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    ultima_atividade = models.DateTimeField(auto_now=True)
