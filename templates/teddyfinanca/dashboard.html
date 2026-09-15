@@ -1584,7 +1584,8 @@ const getCookie = (name) => {
     }
     return cookieValue;
 };
-const csrftoken = getCookie('csrftoken');\nlet currentJogoId = null;
+const csrftoken = getCookie('csrftoken');
+let currentJogoId = null;
 let minhaPeca = '';
 let meuTurno = false;
 
