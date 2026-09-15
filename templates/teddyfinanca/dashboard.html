@@ -1389,6 +1389,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 1. Pega o Connect Token do nosso backend Django
                 const response = await fetch('/financeiro/api/connect-token/', { 
                     method: 'POST',
+        credentials: 'same-origin',
                     headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '' }
                 });
                 
@@ -1406,6 +1407,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 
                                 const resVincular = await fetch('/financeiro/api/banco/vincular/', {
                                     method: 'POST',
+        credentials: 'same-origin',
                                     headers: { 
                                         'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
                                         'Content-Type': 'application/json'
@@ -1594,6 +1596,7 @@ function csrfFetch(url, data) {
     for (const key in data) fd.append(key, data[key]);
     return fetch(url, {
         method: 'POST',
+        credentials: 'same-origin',
         headers: { 'X-CSRFToken': getCookie('csrftoken') },
         body: fd
     });
@@ -1639,7 +1642,7 @@ document.querySelectorAll('.board-cell').forEach(btn => {
 });
 
 setInterval(() => {
-    fetch('/financeiro/game/ping/').then(r=>r.json()).then(data => {
+    fetch('/financeiro/game/ping/', { credentials: 'same-origin' }).then(r=>r.json()).then(data => {
         if (!data.jogo_ativo) {
             document.getElementById('game-board-container').style.display = 'none';
             document.getElementById('game-lobby').style.display = 'block';
