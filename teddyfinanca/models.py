@@ -103,6 +103,36 @@ class VendaParcelada(models.Model):
         pago = pendentes.aggregate(pago=Sum('valor_pago'))['pago'] or 0
         return total - pago
 
+class Venda(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    cliente = models.CharField(max_length=200)
+    descricao = models.TextField(verbose_name="Descrição da Venda")
+    valor = models.DecimalField(max_digits=12, decimal_places=2)
+    banco = models.ForeignKey('Banco', on_delete=models.SET_NULL, null=True, verbose_name="Receber em qual Banco?")
+    data_venda = models.DateField(default=timezone.now)
+    arquivado = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = "Venda à Vista"
+        verbose_name_plural = "Vendas à Vista"
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        if is_new and self.banco:
+            Transacao.objects.create(
+                usuario=self.usuario,
+                banco=self.banco,
+                tipo='ENTRADA',
+                valor=self.valor,
+                descricao=f"Venda: {self.descricao} ({self.cliente})",
+                data=self.data_venda,
+                status='CONCLUIDO'
+            )
+
+    def __str__(self):
+        return f"Venda {self.cliente} - {self.valor}"
+
     def __str__(self):
         return f"Venda para {self.cliente} - R$ {self.valor_total}"
 
@@ -191,6 +221,14 @@ class CompraParcelada(models.Model):
         total = pendentes.aggregate(total=Sum('valor'))['total'] or 0
         pago = pendentes.aggregate(pago=Sum('valor_pago'))['pago'] or 0
         return total - pago
+
+    @property
+    def progresso(self):
+        if self.valor_total <= 0:
+            return 100
+        restante = self.valor_restante
+        pago = self.valor_total - restante
+        return int((pago / self.valor_total) * 100)
 
     def __str__(self):
         return f"Compra: {self.descricao} - {self.quantidade_parcelas}x"

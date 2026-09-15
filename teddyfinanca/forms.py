@@ -1,5 +1,5 @@
 from django import forms
-from .models import Perfil, Transacao, Divida, Emprestimo, VendaParcelada, Banco, Categoria
+from .models import Perfil, Transacao, Divida, Emprestimo, VendaParcelada, Venda, Banco, Categoria
 
 class LocalizedModelForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
@@ -57,10 +57,20 @@ class DividaForm(LocalizedModelForm):
             'valor': 'Valor Total (Ou Mensalidade)'
         }
 
+class VendaForm(LocalizedModelForm):
+    class Meta:
+        model = Venda
+        fields = ['cliente', 'descricao', 'valor', 'data_venda']
+        widgets = {
+            'data_venda': forms.DateInput(attrs={'type': 'date'}),
+        }
+
 class EmprestimoForm(LocalizedModelForm):
+    juros_percentual = forms.DecimalField(max_digits=5, decimal_places=2, required=False, label="Juros Cobrado (%)", help_text="Opcional. Calcula automaticamente o total.")
+    
     class Meta:
         model = Emprestimo
-        fields = ['nome_pessoa', 'valor', 'data_emprestimo', 'data_devolucao', 'status', 'observacao']
+        fields = ['nome_pessoa', 'valor', 'juros_percentual', 'data_emprestimo', 'data_devolucao', 'status', 'observacao']
         widgets = {
             'data_emprestimo': forms.DateInput(attrs={'type': 'date'}),
             'data_devolucao': forms.DateInput(attrs={'type': 'date'}),

@@ -21,36 +21,38 @@
             });
         }
     </script>
+    
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { 
-            background-color: #f0f2f5; 
+            background-color: #f5f7fa; 
             padding-bottom: 70px; /* Espaço para a barra inferior */
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         
         /* Estilo da App Bar no Topo */
         .app-header {
-            background-color: #198754;
+            background: linear-gradient(135deg, #198754 0%, #0f5132 100%);
             color: white;
-            padding: 15px;
+            padding: 25px 20px 45px 20px;
             text-align: center;
             font-weight: bold;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-bottom-left-radius: 30px;
+            border-bottom-right-radius: 30px;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 0;
         }
 
         /* Barra de Navegação Inferior (Bottom Nav) */
         .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background-color: #ffffff;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
             display: flex;
             justify-content: space-around;
-            padding: 10px 0;
-            z-index: 1000;
+            padding: 5px 0;
         }
         .bottom-nav .nav-link {
             color: #6c757d;
@@ -62,6 +64,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            border: none;
         }
         .bottom-nav .nav-link.active {
             color: #198754;
@@ -75,27 +78,26 @@
 
         /* Cards Superiores */
         .summary-card {
-            border-radius: 15px;
+            border-radius: 12px;
             border: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
         
         .horizontal-cards {
             display: flex;
             flex-wrap: nowrap;
             overflow-x: auto;
-            padding-bottom: 10px;
+            padding-bottom: 5px;
             -webkit-overflow-scrolling: touch;
             scrollbar-width: none; /* Firefox */
-            scroll-snap-type: x mandatory;
         }
         .horizontal-cards::-webkit-scrollbar {
             display: none; /* Chrome */
         }
         .horizontal-cards > div {
-            flex: 0 0 45%;
-            min-width: 140px;
-            scroll-snap-align: start;
+            flex: 0 0 auto;
+            min-width: 125px; /* Reduzido para caber mais na tela */
+            max-width: 150px;
         }
         @media (min-width: 768px) {
             .horizontal-cards {
@@ -104,7 +106,7 @@
                 padding-bottom: 0;
             }
             .horizontal-cards > div {
-                flex: 0 0 25%;
+                flex: 1 1 18%; /* 5 cards cabem perfeitamente lado a lado no desktop */
                 min-width: auto;
             }
         }
@@ -147,7 +149,7 @@
     <a href="{% url 'teddyfinanca:logout' %}" class="text-white text-decoration-none"><i class="bi bi-box-arrow-right"></i> Sair</a>
 </div>
 
-<div class="container mt-3">
+<div class="container mt-3 position-relative" style="z-index: 1;">
     {% if messages %}
         {% for message in messages %}
             <div class="alert alert-success alert-dismissible fade show">
@@ -163,153 +165,202 @@
         <div class="tab-pane fade show active" id="fluxo" role="tabpanel">
             
             <!-- Resumo no Topo -->
-            <div class="row g-2 mb-3 horizontal-cards">
-                <div class="col-6 col-md-3">
-                    <div class="card summary-card bg-primary text-white h-100">
-                        <div class="card-body p-3 text-center">
-                            <small>Em Bancos</small>
-                            <h5 class="mb-0 mt-1">R$ {{ total_saldo|floatformat:"2g" }}</h5>
-                            <small class="d-block mt-1" style="font-size: 0.75rem; opacity: 0.9;">Crédito Disp: R$ {{ total_credito|floatformat:"2g" }}</small>
+            <!-- Resumo no Topo -->
+            <div class="row flex-nowrap g-2 mb-4 px-1" style="overflow-x: auto; padding-bottom: 5px;">
+                <div class="col" style="min-width: 120px;">
+                    <div class="card summary-card bg-primary text-white h-100 shadow-sm border-0" style="border-radius: 12px;">
+                        <div class="card-body p-2 d-flex flex-column justify-content-between text-center">
+                            <div class="text-white-50 mb-1 fw-semibold d-flex flex-column align-items-center" style="font-size: 0.65rem;"><i class="bi bi-bank fs-6 text-white mb-1"></i> Bancos</div>
+                            <h6 class="mb-0 fw-bold" style="font-size: 0.85rem;">R$ {{ total_saldo|floatformat:"2g" }}</h6>
                         </div>
                     </div>
                 </div>
-                <div class="col-6 col-md-3">
-                    <div class="card summary-card bg-success text-white h-100">
-                        <div class="card-body p-3 text-center">
-                            <small>Entradas (Mês)</small>
-                            <h5 class="mb-0 mt-1">+ R$ {{ entradas_mes|floatformat:"2g" }}</h5>
+                <div class="col" style="min-width: 120px;">
+                    <div class="card summary-card bg-success text-white h-100 shadow-sm border-0" style="border-radius: 12px;">
+                        <div class="card-body p-2 d-flex flex-column justify-content-between text-center">
+                            <div class="text-white-50 mb-1 fw-semibold d-flex flex-column align-items-center" style="font-size: 0.65rem;"><i class="bi bi-arrow-down-circle-fill fs-6 text-white mb-1"></i> Entradas</div>
+                            <h6 class="mb-0 fw-bold" style="font-size: 0.85rem;">+ R$ {{ entradas_mes|floatformat:"2g" }}</h6>
                         </div>
                     </div>
                 </div>
-                <div class="col-6 col-md-3">
-                    <div class="card summary-card bg-info text-white h-100">
-                        <div class="card-body p-3 text-center">
-                            <small>Gastos (Mês)</small>
-                            <h5 class="mb-0 mt-1">- R$ {{ saidas_mes|floatformat:"2g" }}</h5>
+                <div class="col" style="min-width: 120px;">
+                    <div class="card summary-card bg-info text-white h-100 shadow-sm border-0" style="border-radius: 12px;">
+                        <div class="card-body p-2 d-flex flex-column justify-content-between text-center">
+                            <div class="text-white-50 mb-1 fw-semibold d-flex flex-column align-items-center" style="font-size: 0.65rem;"><i class="bi bi-arrow-up-circle-fill fs-6 text-white mb-1"></i> Gastos</div>
+                            <h6 class="mb-0 fw-bold" style="font-size: 0.85rem;">- R$ {{ saidas_mes|floatformat:"2g" }}</h6>
                         </div>
                     </div>
                 </div>
-                <div class="col-6 col-md-3">
-                    <div class="card summary-card bg-warning text-dark h-100">
-                        <div class="card-body p-3 text-center">
-                            <small>A Receber</small>
-                            <h5 class="mb-0 mt-1">R$ {{ total_receber|floatformat:"2g" }}</h5>
+                <div class="col" style="min-width: 120px;">
+                    <div class="card summary-card bg-warning text-dark h-100 shadow-sm border-0" style="border-radius: 12px;">
+                        <div class="card-body p-2 d-flex flex-column justify-content-between text-center">
+                            <div class="text-muted mb-1 fw-semibold d-flex flex-column align-items-center" style="font-size: 0.65rem;"><i class="bi bi-clock-history fs-6 text-dark mb-1"></i> A Receber</div>
+                            <h6 class="mb-0 fw-bold text-dark" style="font-size: 0.85rem;">R$ {{ total_receber|floatformat:"2g" }}</h6>
                         </div>
                     </div>
                 </div>
-                <div class="col-6 col-md-3">
-                    <div class="card summary-card bg-danger text-white h-100">
-                        <div class="card-body p-3 text-center">
-                            <small>Total Dívidas Pendentes</small>
-                            <h5 class="mb-0 mt-1">R$ {{ total_pagar|floatformat:"2g" }}</h5>
+                <div class="col" style="min-width: 120px;">
+                    <div class="card summary-card bg-danger text-white h-100 shadow-sm border-0" style="border-radius: 12px;">
+                        <div class="card-body p-2 d-flex flex-column justify-content-between text-center">
+                            <div class="text-white-50 mb-1 fw-semibold d-flex flex-column align-items-center" style="font-size: 0.65rem;"><i class="bi bi-exclamation-triangle fs-6 text-white mb-1"></i> Dívidas</div>
+                            <h6 class="mb-0 fw-bold" style="font-size: 0.85rem;">R$ {{ total_pagar|floatformat:"2g" }}</h6>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Alertas de Atrasos -->
-            {% if dividas_atrasadas or emprestimos_atrasados or parcelas_atrasadas %}
-            <div class="mb-4">
-                {% for d in dividas_atrasadas %}
-                <div class="alert alert-danger py-2 mb-2 d-flex justify-content-between align-items-center" role="alert" style="font-size: 0.85rem; border-radius: 10px;">
-                    <div><i class="bi bi-exclamation-triangle-fill me-1"></i> Dívida Vencida: <strong>{{ d.descricao }}</strong></div>
-                    <div class="text-end">
-                        <span class="d-block fw-bold">R$ {{ d.restante|floatformat:"2g" }}</span>
-                        <small>{{ d.dias_para_vencer|stringformat:"+d"|slice:"1:" }} dias de atraso</small>
+            <div class="row g-4 mb-4 mt-2">
+                <!-- Coluna Esquerda: Gráfico e Atrasos -->
+                <div class="col-12 col-lg-5 d-flex flex-column gap-4">
+                    <div class="card border-0 shadow-sm" style="border-radius: 16px;">
+                        <div class="card-body p-4 text-center d-flex flex-column justify-content-between">
+                            <h6 class="fw-bold text-dark mb-4 text-start" style="font-size: 1.1rem;">Balanço do Mês</h6>
+                            
+                            <div style="position: relative; height: 180px; width: 100%; display: flex; justify-content: center; align-items: center;">
+                                <canvas id="chartGeral"></canvas>
+                                <!-- Caso não haja dados -->
+                                {% if entradas_mes == 0 and saidas_mes == 0 %}
+                                <span class="position-absolute text-muted small">Sem dados no mês</span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="d-flex justify-content-around mt-4 pt-3 border-top border-light">
+                                <div class="text-start">
+                                    <span class="d-block text-muted small fw-semibold"><i class="bi bi-circle-fill text-success me-1" style="font-size: 0.5rem;"></i> Entradas</span>
+                                    <span class="fw-bold text-success fs-5">R$ {{ entradas_mes|floatformat:"2g" }}</span>
+                                </div>
+                                <div class="text-end">
+                                    <span class="d-block text-muted small fw-semibold"><i class="bi bi-circle-fill text-danger me-1" style="font-size: 0.5rem;"></i> Gastos</span>
+                                    <span class="fw-bold text-danger fs-5">R$ {{ saidas_mes|floatformat:"2g" }}</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                {% endfor %}
-                {% for e in emprestimos_atrasados %}
-                <div class="alert alert-warning py-2 mb-2 d-flex justify-content-between align-items-center" role="alert" style="font-size: 0.85rem; border-radius: 10px;">
-                    <div><i class="bi bi-clock-history me-1"></i> Receber Atrasado: <strong>{{ e.nome_pessoa }}</strong></div>
-                    <div class="text-end">
-                        <span class="d-block fw-bold">R$ {{ e.restante|floatformat:"2g" }}</span>
-                        <small>{{ e.dias_para_receber|stringformat:"+d"|slice:"1:" }} dias de atraso</small>
+                    
+                    {% if dividas_atrasadas or emprestimos_atrasados or parcelas_atrasadas %}
+                    <div class="card border-0 shadow-sm flex-grow-1" style="border-radius: 16px;">
+                        <div class="card-body p-4">
+                            <h6 class="fw-bold text-dark mb-3" style="font-size: 1.1rem;">Pendências Vencidas</h6>
+                            
+                            <div id="atrasos-container">
+                                {% for d in dividas_atrasadas %}
+                                <div class="atraso-item alert alert-danger py-2 mb-2 d-flex justify-content-between align-items-center border-0" role="alert" style="font-size: 0.85rem; border-radius: 10px; background: rgba(220,53,69,0.1);">
+                                    <div><i class="bi bi-exclamation-triangle-fill text-danger me-1"></i> <span class="text-dark">Dívida: <strong>{{ d.descricao }}</strong></span></div>
+                                    <div class="text-end">
+                                        <span class="d-block fw-bold text-danger">R$ {{ d.restante|floatformat:"2g" }}</span>
+                                        <small class="text-muted">{{ d.dias_para_vencer|stringformat:"+d"|slice:"1:" }} dias atrás</small>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                {% for e in emprestimos_atrasados %}
+                                <div class="atraso-item alert alert-warning py-2 mb-2 d-flex justify-content-between align-items-center border-0" role="alert" style="font-size: 0.85rem; border-radius: 10px; background: rgba(255,193,7,0.1);">
+                                    <div><i class="bi bi-clock-history text-warning me-1"></i> <span class="text-dark">Receber: <strong>{{ e.nome_pessoa }}</strong></span></div>
+                                    <div class="text-end">
+                                        <span class="d-block fw-bold text-warning">R$ {{ e.restante|floatformat:"2g" }}</span>
+                                        <small class="text-muted">{{ e.dias_para_receber|stringformat:"+d"|slice:"1:" }} dias atrás</small>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                {% for p in parcelas_atrasadas %}
+                                <div class="atraso-item alert alert-warning py-2 mb-2 d-flex justify-content-between align-items-center border-0" role="alert" style="font-size: 0.85rem; border-radius: 10px; background: rgba(255,193,7,0.1);">
+                                    <div><i class="bi bi-clock-history text-warning me-1"></i> <span class="text-dark">Venda: <strong>{{ p.venda.cliente }}</strong></span></div>
+                                    <div class="text-end">
+                                        <span class="d-block fw-bold text-warning">R$ {{ p.restante|floatformat:"2g" }}</span>
+                                        <small class="text-muted">{{ p.dias_para_vencer|stringformat:"+d"|slice:"1:" }} dias atrás</small>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top border-light" id="atrasos-pagination" style="display: none !important;">
+                                <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" id="btn-prev-atraso" disabled><i class="bi bi-chevron-left"></i></button>
+                                <span class="text-muted small fw-semibold" id="atraso-page-info"></span>
+                                <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" id="btn-next-atraso"><i class="bi bi-chevron-right"></i></button>
+                            </div>
+                        </div>
                     </div>
+                    {% endif %}
                 </div>
-                {% endfor %}
-                {% for p in parcelas_atrasadas %}
-                <div class="alert alert-warning py-2 mb-2 d-flex justify-content-between align-items-center" role="alert" style="font-size: 0.85rem; border-radius: 10px;">
-                    <div><i class="bi bi-clock-history me-1"></i> Venda Vencida: <strong>{{ p.venda.cliente }} (Parc. {{ p.numero }})</strong></div>
-                    <div class="text-end">
-                        <span class="d-block fw-bold">R$ {{ p.restante|floatformat:"2g" }}</span>
-                        <small>{{ p.dias_para_vencer|stringformat:"+d"|slice:"1:" }} dias de atraso</small>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
 
-            <!-- Mini Pizza e Lançamentos Lado a Lado -->
-            <div class="card summary-card mb-4">
-                <div class="card-body p-3">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h6 class="mb-0 text-muted">Fluxo e Gráfico</h6>
-                        <div>
-                            <button class="btn btn-outline-secondary rounded-pill fw-bold shadow-sm px-3 me-2" data-bs-toggle="modal" data-bs-target="#modalCategorias">Categorias</button>
-                            <button class="btn btn-success rounded-pill fw-bold shadow-sm px-3" data-bs-toggle="modal" data-bs-target="#modalTransacao">+ Lançar</button>
-                        </div>
-                    </div>
-                    <div class="row g-3">
-                        <!-- Coluna do Gráfico -->
-                        <div class="col-12 col-md-5 text-center mb-3 mb-md-0">
-                            <div class="grafico-container mx-auto">
-                                <canvas id="miniPie"></canvas>
+                <!-- Coluna Direita: Extrato -->
+                <div class="col-12 col-lg-7">
+                    <div class="card border-0 shadow-sm h-100" style="border-radius: 16px;">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold text-dark mb-0" style="font-size: 1.1rem;">Histórico</h6>
+                                <button class="btn btn-sm btn-outline-secondary rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#modalCategorias">
+                                    <i class="bi bi-tags"></i> Categorias
+                                </button>
                             </div>
-                            <div class="mt-3" style="font-size: 1.1rem; line-height: 1.5;">
-                                <span class="text-success fw-bold d-block"><i class="bi bi-arrow-up-short fs-4 align-middle"></i> R$ {{ entradas_mes|floatformat:"2g" }}</span>
-                                <span class="text-danger fw-bold d-block"><i class="bi bi-arrow-down-short fs-4 align-middle"></i> R$ {{ saidas_mes|floatformat:"2g" }}</span>
+                            
+                            <!-- Filtros e Busca -->
+                            <div class="mb-3">
+                                <div class="input-group mb-2 shadow-sm rounded-pill overflow-hidden border">
+                                    <span class="input-group-text bg-white border-0 ps-3 text-muted"><i class="bi bi-search"></i></span>
+                                    <input type="text" id="searchInput" class="form-control border-0 shadow-none" placeholder="Buscar transação..." style="font-size: 0.9rem;">
+                                </div>
+                                <div class="d-flex gap-2 overflow-auto py-1" style="-webkit-overflow-scrolling: touch; scrollbar-width: none;">
+                                    <button class="filter-btn btn btn-dark rounded-pill btn-sm px-3 shadow-sm border-0" data-filter="all">Todas contas</button>
+                                    <button class="filter-btn btn btn-outline-secondary bg-white rounded-pill btn-sm px-3 shadow-sm border-0" data-filter="all">Todos</button>
+                                    <button class="filter-btn btn btn-outline-secondary bg-white text-success rounded-pill btn-sm px-3 shadow-sm border-0" data-filter="ENTRADA"><i class="bi bi-arrow-down-short"></i> Entradas</button>
+                                    <button class="filter-btn btn btn-outline-secondary bg-white text-danger rounded-pill btn-sm px-3 shadow-sm border-0" data-filter="SAIDA"><i class="bi bi-arrow-up-short"></i> Saídas</button>
+                                </div>
                             </div>
-                        </div>
-                        <!-- Coluna do Extrato -->
-                        <div class="col-12 col-md-7">
-                            <div class="list-group list-group-flush">
+                            
+                            <div class="list-group list-group-flush" id="transactionsList">
                                 {% for t in transacoes %}
-                                <div class="list-group-item px-1 py-2 border-bottom" style="font-size: 0.8rem;">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="text-truncate fw-semibold" style="max-width: 90px;">{{ t.descricao }}</span>
+                                <div class="list-group-item px-0 py-3 border-bottom border-light">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <div class="d-flex align-items-center overflow-hidden">
+                                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 42px; height: 42px;">
+                                                {% if t.tipo == 'ENTRADA' %}
+                                                <i class="bi bi-arrow-down-short fs-4 text-success"></i>
+                                                {% else %}
+                                                <i class="bi bi-arrow-up-short fs-4 text-danger"></i>
+                                                {% endif %}
+                                            </div>
+                                            <span class="fw-semibold text-dark text-truncate" style="max-width: 150px; font-size: 0.95rem;">{{ t.descricao }}</span>
+                                        </div>
+                                        
                                         {% if t.tipo == 'ENTRADA' %}
-                                        <span class="text-success fw-bold text-nowrap">+ R$ {{ t.valor|floatformat:"2g" }}</span>
+                                        <span class="text-success fw-bold text-nowrap" style="font-size: 0.95rem;">
+                                            + R$ {{ t.valor|floatformat:"2g" }}
+                                        </span>
                                         {% else %}
-                                        <span class="text-danger fw-bold text-nowrap">- R$ {{ t.valor|floatformat:"2g" }}</span>
+                                        <span class="text-dark fw-bold text-nowrap" style="font-size: 0.95rem;">
+                                            - R$ {{ t.valor|floatformat:"2g" }}
+                                        </span>
                                         {% endif %}
                                     </div>
-                                    <div class="d-flex justify-content-between text-muted" style="font-size: 0.7rem;">
+                                    <div class="d-flex justify-content-between text-muted ms-5 ps-2" style="font-size: 0.75rem;">
                                         <span>{{ t.data|date:"d/m/Y" }}</span>
                                         <span>{{ t.banco.nome|default:"-" }} ({{ t.get_forma_pagamento_display }})</span>
                                     </div>
                                 </div>
                                 {% empty %}
-                                <div class="text-center text-muted small py-3">Nenhum fluxo lançado.</div>
+                                <div class="text-center text-muted small py-4">
+                                    <i class="bi bi-receipt fs-1 text-light mb-2 d-block"></i>
+                                    Nenhuma transação lançada.
+                                </div>
                                 {% endfor %}
                             </div>
                             
-                            <!-- Paginação Extrato -->
+                            <!-- Paginação Extrato (Clean) -->
                             {% if transacoes.has_other_pages %}
-                            <div class="d-flex justify-content-center mt-2">
-                                <ul class="pagination pagination-sm mb-0">
-                                    {% if transacoes.has_previous %}
-                                    <li class="page-item"><a class="page-link" href="?page_transacao={{ transacoes.previous_page_number }}">&laquo;</a></li>
-                                    {% else %}
-                                    <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
-                                    {% endif %}
-                                    
-                                    {% for i in transacoes.paginator.page_range %}
-                                        {% if i >= transacoes.number|add:"-2" and i <= transacoes.number|add:"2" %}
-                                        {% if transacoes.number == i %}
-                                        <li class="page-item active"><span class="page-link">{{ i }}</span></li>
-                                        {% else %}
-                                        <li class="page-item"><a class="page-link" href="?page_transacao={{ i }}">{{ i }}</a></li>
-                                        {% endif %}
-                                        {% endif %}
-                                    {% endfor %}
-                                    
-                                    {% if transacoes.has_next %}
-                                    <li class="page-item"><a class="page-link" href="?page_transacao={{ transacoes.next_page_number }}">&raquo;</a></li>
-                                    {% else %}
-                                    <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
-                                    {% endif %}
-                                </ul>
+                            <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top border-light">
+                                {% if transacoes.has_previous %}
+                                <a href="?page_transacao={{ transacoes.previous_page_number }}" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold"><i class="bi bi-chevron-left me-1"></i> Anterior</a>
+                                {% else %}
+                                <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" disabled><i class="bi bi-chevron-left me-1"></i> Anterior</button>
+                                {% endif %}
+                                
+                                <span class="text-muted small fw-semibold">Página {{ transacoes.number }} de {{ transacoes.paginator.num_pages }}</span>
+                                
+                                {% if transacoes.has_next %}
+                                <a href="?page_transacao={{ transacoes.next_page_number }}" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold">Próxima <i class="bi bi-chevron-right ms-1"></i></a>
+                                {% else %}
+                                <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" disabled>Próxima <i class="bi bi-chevron-right ms-1"></i></button>
+                                {% endif %}
                             </div>
                             {% endif %}
                         </div>
@@ -335,36 +386,38 @@
             <div class="row g-3 mb-4">
                 {% for banco in bancos %}
                 <div class="col-12 col-md-6 mb-3">
-                    <div class="card summary-card border-primary shadow-sm h-100" style="border-left: 5px solid #0d6efd !important; border-radius: 12px;">
-                        <div class="card-body p-3">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="card-title mb-0 text-dark fw-bold"><i class="bi bi-bank me-2 text-primary"></i>{{ banco.nome }}</h5>
+                    <div class="card summary-card border-0 shadow-sm h-100 text-white" style="border-radius: 20px; background: linear-gradient(135deg, #2b5876 0%, #4e4376 100%); position: relative; overflow: hidden;">
+                        <!-- Decoração do Cartão -->
+                        <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+                        <div style="position: absolute; bottom: -30px; left: -30px; width: 100px; height: 100px; background: rgba(255,255,255,0.05); border-radius: 50%;"></div>
+                        <div style="position: absolute; top: 20px; right: 20px; width: 40px; height: 30px; background: linear-gradient(135deg, #e0e0e0 0%, #bdbdbd 100%); border-radius: 5px; opacity: 0.8;"></div> <!-- Chip do cartão -->
+
+                        <div class="card-body p-4 position-relative z-1">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h5 class="card-title mb-0 fw-bold d-flex align-items-center"><i class="bi bi-bank me-2"></i> {{ banco.nome }}</h5>
                                 <div>
-                                    <button class="btn btn-sm btn-light me-1 text-secondary" data-bs-toggle="modal" data-bs-target="#modalEditarBanco{{ banco.id }}"><i class="bi bi-pencil"></i></button>
-                                    <a href="{% url 'teddyfinanca:deletar_banco' banco.id %}" class="btn btn-sm btn-light text-danger" onclick="return confirm('Tem certeza que deseja deletar o banco {{ banco.nome }}?')"><i class="bi bi-trash"></i></a>
+                                    <button class="btn btn-sm btn-outline-light border-0 me-1 shadow-sm" style="background: rgba(255,255,255,0.2);" data-bs-toggle="modal" data-bs-target="#modalEditarBanco{{ banco.id }}"><i class="bi bi-pencil"></i></button>
+                                    <a href="{% url 'teddyfinanca:deletar_banco' banco.id %}" class="btn btn-sm btn-outline-light border-0 shadow-sm" style="background: rgba(255,255,255,0.2);" onclick="return confirm('Tem certeza que deseja deletar o banco {{ banco.nome }}?')"><i class="bi bi-trash"></i></a>
                                 </div>
                             </div>
                             
-                            <h4 class="text-primary mb-3 fw-bold">R$ {{ banco.disponivel|floatformat:"2g" }} <small class="text-muted fs-6 fw-normal">Disponível</small></h4>
+                            <div class="mb-4">
+                                <span class="d-block text-light mb-1" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.85;">Saldo Disponível</span>
+                                <h3 class="mb-0 fw-bold" style="letter-spacing: 1px;">R$ {{ banco.disponivel|floatformat:"2g" }}</h3>
+                            </div>
                             
-                            <div class="row g-2 text-muted small" style="font-size: 0.85rem;">
-                                <div class="col-6">
-                                    <div class="p-2 rounded" style="background-color: #f8f9fa;">
-                                        <span class="d-block text-secondary mb-1">Saldo Conta</span>
-                                        <span class="fw-bold text-dark">R$ {{ banco.saldo_atual|floatformat:"2g" }}</span>
-                                    </div>
+                            <div class="row g-2 text-white small" style="font-size: 0.85rem;">
+                                <div class="col-4">
+                                    <span class="d-block text-light mb-1" style="font-size: 0.7rem; opacity: 0.85;">Conta</span>
+                                    <span class="fw-semibold">R$ {{ banco.saldo_atual|floatformat:"2g" }}</span>
                                 </div>
-                                <div class="col-6">
-                                    <div class="p-2 rounded" style="background-color: #f8f9fa;">
-                                        <span class="d-block text-secondary mb-1">Cheque Especial</span>
-                                        <span class="fw-bold text-dark">R$ {{ banco.limite_cheque_especial|floatformat:"2g" }}</span>
-                                    </div>
+                                <div class="col-4">
+                                    <span class="d-block text-light mb-1" style="font-size: 0.7rem; opacity: 0.85;">Cheque Especial</span>
+                                    <span class="fw-semibold">R$ {{ banco.limite_cheque_especial|floatformat:"2g" }}</span>
                                 </div>
-                                <div class="col-12">
-                                    <div class="p-2 rounded d-flex justify-content-between align-items-center" style="background-color: #f8f9fa;">
-                                        <span class="text-secondary">Cartão de Crédito (Limite)</span>
-                                        <span class="fw-bold text-dark">R$ {{ banco.limite_credito|floatformat:"2g" }}</span>
-                                    </div>
+                                <div class="col-4">
+                                    <span class="d-block text-light mb-1" style="font-size: 0.7rem; opacity: 0.85;">Cartão de Crédito</span>
+                                    <span class="fw-semibold">R$ {{ banco.limite_credito|floatformat:"2g" }}</span>
                                 </div>
                             </div>
                         </div>
@@ -479,29 +532,41 @@
             </div>
 
             <!-- Compras Parceladas (Dívidas Agrupadas) -->
-            <div class="card summary-card mb-4 border-danger" style="border-left: 5px solid #dc3545 !important;">
+            <div class="card summary-card mb-4" style="border-left: 5px solid #fd7e14 !important;">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center border-0 pt-3">
-                    <h6 class="text-danger mb-0"><i class="bi bi-cart-check"></i> Compras Parceladas</h6>
+                    <h6 class="mb-0" style="color: #fd7e14;"><i class="bi bi-cart-check"></i> Compras Parceladas</h6>
                 </div>
                 <div class="accordion" id="accordionCompras">
                     {% for compra in compras %}
-                    <div class="accordion-item border-0 border-bottom">
+                    <div class="accordion-item border-0 border-bottom mb-3 shadow-sm" style="border-radius: 12px; overflow: hidden;">
                         <h2 class="accordion-header">
-                            <button class="accordion-button collapsed px-3 py-3" type="button" data-bs-toggle="collapse" data-bs-target="#compra{{ compra.id }}">
-                                <div class="d-flex justify-content-between w-100 me-2">
-                                    <div>
-                                        <strong>{{ compra.descricao }}</strong><br>
-                                        {% if compra.observacao %}<small class="text-muted d-block">{{ compra.observacao }}</small>{% endif %}
-                                        <small class="text-muted">{{ compra.quantidade_parcelas }} parcelas</small>
+                            <button class="accordion-button collapsed px-4 py-3 bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#compra{{ compra.id }}" style="border-radius: 12px;">
+                                <div class="w-100 me-2">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <div>
+                                            <strong class="text-dark">{{ compra.descricao }}</strong><br>
+                                            <small class="text-muted">{{ compra.quantidade_parcelas }} parcelas</small>
+                                        </div>
+                                        <div class="text-end">
+                                            <strong class="text-dark">R$ {{ compra.valor_total|floatformat:"2g" }}</strong><br>
+                                            {% if not compra.todas_parcelas_pagas %}
+                                            <small class="fw-bold" style="font-size: 0.75rem; color: #fd7e14;">Falta: R$ {{ compra.valor_restante|floatformat:"2g" }}</small>
+                                            {% else %}
+                                            <small class="text-success fw-bold" style="font-size: 0.75rem;">Quitada!</small>
+                                            {% endif %}
+                                        </div>
                                     </div>
-                                    <div class="text-end">
-                                        <strong>R$ {{ compra.valor_total|floatformat:"2g" }}</strong><br>
-                                        <small class="text-muted d-block" style="font-size: 0.7rem;">{% if compra.entrada > 0 %}Entrada: R$ {{ compra.entrada|floatformat:"2g" }}{% endif %}</small>
-                                        {% if not compra.todas_parcelas_pagas %}
-                                        <small class="text-danger fw-bold" style="font-size: 0.75rem;">Resta: R$ {{ compra.valor_restante|floatformat:"2g" }}</small>
+                                    
+                                    <!-- Barra de Progresso -->
+                                    <div class="progress mt-2" style="height: 6px; border-radius: 10px;">
+                                        {% if compra.progresso == 100 %}
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
                                         {% else %}
-                                        <small class="text-success fw-bold" style="font-size: 0.75rem;">Quitada!</small>
+                                        <div class="progress-bar" role="progressbar" style="width: {{ compra.progresso }}%; background-color: #fd7e14;" aria-valuenow="{{ compra.progresso }}" aria-valuemin="0" aria-valuemax="100"></div>
                                         {% endif %}
+                                    </div>
+                                    <div class="d-flex justify-content-between mt-1" style="font-size: 0.7rem;">
+                                        <span class="text-muted">{{ compra.progresso }}% Pago</span>
                                     </div>
                                 </div>
                             </button>
@@ -796,6 +861,30 @@
                 {% endif %}
             </div>
 
+            <!-- Vendas à Vista (Sem Parcelamento) -->
+            <div class="card summary-card mb-4 border-success" style="border-left: 5px solid #198754 !important;">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center border-0 pt-3">
+                    <h6 class="text-success mb-0"><i class="bi bi-cart-check"></i> Vendas à Vista</h6>
+                    <button class="btn btn-success text-white rounded-pill fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalVendaVista">+ Venda</button>
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for v in vendas_vista %}
+                    <li class="list-group-item px-3 py-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ v.cliente }}</strong><br>
+                            <small class="text-muted">{{ v.descricao }} - {{ v.data_venda|date:"d/m/Y" }}</small>
+                        </div>
+                        <div class="text-end">
+                            <strong class="text-success">R$ {{ v.valor|floatformat:"2g" }}</strong><br>
+                            <!-- Removed banco display -->
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-center text-muted py-4">Nenhuma venda à vista registrada.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
         </div>
 
         <!-- ABA 4: PERFIL -->
@@ -832,32 +921,43 @@
 </div>
 
 <!-- BARRA DE NAVEGAÇÃO INFERIOR -->
-<ul class="nav nav-pills bottom-nav" id="bottomTabs" role="tablist">
-    <li class="nav-item" role="presentation">
-        <a class="nav-link active" data-bs-toggle="pill" href="#fluxo" role="tab">
-            <i class="bi bi-graph-up-arrow"></i>
-            Fluxo Diário
-        </a>
-    </li>
-    <li class="nav-item" role="presentation">
-        <a class="nav-link" data-bs-toggle="pill" href="#bancos" role="tab">
-            <i class="bi bi-bank"></i>
-            Bancos
-        </a>
-    </li>
-    <li class="nav-item" role="presentation">
-        <a class="nav-link" data-bs-toggle="pill" href="#compromissos" role="tab">
-            <i class="bi bi-calendar2-check"></i>
-            Compromissos
-        </a>
-    </li>
-    <li class="nav-item" role="presentation">
-        <a class="nav-link" data-bs-toggle="pill" href="#perfil" role="tab">
-            <i class="bi bi-person-badge"></i>
-            Perfil
-        </a>
-    </li>
-</ul>
+<div class="bottom-nav-container" style="position: fixed; bottom: 0; left: 0; width: 100%; z-index: 1000;">
+    <!-- Botão Central Flutuante -->
+    <div style="position: absolute; left: 50%; top: -35px; transform: translateX(-50%); z-index: 1001;">
+        <button class="btn btn-success shadow-lg d-flex align-items-center justify-content-center text-white" 
+                style="width: 60px; height: 60px; border-radius: 50%; font-size: 1.5rem; border: 5px solid #f5f7fa;" 
+                data-bs-toggle="modal" data-bs-target="#modalTransacao">
+            <i class="bi bi-plus-lg"></i>
+        </button>
+    </div>
+    
+    <ul class="nav nav-pills bottom-nav d-flex justify-content-between align-items-center mb-0 px-2 bg-white" id="bottomTabs" role="tablist" style="box-shadow: 0 -4px 15px rgba(0,0,0,0.05); height: 65px; border-top-left-radius: 20px; border-top-right-radius: 20px;">
+        <li class="nav-item" role="presentation" style="flex: 1;">
+            <a class="nav-link active" data-bs-toggle="pill" href="#fluxo" role="tab" style="padding: 5px;">
+                <i class="bi bi-graph-up-arrow" style="font-size: 1.3rem;"></i>
+                <span class="d-block mt-1" style="font-size: 0.65rem; white-space: nowrap;">Início</span>
+            </a>
+        </li>
+        <li class="nav-item" role="presentation" style="flex: 1; padding-right: 25px;">
+            <a class="nav-link" data-bs-toggle="pill" href="#bancos" role="tab" style="padding: 5px;">
+                <i class="bi bi-bank" style="font-size: 1.3rem;"></i>
+                <span class="d-block mt-1" style="font-size: 0.65rem; white-space: nowrap;">Contas</span>
+            </a>
+        </li>
+        <li class="nav-item" role="presentation" style="flex: 1; padding-left: 25px;">
+            <a class="nav-link" data-bs-toggle="pill" href="#compromissos" role="tab" style="padding: 5px;">
+                <i class="bi bi-calendar2-check" style="font-size: 1.3rem;"></i>
+                <span class="d-block mt-1" style="font-size: 0.65rem; white-space: nowrap;">Dívidas</span>
+            </a>
+        </li>
+        <li class="nav-item" role="presentation" style="flex: 1;">
+            <a class="nav-link" data-bs-toggle="pill" href="#perfil" role="tab" style="padding: 5px;">
+                <i class="bi bi-person-circle" style="font-size: 1.3rem;"></i>
+                <span class="d-block mt-1" style="font-size: 0.65rem; white-space: nowrap;">Perfil</span>
+            </a>
+        </li>
+    </ul>
+</div>
 
 <!-- Modals -->
 
@@ -944,7 +1044,14 @@
       <div class="modal-body">
         <form method="POST">
             {% csrf_token %}
-            {% for field in emprestimo_form %}<div class="mb-3"><label class="form-label text-muted small mb-1">{{ field.label }}</label>{% render_field field class="form-control bg-light border-0" %}</div>{% endfor %}
+            {% for field in emprestimo_form %}
+                <div class="mb-3">
+                    <label class="form-label text-muted small mb-1">{{ field.label }}</label>
+                    {% render_field field class="form-control bg-light border-0" id="id_emp_"|add:field.name %}
+                    {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text }}</small>{% endif %}
+                </div>
+            {% endfor %}
+            <div id="resumo_juros" class="alert alert-success py-2 mt-2 mb-3 fw-bold text-center" style="display: none; border-radius: 10px; font-size: 0.9rem;"></div>
             <button type="submit" name="btn_emprestimo" class="btn btn-warning w-100 rounded-pill py-2">Salvar</button>
         </form>
       </div>
@@ -959,6 +1066,19 @@
             {% csrf_token %}
             {% for field in venda_form %}<div class="mb-3"><label class="form-label text-muted small mb-1">{{ field.label }}</label>{% render_field field class="form-control bg-light border-0" %}</div>{% endfor %}
             <button type="submit" name="btn_venda" class="btn btn-info text-white w-100 rounded-pill py-2">Salvar</button>
+        </form>
+      </div>
+  </div></div>
+</div>
+
+<div class="modal fade" id="modalVendaVista" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0" style="border-radius:15px;">
+      <div class="modal-header bg-success text-white border-0" style="border-radius:15px 15px 0 0;"><h5 class="modal-title">Nova Venda à Vista</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <form method="POST">
+            {% csrf_token %}
+            {% for field in venda_vista_form %}<div class="mb-3"><label class="form-label text-muted small mb-1">{{ field.label }}</label>{% render_field field class="form-control bg-light border-0" %}</div>{% endfor %}
+            <button type="submit" name="btn_venda_vista" class="btn btn-success text-white w-100 rounded-pill py-2">Salvar</button>
         </form>
       </div>
   </div></div>
@@ -988,35 +1108,7 @@
   </div>
 </div>
 <script>
-    // Gráfico Mini Pie de Fluxo Diário
-    var catLabels = {{ categorias_labels_json|safe }};
-    var catValores = {{ categorias_valores_json|safe }};
-    var bgColors = ['#dc3545', '#ffc107', '#0dcaf0', '#0d6efd', '#6f42c1', '#d63384', '#fd7e14', '#20c997', '#6c757d', '#198754'];
 
-    if (catLabels.length === 0) {
-        catLabels = ['Nenhum Gasto'];
-        catValores = [1];
-        bgColors = ['#e9ecef'];
-    }
-
-    var ctxPie = document.getElementById('miniPie').getContext('2d');
-    var miniPie = new Chart(ctxPie, {
-        type: 'doughnut',
-        data: {
-            labels: catLabels,
-            datasets: [{
-                data: catValores,
-                backgroundColor: bgColors,
-                borderWidth: 0
-            }]
-        },
-        options: {
-            plugins: { legend: { display: true, position: 'right', labels: { boxWidth: 10, font: { size: 10 } } } },
-            cutout: '60%',
-            responsive: true,
-            maintainAspectRatio: true
-        }
-    });
 
     // Guardar a aba ativa no localStorage para a bottom nav
     document.addEventListener("DOMContentLoaded", function() {
@@ -1133,7 +1225,118 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const canvas = document.getElementById('chartGeral');
+    if (canvas) {
+        const ctx = canvas.getContext('2d');
+        const entradas = {{ entradas_mes|stringformat:"f" }};
+        const saidas = {{ saidas_mes|stringformat:"f" }};
+        
+        if (entradas > 0 || saidas > 0) {
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Entradas', 'Gastos'],
+                    datasets: [{
+                        data: [entradas, saidas],
+                        backgroundColor: ['#198754', '#dc3545'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) label += ': ';
+                                    if (context.parsed !== null) {
+                                        label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+});
+</script>
 
+<!-- Paginação dos Atrasos -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const atrasos = document.querySelectorAll('.atraso-item');
+    if (atrasos.length > 5) {
+        const ITEMS_PER_PAGE = 5;
+        let currentPage = 1;
+        const totalPages = Math.ceil(atrasos.length / ITEMS_PER_PAGE);
+        
+        const paginationContainer = document.getElementById('atrasos-pagination');
+        const btnPrev = document.getElementById('btn-prev-atraso');
+        const btnNext = document.getElementById('btn-next-atraso');
+        const pageInfo = document.getElementById('atraso-page-info');
+        
+        // Remove !important from display: none to show it
+        paginationContainer.setAttribute('style', 'display: flex !important;');
+        
+        function showPage(page) {
+            currentPage = page;
+            atrasos.forEach((item, index) => {
+                if (index >= (page - 1) * ITEMS_PER_PAGE && index < page * ITEMS_PER_PAGE) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            
+            pageInfo.innerText = `Página ${currentPage} de ${totalPages}`;
+            btnPrev.disabled = currentPage === 1;
+            btnNext.disabled = currentPage === totalPages;
+        }
+        
+        btnPrev.addEventListener('click', () => { if (currentPage > 1) showPage(currentPage - 1); });
+        btnNext.addEventListener('click', () => { if (currentPage < totalPages) showPage(currentPage + 1); });
+        
+        showPage(1);
+    }
+});
+</script>
+
+<!-- Cálculo de Juros para Empréstimo -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const inputValor = document.getElementById('id_emp_valor');
+    const inputJuros = document.getElementById('id_emp_juros_percentual');
+    const resumo = document.getElementById('resumo_juros');
+    
+    function calcularJuros() {
+        if (!inputValor || !inputJuros || !resumo) return;
+        
+        let valor = parseFloat(inputValor.value.replace(',', '.')) || 0;
+        let juros = parseFloat(inputJuros.value.replace(',', '.')) || 0;
+        
+        if (valor > 0 && juros > 0) {
+            let total = valor + (valor * (juros / 100));
+            resumo.style.display = 'block';
+            resumo.innerHTML = `Total a Receber: <span class="text-dark">R$ ${total.toFixed(2).replace('.', ',')}</span>`;
+        } else {
+            resumo.style.display = 'none';
+        }
+    }
+    
+    if (inputValor) inputValor.addEventListener('input', calcularJuros);
+    if (inputJuros) inputJuros.addEventListener('input', calcularJuros);
+});
+</script>
 
 <!-- Pluggy SDK -->
 <script src="https://cdn.pluggy.ai/pluggy-connect/latest/pluggy-connect.js"></script>
@@ -1203,6 +1406,59 @@ document.addEventListener('DOMContentLoaded', function() {
                 btnPluggy.innerHTML = '<i class="bi bi-bank"></i> Sincronizar (Pluggy)';
                 btnPluggy.disabled = false;
             }
+        });
+    }
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const transactionList = document.getElementById('transactionsList');
+    
+    if (searchInput && transactionList) {
+        const items = transactionList.querySelectorAll('.list-group-item');
+        
+        function filterTransactions() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const activeFilter = document.querySelector('.filter-btn.btn-dark:not([data-filter="all"])')?.dataset.filter || 'all';
+            
+            items.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                const isEntrada = item.querySelector('.text-success.fw-bold') !== null;
+                const type = isEntrada ? 'ENTRADA' : 'SAIDA';
+                
+                const matchesSearch = text.includes(searchTerm);
+                const matchesFilter = activeFilter === 'all' || type === activeFilter;
+                
+                if (matchesSearch && matchesFilter) {
+                    item.style.display = '';
+                } else {
+                    item.style.setProperty('display', 'none', 'important');
+                }
+            });
+        }
+        
+        searchInput.addEventListener('keyup', filterTransactions);
+        
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Ignore the first "Todas contas" button for the type filtering
+                if (this.textContent.includes('Todas contas')) return;
+                
+                filterBtns.forEach(b => {
+                    if (!b.textContent.includes('Todas contas')) {
+                        b.classList.remove('btn-dark');
+                        b.classList.add('btn-outline-secondary', 'bg-white');
+                    }
+                });
+                
+                this.classList.remove('btn-outline-secondary', 'bg-white');
+                this.classList.add('btn-dark');
+                
+                filterTransactions();
+            });
         });
     }
 });

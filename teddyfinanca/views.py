@@ -4,8 +4,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Sum
-from .models import Banco, Transacao, Divida, Emprestimo, VendaParcelada, Categoria, CompraParcelada
-from .forms import TransacaoForm, DividaForm, EmprestimoForm, BancoForm, VendaParceladaForm, CategoriaForm
+from .models import Banco, Transacao, Divida, Emprestimo, VendaParcelada, Venda, Categoria, CompraParcelada
+from .forms import TransacaoForm, DividaForm, EmprestimoForm, BancoForm, VendaParceladaForm, VendaForm, CategoriaForm
 
 from django.contrib.auth.models import User
 
@@ -204,8 +204,27 @@ def dashboard(request):
             if form.is_valid():
                 emp = form.save(commit=False)
                 emp.usuario = request.user
+                
+                juros = form.cleaned_data.get('juros_percentual')
+                if juros and juros > 0:
+                    valor_original = emp.valor
+                    emp.valor = emp.valor + (emp.valor * (juros / 100))
+                    obs_juros = f"Valor original: R$ {valor_original}. Juros: {juros}%."
+                    if emp.observacao:
+                        emp.observacao = f"{obs_juros} {emp.observacao}"
+                    else:
+                        emp.observacao = obs_juros
+                        
                 emp.save()
                 messages.success(request, "Empréstimo adicionado com sucesso!")
+                return redirect('teddyfinanca:dashboard')
+        elif 'btn_venda_vista' in request.POST:
+            form = VendaForm(request.POST)
+            if form.is_valid():
+                venda = form.save(commit=False)
+                venda.usuario = request.user
+                venda.save()
+                messages.success(request, "Venda adicionada com sucesso!")
                 return redirect('teddyfinanca:dashboard')
         elif 'btn_categoria' in request.POST:
             form = CategoriaForm(request.POST)
@@ -263,11 +282,13 @@ def dashboard(request):
     emprestimo_form = EmprestimoForm()
     banco_form = BancoForm()
     venda_form = VendaParceladaForm()
+    venda_vista_form = VendaForm()
     categoria_form = CategoriaForm()
 
     # Filtra tudo pelo usuário logado
     bancos = Banco.objects.filter(usuario=request.user)
     vendas = VendaParcelada.objects.filter(usuario=request.user)
+    vendas_vista = Venda.objects.filter(usuario=request.user).order_by('-data_venda')
 
     # Cálculos dos mini-cards
     total_saldo_atual = bancos.aggregate(total=Sum('saldo_atual'))['total'] or 0
@@ -317,6 +338,7 @@ def dashboard(request):
     
     categorias_labels_json = json.dumps(categorias_labels)
     categorias_valores_json = json.dumps(categorias_valores)
+    categorias_list = [{'nome': lbl, 'valor': val} for lbl, val in zip(categorias_labels, categorias_valores)]
     
     # Dívidas Simples com paginação (5 por página) - Mostra todas não arquivadas e que NÃO estão vinculadas a uma compra parcelada
     dividas_list = Divida.objects.filter(usuario=request.user, arquivado=False, compra_vinculada__isnull=True).order_by('data_vencimento')
@@ -389,12 +411,15 @@ def dashboard(request):
         'saidas_mes': saidas_mes,
         'categorias_labels_json': categorias_labels_json,
         'categorias_valores_json': categorias_valores_json,
+        'categorias_list': categorias_list,
         'compras': compras,
         'transacao_form': transacao_form,
         'divida_form': divida_form,
         'emprestimo_form': emprestimo_form,
         'banco_form': banco_form,
         'venda_form': venda_form,
+        'venda_vista_form': venda_vista_form,
+        'vendas_vista': vendas_vista,
         'categoria_form': categoria_form,
         'categorias': Categoria.objects.filter(usuario=request.user),
         'dividas_atrasadas': dividas_atrasadas,
@@ -555,8 +580,10 @@ def deletar_categoria(request, id):
 def deletar_banco(request, id):
     try:
         banco = Banco.objects.get(id=id, usuario=request.user)
+        # Deletar todas as transações (lançamentos) feitas por esse banco
+        Transacao.objects.filter(banco=banco).delete()
         banco.delete()
-        messages.success(request, f"Banco '{banco.nome}' deletado!")
+        messages.success(request, f"Banco '{banco.nome}' e seus lançamentos foram deletados!")
     except Banco.DoesNotExist:
         messages.error(request, "Banco não encontrado.")
     return redirect('teddyfinanca:dashboard')
