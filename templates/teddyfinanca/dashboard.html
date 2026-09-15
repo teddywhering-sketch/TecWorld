@@ -238,11 +238,11 @@
                     </div>
                     
                     {% if dividas_atrasadas or emprestimos_atrasados or parcelas_atrasadas %}
-                    <div class="card border-0 shadow-sm flex-grow-1" style="border-radius: 16px;">
+                    <div class="card border-0 shadow-sm" style="border-radius: 16px;">
                         <div class="card-body p-4">
                             <h6 class="fw-bold text-dark mb-3" style="font-size: 1.1rem;">Pendências Vencidas</h6>
                             
-                            <div id="atrasos-container">
+                            <div id="atrasos-container" style="min-height: 290px;">
                                 {% for d in dividas_atrasadas %}
                                 <div class="atraso-item alert alert-danger py-2 mb-2 d-flex justify-content-between align-items-center border-0" role="alert" style="font-size: 0.85rem; border-radius: 10px; background: rgba(220,53,69,0.1);">
                                     <div><i class="bi bi-exclamation-triangle-fill text-danger me-1"></i> <span class="text-dark">Dívida: <strong>{{ d.descricao }}</strong></span></div>
@@ -1292,9 +1292,9 @@ document.addEventListener('DOMContentLoaded', function() {
             currentPage = page;
             atrasos.forEach((item, index) => {
                 if (index >= (page - 1) * ITEMS_PER_PAGE && index < page * ITEMS_PER_PAGE) {
-                    item.style.display = 'flex';
+                    item.style.setProperty('display', 'flex', 'important'); item.classList.add('d-flex');
                 } else {
-                    item.style.display = 'none';
+                    item.classList.remove('d-flex'); item.style.setProperty('display', 'none', 'important');
                 }
             });
             
