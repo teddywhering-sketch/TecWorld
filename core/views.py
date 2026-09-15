@@ -409,7 +409,11 @@ class OrdemDeleteView(LoginRequiredMixin, ProvedorOrOperacionalRequiredMixin, De
     success_url = reverse_lazy("ordem-list")
 
     def get_queryset(self):
-        qs = super().get_queryset().filter(status="ABERTA")
+        qs = super().get_queryset()
+        if self.request.user.is_staff:
+            qs = qs.filter(status__in=["ABERTA", "AGUARDANDO_CONFIRMACAO"])
+        else:
+            qs = qs.filter(status="ABERTA")
         is_provedor = self.request.user.groups.filter(name="Provedor").exists()
         if is_provedor:
             cliente = getattr(self.request.user, 'cliente_provedor', None)
