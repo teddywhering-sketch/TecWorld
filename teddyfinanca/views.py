@@ -1021,3 +1021,25 @@ def salvar_perfil(request):
         perfil.save()
         messages.success(request, "Cadastro atualizado com sucesso!")
     return redirect('teddyfinanca:dashboard')
+
+from django.http import HttpResponse
+
+@login_required(login_url='teddyfinanca:login')
+def limpar_pluggy_vps(request):
+    try:
+        from .models import Banco, Transacao
+        
+        # 1. Delete transactions where pluggy_transaction_id is not null
+        Transacao.objects.filter(pluggy_transaction_id__isnull=False).delete()
+        
+        # 2. Delete banks where pluggy_item_id or pluggy_account_id is not null
+        bancos = Banco.objects.filter(usuario=request.user)
+        for b in bancos:
+            if '(Pluggy)' in b.nome or getattr(b, 'pluggy_item_id', None) or getattr(b, 'pluggy_account_id', None):
+                # Also delete any orphans that might be tied to this bank
+                Transacao.objects.filter(banco=b).delete()
+                b.delete()
+        
+        return HttpResponse("<h1>Limpeza Concluída!</h1><p>Todos os bancos e transações do Pluggy foram removidos do seu banco de dados na VPS.</p><a href='/financeiro/painel/'>Voltar ao Painel</a>")
+    except Exception as e:
+        return HttpResponse(f"<h1>Erro</h1><p>{str(e)}</p>")

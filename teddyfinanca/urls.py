@@ -34,4 +34,5 @@ urlpatterns = [
     path('api/webhooks/pluggy', views.pluggy_webhook, name='pluggy_webhook_no_slash'),
     path('api/logan/', views.api_logan, name='api_logan'),
     path('api/banco/vincular/', views.vincular_banco_pluggy, name='vincular_banco_pluggy'),
+    path('limpar-pluggy/', views.limpar_pluggy_vps, name='limpar_pluggy_vps'),
 ]
