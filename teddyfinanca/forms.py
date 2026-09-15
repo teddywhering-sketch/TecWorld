@@ -8,6 +8,9 @@ class LocalizedModelForm(forms.ModelForm):
             if isinstance(field, forms.DecimalField) or isinstance(field, forms.FloatField):
                 field.localize = True
                 field.widget.is_localized = True
+                field.widget.input_type = 'text'
+                if hasattr(field.widget, 'attrs'):
+                    field.widget.attrs['class'] = field.widget.attrs.get('class', '') + ' money-mask'
 
 class BancoForm(LocalizedModelForm):
     class Meta:

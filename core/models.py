@@ -100,9 +100,9 @@ class OrdemServico(TimeStampedModel):
     comprovante_pagamento = models.FileField(upload_to="ordens/pagamentos/%Y/%m/", blank=True, null=True, validators=[FileExtensionValidator(allowed_extensions=["pdf", "jpg", "jpeg", "png", "webp"])])
     arquivada_em = models.DateTimeField(blank=True, null=True)
     solucao = models.TextField(blank=True)
-    foto_1 = models.ImageField(upload_to="ordens/%Y/%m/", blank=True, null=True)
-    foto_2 = models.ImageField(upload_to="ordens/%Y/%m/", blank=True, null=True)
-    foto_3 = models.ImageField(upload_to="ordens/%Y/%m/", blank=True, null=True)
+    foto_1 = models.FileField(upload_to="ordens/%Y/%m/", blank=True, null=True)
+    foto_2 = models.FileField(upload_to="ordens/%Y/%m/", blank=True, null=True)
+    foto_3 = models.FileField(upload_to="ordens/%Y/%m/", blank=True, null=True)
     valor = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
     class Meta: ordering = ["-criado_em"]
     

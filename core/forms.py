@@ -25,8 +25,13 @@ class BaseForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs["class"] = "form-control"
-        for field in self.fields.values():
-            if isinstance(field.widget, forms.CheckboxInput): field.widget.attrs["class"] = "form-check-input"
+            if isinstance(field, forms.DecimalField) or isinstance(field, forms.FloatField):
+                field.localize = True
+                field.widget.is_localized = True
+                field.widget.input_type = 'text'
+                field.widget.attrs['class'] += ' money-mask'
+            elif isinstance(field.widget, forms.CheckboxInput): 
+                field.widget.attrs["class"] = "form-check-input"
 
 class ClienteForm(BaseForm):
     class Meta:
@@ -160,8 +165,8 @@ class FinalizarOSForm(BaseForm):
         self.fields["nome_cliente_instalado"].required = True
         self.fields["solucao"].required = True
         self.fields["foto_1"].required = True
-        self.fields["foto_2"].required = True
-        self.fields["foto_3"].required = True
+        self.fields["foto_2"].required = False
+        self.fields["foto_3"].required = False
 
 class ConfirmarOSForm(BaseForm):
     class Meta:

@@ -9,9 +9,9 @@
     <div>
         <a class="btn btn-primary" href="{% url 'ordem-update' object.pk %}"><i class="bi bi-pencil me-1"></i>Editar OS</a>
         {% if object.status == 'ABERTA' %}
-        <a class="btn btn-danger ms-2" href="{% url 'ordem-delete' object.pk %}"><i class="bi bi-trash me-1"></i>Excluir OS</a>
+        <a class="btn btn-outline-danger ms-2" href="{% url 'ordem-delete' object.pk %}" onclick="return confirm('Tem certeza que deseja excluir esta OS?');"><i class="bi bi-trash text-danger me-1"></i>Excluir OS</a>
         {% elif object.status == 'AGUARDANDO_CONFIRMACAO' and user.is_staff %}
-        <a class="btn btn-danger ms-2" href="{% url 'ordem-delete' object.pk %}"><i class="bi bi-trash me-1"></i>Excluir OS (Admin)</a>
+        <a class="btn btn-outline-danger ms-2" href="{% url 'ordem-delete' object.pk %}" onclick="return confirm('Tem certeza que deseja excluir esta OS?');"><i class="bi bi-trash text-danger me-1"></i>Excluir OS (Admin)</a>
         {% endif %}
     </div>
     {% endif %}
@@ -82,9 +82,9 @@
             {% if object.foto_1 or object.foto_2 or object.foto_3 %}
             <h6 class="mt-4">Evidências técnicas</h6>
             <div class="row g-2">
-                {% if object.foto_1 %}<div class="col-md-4"><small class="fw-semibold d-block mb-1">CTO</small><a href="{{ object.foto_1.url }}" target="_blank"><img src="{{ object.foto_1.url }}" class="img-fluid rounded shadow-sm" alt="CTO"></a></div>{% endif %}
-                {% if object.foto_2 %}<div class="col-md-4"><small class="fw-semibold d-block mb-1">ONT</small><a href="{{ object.foto_2.url }}" target="_blank"><img src="{{ object.foto_2.url }}" class="img-fluid rounded shadow-sm" alt="ONT"></a></div>{% endif %}
-                {% if object.foto_3 %}<div class="col-md-4"><small class="fw-semibold d-block mb-1">Sinal</small><a href="{{ object.foto_3.url }}" target="_blank"><img src="{{ object.foto_3.url }}" class="img-fluid rounded shadow-sm" alt="Sinal"></a></div>{% endif %}
+                {% if object.foto_1 %}<div class="col-md-4"><small class="fw-semibold d-block mb-1">CTO</small><a href="{{ object.foto_1.url }}" target="_blank">{% if object.foto_1.url|lower|slice:"-4:" == '.pdf' or object.foto_1.url|lower|slice:"-4:" == '.doc' or object.foto_1.url|lower|slice:"-5:" == '.docx' %}<div class="p-3 bg-light rounded shadow-sm text-center"><i class="bi bi-file-earmark-text fs-1"></i><br>Ver Documento</div>{% else %}<img src="{{ object.foto_1.url }}" class="img-fluid rounded shadow-sm" alt="CTO" style="max-height: 200px; object-fit: cover; width: 100%;">{% endif %}</a></div>{% endif %}
+                {% if object.foto_2 %}<div class="col-md-4"><small class="fw-semibold d-block mb-1">ONT</small><a href="{{ object.foto_2.url }}" target="_blank">{% if object.foto_2.url|lower|slice:"-4:" == '.pdf' or object.foto_2.url|lower|slice:"-4:" == '.doc' or object.foto_2.url|lower|slice:"-5:" == '.docx' %}<div class="p-3 bg-light rounded shadow-sm text-center"><i class="bi bi-file-earmark-text fs-1"></i><br>Ver Documento</div>{% else %}<img src="{{ object.foto_2.url }}" class="img-fluid rounded shadow-sm" alt="ONT" style="max-height: 200px; object-fit: cover; width: 100%;">{% endif %}</a></div>{% endif %}
+                {% if object.foto_3 %}<div class="col-md-4"><small class="fw-semibold d-block mb-1">Sinal</small><a href="{{ object.foto_3.url }}" target="_blank">{% if object.foto_3.url|lower|slice:"-4:" == '.pdf' or object.foto_3.url|lower|slice:"-4:" == '.doc' or object.foto_3.url|lower|slice:"-5:" == '.docx' %}<div class="p-3 bg-light rounded shadow-sm text-center"><i class="bi bi-file-earmark-text fs-1"></i><br>Ver Documento</div>{% else %}<img src="{{ object.foto_3.url }}" class="img-fluid rounded shadow-sm" alt="Sinal" style="max-height: 200px; object-fit: cover; width: 100%;">{% endif %}</a></div>{% endif %}
             </div>
             {% endif %}
         </div>
