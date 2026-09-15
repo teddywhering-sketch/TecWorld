@@ -1,17 +1,25 @@
 from django import forms
 from .models import Perfil, Transacao, Divida, Emprestimo, VendaParcelada, Banco, Categoria
 
-class BancoForm(forms.ModelForm):
+class LocalizedModelForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            if isinstance(field, forms.DecimalField) or isinstance(field, forms.FloatField):
+                field.localize = True
+                field.widget.is_localized = True
+
+class BancoForm(LocalizedModelForm):
     class Meta:
         model = Banco
         fields = ['nome', 'saldo_atual', 'limite_cheque_especial', 'limite_credito']
 
-class CategoriaForm(forms.ModelForm):
+class CategoriaForm(LocalizedModelForm):
     class Meta:
         model = Categoria
         fields = ['nome', 'tipo']
 
-class VendaParceladaForm(forms.ModelForm):
+class VendaParceladaForm(LocalizedModelForm):
     class Meta:
         model = VendaParcelada
         fields = ['cliente', 'telefone_cliente', 'descricao', 'valor_total', 'entrada', 'quantidade_parcelas', 'data_venda']
@@ -19,7 +27,7 @@ class VendaParceladaForm(forms.ModelForm):
             'data_venda': forms.DateInput(attrs={'type': 'date'}),
         }
 
-class TransacaoForm(forms.ModelForm):
+class TransacaoForm(LocalizedModelForm):
     categoria_texto = forms.CharField(max_length=100, required=False, label="Categoria", help_text="Digite para criar nova ou use uma existente", widget=forms.TextInput(attrs={'list': 'categorias-datalist', 'autocomplete': 'off'}))
     
     class Meta:
@@ -29,7 +37,7 @@ class TransacaoForm(forms.ModelForm):
             'data': forms.DateInput(attrs={'type': 'date'}),
         }
 
-class DividaForm(forms.ModelForm):
+class DividaForm(LocalizedModelForm):
     TIPO_CHOICES = (
         ('UNICA', 'Única'),
         ('PARCELADA', 'Parcelada'),
@@ -37,7 +45,7 @@ class DividaForm(forms.ModelForm):
     )
     tipo_divida = forms.ChoiceField(choices=TIPO_CHOICES, initial='UNICA', label="Tipo de Dívida")
     quantidade_parcelas = forms.IntegerField(min_value=2, required=False, label="Quantas parcelas? (Se Parcelada)")
-    entrada = forms.DecimalField(max_digits=12, decimal_places=2, required=False, initial=0.00, label="Valor de Entrada (Se houver)")
+    entrada = forms.DecimalField(max_digits=12, decimal_places=2, required=False, initial=0.00, label="Valor de Entrada (Se houver)", localize=True)
 
     class Meta:
         model = Divida
@@ -49,7 +57,7 @@ class DividaForm(forms.ModelForm):
             'valor': 'Valor Total (Ou Mensalidade)'
         }
 
-class EmprestimoForm(forms.ModelForm):
+class EmprestimoForm(LocalizedModelForm):
     class Meta:
         model = Emprestimo
         fields = ['nome_pessoa', 'valor', 'data_emprestimo', 'data_devolucao', 'status', 'observacao']
@@ -58,7 +66,7 @@ class EmprestimoForm(forms.ModelForm):
             'data_devolucao': forms.DateInput(attrs={'type': 'date'}),
         }
 
-class PerfilForm(forms.ModelForm):
+class PerfilForm(LocalizedModelForm):
     class Meta:
         model = Perfil
         fields = ['nome_completo', 'cpf', 'telefone', 'endereco']
