@@ -1685,11 +1685,11 @@ function convidarJogador(id) {
 }
 
 function aceitarConvite(id) {
-    csrfFetch(`/financeiro/game/aceitar/${id}/`, {}).then(res=>res.json());
+    csrfFetch(`/financeiro/game/aceitar/${id}/`, {}).then(() => fetchGameState());
 }
 
 function recusarConvite(id) {
-    csrfFetch(`/financeiro/game/recusar/${id}/`, {});
+    csrfFetch(`/financeiro/game/recusar/${id}/`, {}).then(() => fetchGameState());
 }
 
 

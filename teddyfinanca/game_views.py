@@ -101,14 +101,16 @@ def aceitar_convite(request, jogo_id):
     return JsonResponse({'status': 'ok'})
 
 @login_required
-def recusar_convite(request, jogo_id):
-    jogo = JogoVelha.objects.get(id=jogo_id, jogador2=request.user)
-    jogo.status = 5 # refused
-    jogo.save()
-    # Get global ranking
-    ranking_raw = PresencaOnline.objects.filter(vitorias__gt=0).order_by('-vitorias')[:3]
-    ranking_data = [{'nome': r.user.get_full_name() or r.user.username, 'v': r.vitorias} for r in ranking_raw]
+from django.db.models import Q
 
+def recusar_convite(request, jogo_id):
+    try:
+        jogo = JogoVelha.objects.get(id=jogo_id)
+        if request.user in [jogo.jogador1, jogo.jogador2]:
+            jogo.status = 5 # refused
+            jogo.save()
+    except JogoVelha.DoesNotExist:
+        pass
     return JsonResponse({'status': 'ok'})
 
 def check_vencedor(tabuleiro):
