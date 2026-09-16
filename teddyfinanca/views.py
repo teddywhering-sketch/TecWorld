@@ -395,19 +395,8 @@ def dashboard(request):
     from .models import Perfil
     perfil_obj, _ = Perfil.objects.get_or_create(usuario=request.user)
 
-    import shutil
-    total, used, free = shutil.disk_usage("/")
-    disk_total_gb = total / (1024**3)
-    disk_used_gb = used / (1024**3)
-    disk_free_gb = free / (1024**3)
-    disk_percent = (used / total) * 100
-
     context = {
         'perfil': perfil_obj,
-        'disk_total': disk_total_gb,
-        'disk_used': disk_used_gb,
-        'disk_free': disk_free_gb,
-        'disk_percent': disk_percent,
         'bancos': bancos,
         'dividas': dividas,
         'emprestimos': emprestimos,
