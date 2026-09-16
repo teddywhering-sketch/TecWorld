@@ -305,3 +305,16 @@ class PresencaOnline(models.Model):
     ultima_atividade = models.DateTimeField(auto_now=True)
     vitorias = models.IntegerField(default=0)
     derrotas = models.IntegerField(default=0)
+
+class ChatGlobal(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    mensagem = models.TextField()
+    criado_em = models.DateTimeField(auto_now_add=True)
+    class Meta: ordering = ['-criado_em']
+
+class ChatPrivado(models.Model):
+    jogo = models.ForeignKey(JogoVelha, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    mensagem = models.TextField()
+    criado_em = models.DateTimeField(auto_now_add=True)
+    class Meta: ordering = ['-criado_em']

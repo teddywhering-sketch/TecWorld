@@ -44,5 +44,7 @@ urlpatterns = [
     path('game/recusar/<int:jogo_id>/', game_views.recusar_convite, name='game_recusar'),
     path('game/jogar/<int:jogo_id>/', game_views.jogar_turno, name='game_jogar'),
     path('game/status/<int:jogo_id>/', game_views.status_jogo, name='game_status'),
+    path('game/chat_global/', game_views.enviar_chat_global, name='game_chat_global'),
+    path('game/chat_privado/<int:jogo_id>/', game_views.enviar_chat_privado, name='game_chat_privado'),
 ]
 

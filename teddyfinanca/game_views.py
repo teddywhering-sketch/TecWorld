@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth.models import User
-from .models import PresencaOnline, JogoVelha
+from .models import PresencaOnline, JogoVelha, ChatGlobal, ChatPrivado
 
 @login_required
 def ping_presenca(request):
@@ -44,11 +44,21 @@ def ping_presenca(request):
             'p1': jogo_ativo.jogador1 == user
         }
         
+        chat_privado = ChatPrivado.objects.filter(jogo=jogo_ativo)[:20]
+        chat_privado_data = [{'user': c.user.get_full_name() or c.user.username, 'msg': c.mensagem, 'me': c.user == user} for c in chat_privado][::-1]
+    else:
+        chat_privado_data = []
+
+    chat_global = ChatGlobal.objects.all()[:20]
+    chat_global_data = [{'user': c.user.get_full_name() or c.user.username, 'msg': c.mensagem, 'me': c.user == user} for c in chat_global][::-1]
+
     return JsonResponse({
         'online': users_data,
         'convites': convites_data,
         'jogo_ativo': jogo_data,
-        'my_score': {'v': pres.vitorias, 'd': pres.derrotas}
+        'my_score': {'v': pres.vitorias, 'd': pres.derrotas},
+        'chat_global': chat_global_data,
+        'chat_privado': chat_privado_data
     })
 
 @login_required
@@ -136,3 +146,19 @@ def status_jogo(request, jogo_id):
         'meu_turno': jogo.turno == request.user,
         'adversario_recusou': jogo.status == 5
     })
+
+@login_required
+def enviar_chat_global(request):
+    msg = request.POST.get('msg', '').strip()
+    if msg:
+        ChatGlobal.objects.create(user=request.user, mensagem=msg)
+    return JsonResponse({'status': 'ok'})
+
+@login_required
+def enviar_chat_privado(request, jogo_id):
+    msg = request.POST.get('msg', '').strip()
+    if msg:
+        jogo = JogoVelha.objects.get(id=jogo_id)
+        if request.user in [jogo.jogador1, jogo.jogador2]:
+            ChatPrivado.objects.create(jogo=jogo, user=request.user, mensagem=msg)
+    return JsonResponse({'status': 'ok'})

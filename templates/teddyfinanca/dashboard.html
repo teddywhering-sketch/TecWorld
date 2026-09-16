@@ -320,6 +320,39 @@
                                 </div>
                                 <button class="btn btn-sm btn-secondary w-100 mt-3 rounded-pill" onclick="sairJogo()" id="btn-sair-jogo" style="display:none;">Sair da Partida</button>
                             </div>
+
+                            <!-- Área de Chat -->
+                            <div id="game-chat" class="mt-4 pt-3 border-top border-light text-start">
+                                <ul class="nav nav-tabs nav-tabs-sm mb-2" id="chatTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active small py-1 px-2" id="global-tab" data-bs-toggle="tab" data-bs-target="#chat-global" type="button" role="tab" style="font-size: 0.8rem;">Chat Global</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link small py-1 px-2 disabled" id="privado-tab" data-bs-toggle="tab" data-bs-target="#chat-privado" type="button" role="tab" style="font-size: 0.8rem;">Chat da Partida</button>
+                                    </li>
+                                </ul>
+                                <div class="tab-content">
+                                    <div class="tab-pane fade show active" id="chat-global" role="tabpanel">
+                                        <div id="chat-global-box" class="bg-white rounded p-2 mb-2 overflow-auto shadow-sm" style="height: 120px; font-size: 0.8rem; border: 1px solid #e0e0e0;">
+                                            <span class="text-muted small">Carregando...</span>
+                                        </div>
+                                        <div class="input-group input-group-sm">
+                                            <input type="text" class="form-control" id="chat-global-input" placeholder="Mensagem..." onkeypress="if(event.key === 'Enter') enviarChatGlobal()">
+                                            <button class="btn btn-primary" onclick="enviarChatGlobal()"><i class="bi bi-send"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane fade" id="chat-privado" role="tabpanel">
+                                        <div id="chat-privado-box" class="bg-white rounded p-2 mb-2 overflow-auto shadow-sm" style="height: 120px; font-size: 0.8rem; border: 1px solid #e0e0e0;">
+                                            <span class="text-muted small">Inicie uma partida...</span>
+                                        </div>
+                                        <div class="input-group input-group-sm">
+                                            <input type="text" class="form-control" id="chat-privado-input" placeholder="Mensagem..." onkeypress="if(event.key === 'Enter') enviarChatPrivado()">
+                                            <button class="btn btn-primary" onclick="enviarChatPrivado()"><i class="bi bi-send"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
 
@@ -1644,6 +1677,44 @@ function sairJogo() {
     }
 }
 
+
+function enviarChatGlobal() {
+    const input = document.getElementById('chat-global-input');
+    if (!input.value.trim()) return;
+    csrfFetch('/financeiro/game/chat_global/', {msg: input.value});
+    input.value = '';
+}
+
+function enviarChatPrivado() {
+    const input = document.getElementById('chat-privado-input');
+    if (!input.value.trim() || !currentJogoId) return;
+    csrfFetch(`/financeiro/game/chat_privado/${currentJogoId}/`, {msg: input.value});
+    input.value = '';
+}
+
+function renderChat(boxId, msgs) {
+    const box = document.getElementById(boxId);
+    if (!msgs || msgs.length === 0) {
+        box.innerHTML = '<span class="text-muted small">Sem mensagens</span>';
+        return;
+    }
+    const lastMsgId = box.dataset.lastMsg || '';
+    const newLastMsg = msgs[msgs.length-1].msg;
+    
+    if (box.dataset.msgCount != msgs.length || lastMsgId !== newLastMsg) {
+        box.dataset.msgCount = msgs.length;
+        box.dataset.lastMsg = newLastMsg;
+        let html = '';
+        msgs.forEach(m => {
+            const cor = m.me ? 'text-primary' : 'text-dark fw-bold';
+            const nome = m.me ? 'Você' : m.user;
+            html += `<div class="mb-1"><span class="${cor}">${nome}:</span> <span class="text-secondary">${m.msg}</span></div>`;
+        });
+        box.innerHTML = html;
+        box.scrollTop = box.scrollHeight;
+    }
+}
+
 document.querySelectorAll('.board-cell').forEach(btn => {
     btn.addEventListener('click', function() {
         if (!meuTurno) return;
@@ -1661,6 +1732,39 @@ document.querySelectorAll('.board-cell').forEach(btn => {
 
 setInterval(() => {
     fetch('/financeiro/game/ping/', { credentials: 'same-origin' }).then(r=>r.json()).then(data => {
+        
+        // Render Chats
+        renderChat('chat-global-box', data.chat_global);
+        
+        const privTab = document.getElementById('privado-tab');
+        if (data.jogo_ativo) {
+            privTab.classList.remove('disabled');
+            renderChat('chat-privado-box', data.chat_privado);
+        } else {
+            privTab.classList.add('disabled');
+            document.getElementById('chat-privado-box').innerHTML = '<span class="text-muted small">Inicie uma partida...</span>';
+            // switch to global tab if private was active
+            if(privTab.classList.contains('active')) {
+                document.getElementById('global-tab').click();
+            }
+        }
+
+        
+        // Render Chats
+        renderChat('chat-global-box', data.chat_global);
+        
+        const privTab = document.getElementById('privado-tab');
+        if (data.jogo_ativo) {
+            privTab.classList.remove('disabled');
+            renderChat('chat-privado-box', data.chat_privado);
+        } else {
+            privTab.classList.add('disabled');
+            document.getElementById('chat-privado-box').innerHTML = '<span class="text-muted small">Inicie uma partida...</span>';
+            if(privTab.classList.contains('active')) {
+                document.getElementById('global-tab').click();
+            }
+        }
+
         if (!data.jogo_ativo) {
             document.getElementById('game-board-container').style.display = 'none';
             document.getElementById('game-lobby').style.display = 'block';
