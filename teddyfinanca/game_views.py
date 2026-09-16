@@ -57,13 +57,18 @@ def ping_presenca(request):
     chat_global = ChatGlobal.objects.all()[:20]
     chat_global_data = [{'user': c.user.get_full_name() or c.user.username, 'msg': c.mensagem, 'me': c.user == user} for c in chat_global][::-1]
 
+    # Get global ranking
+    ranking_raw = PresencaOnline.objects.filter(vitorias__gt=0).order_by('-vitorias')[:3]
+    ranking_data = [{'nome': r.user.get_full_name() or r.user.username, 'v': r.vitorias} for r in ranking_raw]
+
     return JsonResponse({
         'online': users_data,
         'convites': convites_data,
         'jogo_ativo': jogo_data,
         'my_score': {'v': pres.vitorias, 'd': pres.derrotas},
         'chat_global': chat_global_data,
-        'chat_privado': chat_privado_data
+        'chat_privado': chat_privado_data,
+        'ranking': ranking_data
     })
 
 @login_required
@@ -77,6 +82,10 @@ def convidar_jogador(request, adversario_id):
             jogador2=adversario,
             status=0 # waiting
         )
+    # Get global ranking
+    ranking_raw = PresencaOnline.objects.filter(vitorias__gt=0).order_by('-vitorias')[:3]
+    ranking_data = [{'nome': r.user.get_full_name() or r.user.username, 'v': r.vitorias} for r in ranking_raw]
+
     return JsonResponse({'status': 'ok', 'jogo_id': jogo.id})
 
 @login_required
@@ -85,6 +94,10 @@ def aceitar_convite(request, jogo_id):
     jogo.status = 1 # playing
     jogo.turno = jogo.jogador1 # p1 starts
     jogo.save()
+    # Get global ranking
+    ranking_raw = PresencaOnline.objects.filter(vitorias__gt=0).order_by('-vitorias')[:3]
+    ranking_data = [{'nome': r.user.get_full_name() or r.user.username, 'v': r.vitorias} for r in ranking_raw]
+
     return JsonResponse({'status': 'ok'})
 
 @login_required
@@ -92,6 +105,10 @@ def recusar_convite(request, jogo_id):
     jogo = JogoVelha.objects.get(id=jogo_id, jogador2=request.user)
     jogo.status = 5 # refused
     jogo.save()
+    # Get global ranking
+    ranking_raw = PresencaOnline.objects.filter(vitorias__gt=0).order_by('-vitorias')[:3]
+    ranking_data = [{'nome': r.user.get_full_name() or r.user.username, 'v': r.vitorias} for r in ranking_raw]
+
     return JsonResponse({'status': 'ok'})
 
 def check_vencedor(tabuleiro):
@@ -112,11 +129,19 @@ def jogar_turno(request, jogo_id):
     pos = int(request.POST.get('pos'))
     jogo = JogoVelha.objects.get(id=jogo_id)
     if jogo.status != 1 or jogo.turno != request.user:
-        return JsonResponse({'status': 'error'})
+        # Get global ranking
+    ranking_raw = PresencaOnline.objects.filter(vitorias__gt=0).order_by('-vitorias')[:3]
+    ranking_data = [{'nome': r.user.get_full_name() or r.user.username, 'v': r.vitorias} for r in ranking_raw]
+
+    return JsonResponse({'status': 'error'})
         
     tab_list = list(jogo.tabuleiro)
     if tab_list[pos] != ' ':
-        return JsonResponse({'status': 'error'})
+        # Get global ranking
+    ranking_raw = PresencaOnline.objects.filter(vitorias__gt=0).order_by('-vitorias')[:3]
+    ranking_data = [{'nome': r.user.get_full_name() or r.user.username, 'v': r.vitorias} for r in ranking_raw]
+
+    return JsonResponse({'status': 'error'})
         
     peca = 'X' if jogo.jogador1 == request.user else 'O'
     tab_list[pos] = peca
@@ -142,11 +167,19 @@ def jogar_turno(request, jogo_id):
         jogo.turno = jogo.jogador2 if jogo.jogador1 == request.user else jogo.jogador1
         
     jogo.save()
+    # Get global ranking
+    ranking_raw = PresencaOnline.objects.filter(vitorias__gt=0).order_by('-vitorias')[:3]
+    ranking_data = [{'nome': r.user.get_full_name() or r.user.username, 'v': r.vitorias} for r in ranking_raw]
+
     return JsonResponse({'status': 'ok'})
 
 @login_required
 def status_jogo(request, jogo_id):
     jogo = JogoVelha.objects.get(id=jogo_id)
+    # Get global ranking
+    ranking_raw = PresencaOnline.objects.filter(vitorias__gt=0).order_by('-vitorias')[:3]
+    ranking_data = [{'nome': r.user.get_full_name() or r.user.username, 'v': r.vitorias} for r in ranking_raw]
+
     return JsonResponse({
         'status_id': jogo.status,
         'tabuleiro': jogo.tabuleiro,
@@ -159,6 +192,10 @@ def enviar_chat_global(request):
     msg = request.POST.get('msg', '').strip()
     if msg:
         ChatGlobal.objects.create(user=request.user, mensagem=msg)
+    # Get global ranking
+    ranking_raw = PresencaOnline.objects.filter(vitorias__gt=0).order_by('-vitorias')[:3]
+    ranking_data = [{'nome': r.user.get_full_name() or r.user.username, 'v': r.vitorias} for r in ranking_raw]
+
     return JsonResponse({'status': 'ok'})
 
 @login_required
@@ -168,4 +205,8 @@ def enviar_chat_privado(request, jogo_id):
         jogo = JogoVelha.objects.get(id=jogo_id)
         if request.user in [jogo.jogador1, jogo.jogador2]:
             ChatPrivado.objects.create(jogo=jogo, user=request.user, mensagem=msg)
+    # Get global ranking
+    ranking_raw = PresencaOnline.objects.filter(vitorias__gt=0).order_by('-vitorias')[:3]
+    ranking_data = [{'nome': r.user.get_full_name() or r.user.username, 'v': r.vitorias} for r in ranking_raw]
+
     return JsonResponse({'status': 'ok'})

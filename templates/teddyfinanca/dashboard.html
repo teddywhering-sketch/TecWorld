@@ -286,6 +286,10 @@
                         <div class="card-body p-4 text-center">
                             <h6 class="fw-bold text-primary mb-3"><i class="bi bi-controller me-2"></i>Hora do Jogo! (Online)</h6>
                             
+                            <div id="game-ranking" class="d-flex justify-content-center gap-2 mb-3 flex-wrap">
+                                <!-- Preenchido via JS -->
+                            </div>
+                            
                             <div id="game-lobby">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <span class="small fw-bold text-success" id="game-my-score">Meus pontos: 0V - 0D</span>
@@ -1745,23 +1749,20 @@ document.querySelectorAll('.board-cell').forEach(btn => {
 
 setInterval(() => {
     fetch('/financeiro/game/ping/', { credentials: 'same-origin' }).then(r=>r.json()).then(data => {
-        
-        // Render Chats
-        renderChat('chat-global-box', data.chat_global);
-        
-        const privTab = document.getElementById('privado-tab');
-        if (data.jogo_ativo) {
-            privTab.classList.remove('disabled');
-            renderChat('chat-privado-box', data.chat_privado);
-        } else {
-            privTab.classList.add('disabled');
-            document.getElementById('chat-privado-box').innerHTML = '<span class="text-muted small">Inicie uma partida...</span>';
-            // switch to global tab if private was active
-            if(privTab.classList.contains('active')) {
-                document.getElementById('global-tab').click();
+        // Render Ranking
+        if (data.ranking) {
+            const rDiv = document.getElementById('game-ranking');
+            if (data.ranking.length === 0) {
+                rDiv.innerHTML = '<span class="small text-muted">Ainda não há campeões!</span>';
+            } else {
+                let rHtml = '';
+                const medals = ['🥇', '🥈', '🥉'];
+                data.ranking.forEach((r, idx) => {
+                    rHtml += `<div class="badge bg-white text-dark shadow-sm border border-light py-1 px-2 rounded-pill"><span class="fs-6">${medals[idx]}</span> <span class="fw-semibold">${r.nome}</span> <small class="text-success fw-bold">(${r.v}V)</small></div>`;
+                });
+                rDiv.innerHTML = rHtml;
             }
         }
-
         
         // Render Chats
         renderChat('chat-global-box', data.chat_global);
