@@ -202,3 +202,14 @@ def enviar_chat_privado(request, jogo_id):
     ranking_data = [{'nome': r.user.get_full_name() or r.user.username, 'v': r.vitorias} for r in ranking_raw]
 
     return JsonResponse({'status': 'ok'})
+
+@login_required
+def reiniciar_jogo(request, jogo_id):
+    jogo = JogoVelha.objects.get(id=jogo_id)
+    if jogo.status in [2, 3, 4] and request.user in [jogo.jogador1, jogo.jogador2]:
+        jogo.tabuleiro = '         '
+        jogo.status = 1
+        # Troca os jogadores para alternar quem começa (quem é X)
+        jogo.jogador1, jogo.jogador2 = jogo.jogador2, jogo.jogador1
+        jogo.save()
+    return JsonResponse({'status': 'ok'})
