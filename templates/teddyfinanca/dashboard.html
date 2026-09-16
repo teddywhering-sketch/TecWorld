@@ -167,6 +167,47 @@
             <!-- Resumo no Topo -->
             <!-- Resumo no Topo -->
             <div class="row flex-nowrap g-2 mb-4 px-1" style="overflow-x: auto; padding-bottom: 5px;">
+                <div class="col" style="min-width: 120px;">
+                    <div class="card summary-card bg-primary text-white h-100 shadow-sm border-0" style="border-radius: 12px;">
+                        <div class="card-body p-2 d-flex flex-column justify-content-between text-center">
+                            <div class="text-white-50 mb-1 fw-semibold d-flex flex-column align-items-center" style="font-size: 0.65rem;"><i class="bi bi-bank fs-6 text-white mb-1"></i> Bancos</div>
+                            <h6 class="mb-0 fw-bold" style="font-size: 0.85rem;">R$ {{ total_saldo|floatformat:"2g" }}</h6>
+                        </div>
+                    </div>
+                </div>
+                <div class="col" style="min-width: 120px;">
+                    <div class="card summary-card bg-success text-white h-100 shadow-sm border-0" style="border-radius: 12px;">
+                        <div class="card-body p-2 d-flex flex-column justify-content-between text-center">
+                            <div class="text-white-50 mb-1 fw-semibold d-flex flex-column align-items-center" style="font-size: 0.65rem;"><i class="bi bi-arrow-down-circle-fill fs-6 text-white mb-1"></i> Entradas</div>
+                            <h6 class="mb-0 fw-bold" style="font-size: 0.85rem;">+ R$ {{ entradas_mes|floatformat:"2g" }}</h6>
+                        </div>
+                    </div>
+                </div>
+                <div class="col" style="min-width: 120px;">
+                    <div class="card summary-card bg-info text-white h-100 shadow-sm border-0" style="border-radius: 12px;">
+                        <div class="card-body p-2 d-flex flex-column justify-content-between text-center">
+                            <div class="text-white-50 mb-1 fw-semibold d-flex flex-column align-items-center" style="font-size: 0.65rem;"><i class="bi bi-arrow-up-circle-fill fs-6 text-white mb-1"></i> Gastos</div>
+                            <h6 class="mb-0 fw-bold" style="font-size: 0.85rem;">- R$ {{ saidas_mes|floatformat:"2g" }}</h6>
+                        </div>
+                    </div>
+                </div>
+                <div class="col" style="min-width: 120px;">
+                    <div class="card summary-card bg-warning text-dark h-100 shadow-sm border-0" style="border-radius: 12px;">
+                        <div class="card-body p-2 d-flex flex-column justify-content-between text-center">
+                            <div class="text-muted mb-1 fw-semibold d-flex flex-column align-items-center" style="font-size: 0.65rem;"><i class="bi bi-clock-history fs-6 text-dark mb-1"></i> A Receber</div>
+                            <h6 class="mb-0 fw-bold text-dark" style="font-size: 0.85rem;">R$ {{ total_receber|floatformat:"2g" }}</h6>
+                        </div>
+                    </div>
+                </div>
+                <div class="col" style="min-width: 120px;">
+                    <div class="card summary-card bg-danger text-white h-100 shadow-sm border-0" style="border-radius: 12px;">
+                        <div class="card-body p-2 d-flex flex-column justify-content-between text-center">
+                            <div class="text-white-50 mb-1 fw-semibold d-flex flex-column align-items-center" style="font-size: 0.65rem;"><i class="bi bi-exclamation-triangle fs-6 text-white mb-1"></i> Dívidas</div>
+                            <h6 class="mb-0 fw-bold" style="font-size: 0.85rem;">R$ {{ total_pagar|floatformat:"2g" }}</h6>
+                        </div>
+                    </div>
+                </div>
+
             </div>
             
             <div class="row g-4 mb-4 mt-2">
@@ -1814,6 +1855,7 @@ function fetchGameState() {
                 btnSair.style.display = 'block';
                 btnEnd.style.display = 'none';
                 btnEnd.classList.remove('d-flex');
+                celebratedGameId = null; // Reset animation trigger for revanches
             } else {
                 btnSair.style.display = 'none';
                 btnEnd.style.display = 'flex';
