@@ -207,6 +207,17 @@
                         </div>
                     </div>
                 </div>
+                <div class="col" style="min-width: 120px;">
+                    <div class="card summary-card bg-secondary text-white h-100 shadow-sm border-0" style="border-radius: 12px;" title="Total: {{ disk_total|floatformat:1 }}GB | Livre: {{ disk_free|floatformat:1 }}GB">
+                        <div class="card-body p-2 d-flex flex-column justify-content-between text-center">
+                            <div class="text-white-50 mb-1 fw-semibold d-flex flex-column align-items-center" style="font-size: 0.65rem;"><i class="bi bi-hdd-network fs-6 text-white mb-1"></i> Sistema</div>
+                            <div class="w-100 bg-white rounded-pill mb-1 mt-1" style="height: 6px; overflow: hidden;">
+                                <div class="bg-{% if disk_percent > 90 %}danger{% elif disk_percent > 70 %}warning{% else %}success{% endif %} h-100" style="width: {{ disk_percent|floatformat:0 }}%;"></div>
+                            </div>
+                            <h6 class="mb-0 fw-bold" style="font-size: 0.75rem;">{{ disk_used|floatformat:1 }}GB / {{ disk_total|floatformat:1 }}GB</h6>
+                        </div>
+                    </div>
+                </div>
             </div>
             
             <div class="row g-4 mb-4 mt-2">
