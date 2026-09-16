@@ -20,8 +20,13 @@ def ping_presenca(request):
     users_data = [{'id': p.user.id, 'nome': p.user.get_full_name() or p.user.username} for p in online_users]
     
     # Get pending invites for this user
-    convites = JogoVelha.objects.filter(jogador2=user, status=0).values('id', 'jogador1__username', 'jogador1__first_name')
-    convites_data = [{'id': c['id'], 'nome': c['jogador1__first_name'] or c['jogador1__username']} for c in convites]
+    convites_raw = JogoVelha.objects.filter(jogador2=user, status=0).order_by('-id')
+    seen = set()
+    convites_data = []
+    for c in convites_raw:
+        if c.jogador1_id not in seen:
+            seen.add(c.jogador1_id)
+            convites_data.append({'id': c.id, 'nome': c.jogador1.get_full_name() or c.jogador1.username})
     
     # Get active games for this user (where status__in=[1, 2, 3, 4])
     jogo_ativo = JogoVelha.objects.filter(
@@ -64,12 +69,14 @@ def ping_presenca(request):
 @login_required
 def convidar_jogador(request, adversario_id):
     adversario = User.objects.get(id=adversario_id)
-    # create new game
-    jogo = JogoVelha.objects.create(
-        jogador1=request.user,
-        jogador2=adversario,
-        status=0 # waiting
-    )
+    # create new game or return existing
+    jogo = JogoVelha.objects.filter(jogador1=request.user, jogador2=adversario, status=0).first()
+    if not jogo:
+        jogo = JogoVelha.objects.create(
+            jogador1=request.user,
+            jogador2=adversario,
+            status=0 # waiting
+        )
     return JsonResponse({'status': 'ok', 'jogo_id': jogo.id})
 
 @login_required
