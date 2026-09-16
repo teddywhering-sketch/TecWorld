@@ -38,6 +38,14 @@ class DashboardView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         c = super().get_context_data(**kwargs)
         
+        import shutil
+        total, used, free = shutil.disk_usage("/")
+        c['disk_total'] = total / (1024**3)
+        c['disk_used'] = used / (1024**3)
+        c['disk_free'] = free / (1024**3)
+        c['disk_percent'] = (used / total) * 100
+
+        
         import json
         from django.db.models.functions import ExtractWeekDay
         from decimal import Decimal
@@ -233,6 +241,14 @@ class OrdemListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         c = super().get_context_data(**kwargs)
+        
+        import shutil
+        total, used, free = shutil.disk_usage("/")
+        c['disk_total'] = total / (1024**3)
+        c['disk_used'] = used / (1024**3)
+        c['disk_free'] = free / (1024**3)
+        c['disk_percent'] = (used / total) * 100
+
         aba = self.request.GET.get("aba", "abertas")
         c["aba_atual"] = aba
         
@@ -315,6 +331,14 @@ class OrdemCreateView(LoginRequiredMixin, ProvedorOrOperacionalRequiredMixin, Cr
 
     def get_context_data(self, **kwargs):
         c = super().get_context_data(**kwargs)
+        
+        import shutil
+        total, used, free = shutil.disk_usage("/")
+        c['disk_total'] = total / (1024**3)
+        c['disk_used'] = used / (1024**3)
+        c['disk_free'] = free / (1024**3)
+        c['disk_percent'] = (used / total) * 100
+
         import json
         precos = {str(t.id): str(t.valor_padrao) for t in TipoServico.objects.filter(ativo=True)}
         c['tipos_precos_json'] = json.dumps(precos)
@@ -367,6 +391,14 @@ class OrdemUpdateView(LoginRequiredMixin, ProvedorOrOperacionalRequiredMixin, Up
 
     def get_context_data(self, **kwargs):
         c = super().get_context_data(**kwargs)
+        
+        import shutil
+        total, used, free = shutil.disk_usage("/")
+        c['disk_total'] = total / (1024**3)
+        c['disk_used'] = used / (1024**3)
+        c['disk_free'] = free / (1024**3)
+        c['disk_percent'] = (used / total) * 100
+
         import json
         precos = {str(t.id): str(t.valor_padrao) for t in TipoServico.objects.filter(ativo=True)}
         c['tipos_precos_json'] = json.dumps(precos)
@@ -619,7 +651,15 @@ class FinanceiroView(LoginRequiredMixin, OperacionalRequiredMixin, ListView):
         ultimo = FechamentoCaixa.objects.first()
         return Lancamento.objects.filter(criado_em__gt=ultimo.fechado_em) if ultimo else Lancamento.objects.all()
     def get_context_data(self, **kwargs):
-        c = super().get_context_data(**kwargs); qs = self.get_queryset()
+        c = super().get_context_data(**kwargs)
+        
+        import shutil
+        total, used, free = shutil.disk_usage("/")
+        c['disk_total'] = total / (1024**3)
+        c['disk_used'] = used / (1024**3)
+        c['disk_free'] = free / (1024**3)
+        c['disk_percent'] = (used / total) * 100
+; qs = self.get_queryset()
         c["entradas"] = qs.filter(tipo="ENTRADA").aggregate(v=Sum("valor"))["v"] or 0; c["saidas"] = qs.filter(tipo="SAIDA").aggregate(v=Sum("valor"))["v"] or 0; c["saldo"] = c["entradas"] - c["saidas"]
         
         from django.contrib.auth.models import User
@@ -702,7 +742,15 @@ class LogTransacaoListView(LoginRequiredMixin, ListView):
 class RelatorioView(LoginRequiredMixin, OperacionalRequiredMixin, TemplateView):
     template_name = "core/relatorios.html"
     def get_context_data(self, **kwargs):
-        c = super().get_context_data(**kwargs); c["status"] = [{"nome": label, "total": OrdemServico.objects.filter(status=value).count()} for value, label in OrdemServico.Status.choices]; c["tecnicos"] = OrdemServico.objects.values("tecnico__username").annotate(total=Count("id")).order_by("-total"); return c
+        c = super().get_context_data(**kwargs)
+        
+        import shutil
+        total, used, free = shutil.disk_usage("/")
+        c['disk_total'] = total / (1024**3)
+        c['disk_used'] = used / (1024**3)
+        c['disk_free'] = free / (1024**3)
+        c['disk_percent'] = (used / total) * 100
+; c["status"] = [{"nome": label, "total": OrdemServico.objects.filter(status=value).count()} for value, label in OrdemServico.Status.choices]; c["tecnicos"] = OrdemServico.objects.values("tecnico__username").annotate(total=Count("id")).order_by("-total"); return c
 
 class UsuarioListView(LoginRequiredMixin, AdminRequiredMixin, ListView): model = User; template_name = "core/usuario_list.html"; queryset = User.objects.order_by("username"); paginate_by = 10
 class UsuarioCreateView(LoginRequiredMixin, AdminRequiredMixin, CreateView): model = User; form_class = UsuarioForm; template_name = "core/usuario_form.html"; success_url = reverse_lazy("usuario-list")
@@ -796,6 +844,14 @@ class ConfiguracaoSistemaUpdateView(LoginRequiredMixin, UserPassesTestMixin, Upd
 
     def get_context_data(self, **kwargs):
         c = super().get_context_data(**kwargs)
+        
+        import shutil
+        total, used, free = shutil.disk_usage("/")
+        c['disk_total'] = total / (1024**3)
+        c['disk_used'] = used / (1024**3)
+        c['disk_free'] = free / (1024**3)
+        c['disk_percent'] = (used / total) * 100
+
         c["titulo"] = "Configurações do Sistema"
         return c
 
