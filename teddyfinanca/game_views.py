@@ -129,19 +129,11 @@ def jogar_turno(request, jogo_id):
     pos = int(request.POST.get('pos'))
     jogo = JogoVelha.objects.get(id=jogo_id)
     if jogo.status != 1 or jogo.turno != request.user:
-        # Get global ranking
-    ranking_raw = PresencaOnline.objects.filter(vitorias__gt=0).order_by('-vitorias')[:3]
-    ranking_data = [{'nome': r.user.get_full_name() or r.user.username, 'v': r.vitorias} for r in ranking_raw]
-
-    return JsonResponse({'status': 'error'})
+        return JsonResponse({'status': 'error'})
         
     tab_list = list(jogo.tabuleiro)
     if tab_list[pos] != ' ':
-        # Get global ranking
-    ranking_raw = PresencaOnline.objects.filter(vitorias__gt=0).order_by('-vitorias')[:3]
-    ranking_data = [{'nome': r.user.get_full_name() or r.user.username, 'v': r.vitorias} for r in ranking_raw]
-
-    return JsonResponse({'status': 'error'})
+        return JsonResponse({'status': 'error'})
         
     peca = 'X' if jogo.jogador1 == request.user else 'O'
     tab_list[pos] = peca
