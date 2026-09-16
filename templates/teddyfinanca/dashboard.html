@@ -337,8 +337,16 @@
                                 </ul>
                                 <div class="tab-content">
                                     <div class="tab-pane fade show active" id="chat-global" role="tabpanel">
-                                        <div id="chat-global-box" class="bg-white rounded p-2 mb-2 overflow-auto shadow-sm" style="height: 120px; font-size: 0.8rem; border: 1px solid #e0e0e0;">
+                                                                                <div id="chat-global-box" class="bg-white rounded p-2 mb-2 overflow-auto shadow-sm" style="height: 120px; font-size: 0.8rem; border: 1px solid #e0e0e0;">
                                             <span class="text-muted small">Carregando...</span>
+                                        </div>
+                                        <div class="mb-1 d-flex gap-1" style="font-size: 1.1rem; cursor: pointer;">
+                                            <span onclick="addEmoji('global', '😂')">😂</span>
+                                            <span onclick="addEmoji('global', '🔥')">🔥</span>
+                                            <span onclick="addEmoji('global', '👀')">👀</span>
+                                            <span onclick="addEmoji('global', '💀')">💀</span>
+                                            <span onclick="addEmoji('global', '😎')">😎</span>
+                                            <span onclick="addEmoji('global', '🚀')">🚀</span>
                                         </div>
                                         <div class="input-group input-group-sm">
                                             <input type="text" class="form-control" id="chat-global-input" placeholder="Mensagem..." onkeypress="if(event.key === 'Enter') enviarChatGlobal()">
@@ -348,6 +356,14 @@
                                     <div class="tab-pane fade" id="chat-privado" role="tabpanel">
                                         <div id="chat-privado-box" class="bg-white rounded p-2 mb-2 overflow-auto shadow-sm" style="height: 120px; font-size: 0.8rem; border: 1px solid #e0e0e0;">
                                             <span class="text-muted small">Inicie uma partida...</span>
+                                        </div>
+                                        <div class="mb-1 d-flex gap-1" style="font-size: 1.1rem; cursor: pointer;">
+                                            <span onclick="addEmoji('privado', '😂')">😂</span>
+                                            <span onclick="addEmoji('privado', '😡')">😡</span>
+                                            <span onclick="addEmoji('privado', '😱')">😱</span>
+                                            <span onclick="addEmoji('privado', '🤝')">🤝</span>
+                                            <span onclick="addEmoji('privado', '🎯')">🎯</span>
+                                            <span onclick="addEmoji('privado', '🤫')">🤫</span>
                                         </div>
                                         <div class="input-group input-group-sm">
                                             <input type="text" class="form-control" id="chat-privado-input" placeholder="Mensagem..." onkeypress="if(event.key === 'Enter') enviarChatPrivado()">
@@ -1698,14 +1714,14 @@ function sairJogo() {
 function enviarChatGlobal() {
     const input = document.getElementById('chat-global-input');
     if (!input.value.trim()) return;
-    csrfFetch('/financeiro/game/chat_global/', {msg: input.value});
+    csrfFetch('/financeiro/game/chat_global/', {msg: input.value}).then(() => fetchGameState());
     input.value = '';
 }
 
 function enviarChatPrivado() {
     const input = document.getElementById('chat-privado-input');
     if (!input.value.trim() || !currentJogoId) return;
-    csrfFetch(`/financeiro/game/chat_privado/${currentJogoId}/`, {msg: input.value});
+    csrfFetch(`/financeiro/game/chat_privado/${currentJogoId}/`, {msg: input.value}).then(() => fetchGameState());
     input.value = '';
 }
 
@@ -1747,7 +1763,14 @@ document.querySelectorAll('.board-cell').forEach(btn => {
     });
 });
 
-setInterval(() => {
+
+function addEmoji(tipo, emoji) {
+    const input = document.getElementById(`chat-${tipo}-input`);
+    input.value += emoji;
+    input.focus();
+}
+
+function fetchGameState() {
     fetch('/financeiro/game/ping/', { credentials: 'same-origin' }).then(r=>r.json()).then(data => {
         // Render Ranking
         if (data.ranking) {
@@ -1796,20 +1819,23 @@ setInterval(() => {
             
             const invitesDiv = document.getElementById('game-invites');
             invitesDiv.innerHTML = '';
-            data.convites.forEach(c => {
-                invitesDiv.innerHTML += `<div class="alert alert-info py-2 small mb-2 d-flex justify-content-between align-items-center border-0 shadow-sm" style="border-radius: 12px;">
-                    <span class="fw-bold">${c.nome} chamou!</span>
-                    <div>
-                        <button class="btn btn-sm btn-success rounded-circle p-1 me-1" style="width: 28px; height: 28px;" onclick="aceitarConvite(${c.id})"><i class="bi bi-check"></i></button>
-                        <button class="btn btn-sm btn-danger rounded-circle p-1" style="width: 28px; height: 28px;" onclick="recusarConvite(${c.id})"><i class="bi bi-x"></i></button>
-                    </div>
-                </div>`;
-            });
-        }
-        
-        if (data.jogo_ativo) {
-            document.getElementById('game-lobby').style.display = 'none';
+            if (data.convites.length > 0) {
+                data.convites.forEach(c => {
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-warning py-1 px-2 mt-2 mb-0 d-flex justify-content-between align-items-center animate__animated animate__pulse animate__infinite';
+                    alertDiv.innerHTML = `
+                        <span class="small">Convite de <b>${c.nome}</b></span>
+                        <div>
+                            <button class="btn btn-sm btn-success py-0 px-2" onclick="aceitarConvite(${c.id})">Ir</button>
+                            <button class="btn btn-sm btn-danger py-0 px-2" onclick="recusarConvite(${c.id})">X</button>
+                        </div>
+                    `;
+                    invitesDiv.appendChild(alertDiv);
+                });
+            }
+        } else {
             document.getElementById('game-board-container').style.display = 'block';
+            document.getElementById('game-lobby').style.display = 'none';
             
             currentJogoId = data.jogo_ativo.id;
             currentAdversarioId = data.jogo_ativo.adversario_id;
@@ -1852,7 +1878,6 @@ setInterval(() => {
                     }
                 }
             }
-
             
             document.getElementById('game-status-text').innerText = stText;
             
@@ -1864,8 +1889,13 @@ setInterval(() => {
                 if (board[i] === 'O') btn.classList.add('text-danger');
             });
         }
-    });
-}, 3000);
+    }).catch(e => console.error("Game Ping Error:", e));
+}
+
+setInterval(fetchGameState, 3000);
+// Run once immediately
+fetchGameState();
+
 </script>
 
 </body>
