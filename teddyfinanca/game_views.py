@@ -1,3 +1,4 @@
+from django.db.models import Q
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
@@ -101,8 +102,6 @@ def aceitar_convite(request, jogo_id):
     return JsonResponse({'status': 'ok'})
 
 @login_required
-from django.db.models import Q
-
 def recusar_convite(request, jogo_id):
     try:
         jogo = JogoVelha.objects.get(id=jogo_id)
