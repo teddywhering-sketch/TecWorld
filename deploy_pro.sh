@@ -122,7 +122,7 @@ fi
 log "8/9 Subindo os serviços..."
 $COMPOSE up -d --remove-orphans
 # Recria web para carregar o código novo e rodar migrações/collectstatic
-$COMPOSE up -d --force-recreate --no-deps web
+$COMPOSE up -d --force-recreate --no-deps web nginx
 # Recarrega o nginx para aplicar certificado/configuração sem derrubar conexões
 $COMPOSE exec nginx nginx -s reload || $COMPOSE restart nginx
 
