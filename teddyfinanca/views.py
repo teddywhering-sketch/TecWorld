@@ -206,16 +206,52 @@ def dashboard(request):
                 emp.usuario = request.user
                 
                 juros = form.cleaned_data.get('juros_percentual')
+                tipo_juros = form.cleaned_data.get('tipo_juros')
+                
+                valor_original = emp.valor
                 if juros and juros > 0:
-                    valor_original = emp.valor
-                    emp.valor = emp.valor + (emp.valor * (juros / 100))
-                    obs_juros = f"Valor original: R$ {valor_original}. Juros: {juros}%."
+                    if tipo_juros == 'MENSAL':
+                        # Juros ao mês vezes a quantidade de parcelas (Juros Simples)
+                        emp.valor = emp.valor + (emp.valor * (juros / 100) * emp.quantidade_parcelas)
+                        obs_juros = f"Valor orig: R$ {valor_original}. Juros: {juros}%/mês."
+                    else:
+                        emp.valor = emp.valor + (emp.valor * (juros / 100))
+                        obs_juros = f"Valor orig: R$ {valor_original}. Juros: {juros}% total."
+                    
                     if emp.observacao:
                         emp.observacao = f"{obs_juros} {emp.observacao}"
                     else:
                         emp.observacao = obs_juros
                         
-                emp.save()
+                from datetime import date
+                import calendar
+                
+                if emp.quantidade_parcelas > 1:
+                    valor_parcela = emp.valor / emp.quantidade_parcelas
+                    obs_original = emp.observacao
+                    for i in range(emp.quantidade_parcelas):
+                        mes = emp.data_devolucao.month - 1 + i
+                        ano = emp.data_devolucao.year + mes // 12
+                        mes = mes % 12 + 1
+                        dia = emp.data_devolucao.day
+                        max_dia = calendar.monthrange(ano, mes)[1]
+                        dia = min(dia, max_dia)
+                        data_venc = date(ano, mes, dia)
+                        
+                        Emprestimo.objects.create(
+                            usuario=request.user,
+                            nome_pessoa=emp.nome_pessoa,
+                            telefone_contato=emp.telefone_contato,
+                            valor=valor_parcela,
+                            data_emprestimo=emp.data_emprestimo,
+                            data_devolucao=data_venc,
+                            observacao=f"Parcela {i+1}/{emp.quantidade_parcelas}. {obs_original or ''}",
+                            status='PENDENTE',
+                            quantidade_parcelas=1 # as parcelas filhas não geram novas parcelas
+                        )
+                else:
+                    emp.save()
+                    
                 messages.success(request, "Empréstimo adicionado com sucesso!")
                 return redirect('teddyfinanca:dashboard')
         elif 'btn_venda_vista' in request.POST:
@@ -251,10 +287,20 @@ def dashboard(request):
                 
                 # Gerar as parcelas
                 from datetime import timedelta
+                import calendar
+                from datetime import date
+                
                 valor_parcela = (venda.valor_total - venda.entrada) / venda.quantidade_parcelas
                 for i in range(venda.quantidade_parcelas):
-                    # aproximação de 30 dias para cada parcela
-                    data_venc = venda.data_venda + timedelta(days=30*(i+1))
+                    # Adicionar meses baseando-se no primeiro_vencimento
+                    mes = venda.primeiro_vencimento.month - 1 + i
+                    ano = venda.primeiro_vencimento.year + mes // 12
+                    mes = mes % 12 + 1
+                    dia = venda.primeiro_vencimento.day
+                    # Ajustar para o último dia do mês se o dia não existir (ex: 31 de fev)
+                    max_dia = calendar.monthrange(ano, mes)[1]
+                    dia = min(dia, max_dia)
+                    data_venc = date(ano, mes, dia)
                     from .models import ParcelaVenda
                     ParcelaVenda.objects.create(
                         usuario=request.user,

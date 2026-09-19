@@ -85,6 +85,7 @@ class VendaParcelada(models.Model):
     entrada = models.DecimalField(max_digits=12, decimal_places=2, default=0.00, verbose_name="Valor de Entrada")
     quantidade_parcelas = models.PositiveIntegerField()
     data_venda = models.DateField(default=timezone.now)
+    primeiro_vencimento = models.DateField(default=timezone.now, verbose_name="Vencimento da 1ª Parcela")
     arquivado = models.BooleanField(default=False)
 
     class Meta:
@@ -172,7 +173,8 @@ class Emprestimo(models.Model):
     valor = models.DecimalField(max_digits=12, decimal_places=2)
     valor_pago = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     data_emprestimo = models.DateField(default=timezone.now)
-    data_devolucao = models.DateField(verbose_name="Data de Devolução Prometida")
+    data_devolucao = models.DateField(verbose_name="Data de Devolução Prometida / 1º Vencimento")
+    quantidade_parcelas = models.PositiveIntegerField(default=1, verbose_name="Qtd. Parcelas")
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDENTE')
     observacao = models.TextField(blank=True, null=True)
     arquivado = models.BooleanField(default=False)
@@ -194,6 +196,7 @@ class Emprestimo(models.Model):
 
     def __str__(self):
         return f"Empréstimo: {self.nome_pessoa} - R$ {self.valor}"
+
 
 class CompraParcelada(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)

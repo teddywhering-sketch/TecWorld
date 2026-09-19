@@ -1460,6 +1460,8 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('DOMContentLoaded', function() {
     const inputValor = document.getElementById('id_emp_valor');
     const inputJuros = document.getElementById('id_emp_juros_percentual');
+    const inputQtd = document.getElementById('id_emp_quantidade_parcelas');
+    const inputTipo = document.getElementById('id_emp_tipo_juros');
     const resumo = document.getElementById('resumo_juros');
     
     function calcularJuros() {
@@ -1467,9 +1469,16 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let valor = parseFloat(inputValor.value.replace(',', '.')) || 0;
         let juros = parseFloat(inputJuros.value.replace(',', '.')) || 0;
+        let qtd = parseInt(inputQtd ? inputQtd.value : 1) || 1;
+        let tipo = inputTipo ? inputTipo.value : 'TOTAL';
         
         if (valor > 0 && juros > 0) {
-            let total = valor + (valor * (juros / 100));
+            let total = valor;
+            if (tipo === 'MENSAL') {
+                total = valor + (valor * (juros / 100) * qtd);
+            } else {
+                total = valor + (valor * (juros / 100));
+            }
             resumo.style.display = 'block';
             resumo.innerHTML = `Total a Receber: <span class="text-dark">R$ ${total.toFixed(2).replace('.', ',')}</span>`;
         } else {
@@ -1479,6 +1488,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (inputValor) inputValor.addEventListener('input', calcularJuros);
     if (inputJuros) inputJuros.addEventListener('input', calcularJuros);
+    if (inputQtd) inputQtd.addEventListener('input', calcularJuros);
+    if (inputTipo) inputTipo.addEventListener('change', calcularJuros);
 });
 </script>
 

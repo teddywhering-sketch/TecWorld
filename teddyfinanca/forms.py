@@ -25,9 +25,10 @@ class CategoriaForm(LocalizedModelForm):
 class VendaParceladaForm(LocalizedModelForm):
     class Meta:
         model = VendaParcelada
-        fields = ['cliente', 'telefone_cliente', 'descricao', 'valor_total', 'entrada', 'quantidade_parcelas', 'data_venda']
+        fields = ['cliente', 'telefone_cliente', 'descricao', 'valor_total', 'entrada', 'quantidade_parcelas', 'data_venda', 'primeiro_vencimento']
         widgets = {
             'data_venda': forms.DateInput(attrs={'type': 'date'}),
+            'primeiro_vencimento': forms.DateInput(attrs={'type': 'date'}),
         }
 
 class TransacaoForm(LocalizedModelForm):
@@ -70,11 +71,12 @@ class VendaForm(LocalizedModelForm):
         }
 
 class EmprestimoForm(LocalizedModelForm):
-    juros_percentual = forms.DecimalField(max_digits=5, decimal_places=2, required=False, label="Juros Cobrado (%)", help_text="Opcional. Calcula automaticamente o total.")
+    juros_percentual = forms.DecimalField(max_digits=5, decimal_places=2, required=False, label="Juros Cobrado (%)", help_text="Ex: 5 para 5%.")
+    tipo_juros = forms.ChoiceField(choices=[('TOTAL', 'Total (Único)'), ('MENSAL', 'Ao Mês')], required=False, initial='TOTAL', label="Tipo de Juros")
     
     class Meta:
         model = Emprestimo
-        fields = ['nome_pessoa', 'valor', 'juros_percentual', 'data_emprestimo', 'data_devolucao', 'status', 'observacao']
+        fields = ['nome_pessoa', 'valor', 'quantidade_parcelas', 'juros_percentual', 'tipo_juros', 'data_emprestimo', 'data_devolucao', 'observacao']
         widgets = {
             'data_emprestimo': forms.DateInput(attrs={'type': 'date'}),
             'data_devolucao': forms.DateInput(attrs={'type': 'date'}),
