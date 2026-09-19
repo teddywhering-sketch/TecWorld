@@ -76,7 +76,7 @@ class EmprestimoForm(LocalizedModelForm):
     
     class Meta:
         model = Emprestimo
-        fields = ['nome_pessoa', 'valor', 'quantidade_parcelas', 'juros_percentual', 'tipo_juros', 'data_emprestimo', 'data_devolucao', 'observacao']
+        fields = ['nome_pessoa', 'telefone_contato', 'valor', 'quantidade_parcelas', 'juros_percentual', 'tipo_juros', 'data_emprestimo', 'data_devolucao', 'observacao']
         widgets = {
             'data_emprestimo': forms.DateInput(attrs={'type': 'date'}),
             'data_devolucao': forms.DateInput(attrs={'type': 'date'}),
