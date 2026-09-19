@@ -380,12 +380,15 @@ def dashboard(request):
 
     a_pagar_mes = Divida.objects.filter(usuario=request.user, status='PENDENTE', data_vencimento__month=hoje.month, data_vencimento__year=hoje.year).annotate(faltante=F('valor') - F('valor_pago')).aggregate(total=Sum('faltante'))['total'] or 0
 
-    recebido_venda_unica = Venda.objects.filter(usuario=request.user, data_vencimento__month=hoje.month, data_vencimento__year=hoje.year).aggregate(total=Sum('valor_pago'))['total'] or 0
-    recebido_parcelas = ParcelaVenda.objects.filter(venda__usuario=request.user, data_vencimento__month=hoje.month, data_vencimento__year=hoje.year).aggregate(total=Sum('valor_pago'))['total'] or 0
-    recebido_emprestimos = Emprestimo.objects.filter(usuario=request.user, data_devolucao__month=hoje.month, data_devolucao__year=hoje.year).aggregate(total=Sum('valor_pago'))['total'] or 0
+    recebido_venda_unica = Venda.objects.filter(usuario=request.user, data_pagamento__month=hoje.month, data_pagamento__year=hoje.year).aggregate(total=Sum('valor_pago'))['total'] or 0
+    recebido_parcelas = ParcelaVenda.objects.filter(venda__usuario=request.user, data_pagamento__month=hoje.month, data_pagamento__year=hoje.year).aggregate(total=Sum('valor_pago'))['total'] or 0
+    recebido_emprestimos = Emprestimo.objects.filter(usuario=request.user, data_pagamento__month=hoje.month, data_pagamento__year=hoje.year).aggregate(total=Sum('valor_pago'))['total'] or 0
     recebido_mes = recebido_venda_unica + recebido_parcelas + recebido_emprestimos
 
-    pago_mes = Divida.objects.filter(usuario=request.user, data_vencimento__month=hoje.month, data_vencimento__year=hoje.year).aggregate(total=Sum('valor_pago'))['total'] or 0
+    pago_mes = Divida.objects.filter(usuario=request.user, data_pagamento__month=hoje.month, data_pagamento__year=hoje.year).aggregate(total=Sum('valor_pago'))['total'] or 0
+    
+    entradas_mes += recebido_mes
+    saidas_mes += pago_mes
     
     # Agrupamento para gráfico de pizza de categorias
     import json
@@ -503,6 +506,7 @@ def pagar_divida(request, id):
         if request.method == 'POST':
             valor = Decimal(request.POST.get('valor_pagamento', 0))
             divida.valor_pago += valor
+            divida.data_pagamento = date.today()
             if divida.restante <= 0:
                 divida.status = 'PAGO'
             divida.save()
@@ -510,6 +514,7 @@ def pagar_divida(request, id):
         else:
             divida.status = 'PAGO'
             divida.valor_pago = divida.valor
+            divida.data_pagamento = date.today()
             divida.save()
             messages.success(request, f"Dívida '{divida.descricao}' quitada!")
             
@@ -526,6 +531,7 @@ def receber_emprestimo(request, id):
         if request.method == 'POST':
             valor = Decimal(request.POST.get('valor_pagamento', 0))
             emp.valor_pago += valor
+            emp.data_pagamento = date.today()
             if emp.restante <= 0:
                 emp.status = 'PAGO'
             emp.save()
@@ -533,6 +539,7 @@ def receber_emprestimo(request, id):
         else:
             emp.status = 'PAGO'
             emp.valor_pago = emp.valor
+            emp.data_pagamento = date.today()
             emp.save()
             messages.success(request, f"Empréstimo de '{emp.nome_pessoa}' totalmente recebido!")
     except Emprestimo.DoesNotExist:
@@ -549,6 +556,7 @@ def receber_parcela(request, id):
         if request.method == 'POST':
             valor = Decimal(request.POST.get('valor_pagamento', 0))
             parcela.valor_pago += valor
+            parcela.data_pagamento = date.today()
             if parcela.restante <= 0:
                 parcela.status = 'PAGO'
             parcela.save()
@@ -556,6 +564,7 @@ def receber_parcela(request, id):
         else:
             parcela.status = 'PAGO'
             parcela.valor_pago = parcela.valor
+            parcela.data_pagamento = date.today()
             parcela.save()
             messages.success(request, f"Parcela {parcela.numero} de '{parcela.venda.cliente}' quitada!")
     except ParcelaVenda.DoesNotExist:
@@ -1126,10 +1135,12 @@ def receber_venda_unica(request, id):
             valor = Decimal(str(valor_recebido).replace(',', '.'))
             if valor > 0:
                 venda.valor_pago += valor
+                venda.data_pagamento = date.today()
                 
                 if venda.valor_pago >= venda.valor:
                     venda.status = 'PAGO'
                     venda.valor_pago = venda.valor
+                    venda.data_pagamento = date.today()
                     messages.success(request, f"Venda de {venda.cliente} recebida com sucesso!")
                 else:
                     messages.success(request, f"Recebimento parcial da venda de {venda.cliente} registrado!")
@@ -1140,6 +1151,7 @@ def receber_venda_unica(request, id):
     else:
         venda.status = 'PAGO'
         venda.valor_pago = venda.valor
+        venda.data_pagamento = date.today()
         venda.save()
         messages.success(request, f"Venda de {venda.cliente} recebida com sucesso!")
             
