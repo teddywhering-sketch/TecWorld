@@ -30,9 +30,12 @@
     <div class="receipt-box">
         <div class="header">
             <h2>RECIBO DE PAGAMENTO</h2>
-            {% if obj.venda.usuario.perfil.nome_completo %}
+            {% if tipo == 'venda' and obj.venda.usuario.perfil.nome_completo %}
                 <small>Emitido por: {{ obj.venda.usuario.perfil.nome_completo }}</small><br>
                 <small>Contato: {{ obj.venda.usuario.perfil.telefone|default:"" }}</small>
+            {% elif tipo == 'venda_unica' and obj.usuario.perfil.nome_completo %}
+                <small>Emitido por: {{ obj.usuario.perfil.nome_completo }}</small><br>
+                <small>Contato: {{ obj.usuario.perfil.telefone|default:"" }}</small>
             {% elif obj.usuario.perfil.nome_completo %}
                 <small>Emitido por: {{ obj.usuario.perfil.nome_completo }}</small><br>
                 <small>Contato: {{ obj.usuario.perfil.telefone|default:"" }}</small>
@@ -46,6 +49,10 @@
                 <p><span>Cliente:</span> {{ obj.venda.cliente }}</p>
                 <p><span>Referente a:</span> {{ obj.venda.descricao }}</p>
                 <p><span>Parcela:</span> {{ obj.numero }} de {{ obj.venda.quantidade_parcelas }}</p>
+                <p><span>Vencimento:</span> {{ obj.data_vencimento|date:"d/m/Y" }}</p>
+            {% elif tipo == 'venda_unica' %}
+                <p><span>Cliente:</span> {{ obj.cliente }}</p>
+                <p><span>Referente a:</span> {{ obj.descricao }}</p>
                 <p><span>Vencimento:</span> {{ obj.data_vencimento|date:"d/m/Y" }}</p>
             {% elif tipo == 'emprestimo' %}
                 <p><span>Nome:</span> {{ obj.nome_pessoa }}</p>

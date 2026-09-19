@@ -108,33 +108,32 @@ class Venda(models.Model):
     cliente = models.CharField(max_length=200)
     descricao = models.TextField(verbose_name="Descrição da Venda")
     valor = models.DecimalField(max_digits=12, decimal_places=2)
+    valor_pago = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     banco = models.ForeignKey('Banco', on_delete=models.SET_NULL, null=True, verbose_name="Receber em qual Banco?")
-    data_venda = models.DateField(default=timezone.now)
+    data_venda = models.DateField(default=timezone.now, verbose_name="Data da Venda")
+    data_vencimento = models.DateField(default=timezone.now, verbose_name="Data para Receber")
+    status = models.CharField(max_length=10, choices=(('PENDENTE', 'Pendente'), ('PAGO', 'Pago')), default='PENDENTE')
     arquivado = models.BooleanField(default=False)
 
     class Meta:
-        verbose_name = "Venda à Vista"
-        verbose_name_plural = "Vendas à Vista"
+        verbose_name = "Venda"
+        verbose_name_plural = "Vendas"
 
-    def save(self, *args, **kwargs):
-        is_new = self.pk is None
-        super().save(*args, **kwargs)
-        if is_new and self.banco:
-            Transacao.objects.create(
-                usuario=self.usuario,
-                banco=self.banco,
-                tipo='ENTRADA',
-                valor=self.valor,
-                descricao=f"Venda: {self.descricao} ({self.cliente})",
-                data=self.data_venda,
-                status='CONCLUIDO'
-            )
+    @property
+    def dias_para_vencer(self):
+        if self.status == 'PAGO':
+            return 0
+        from datetime import date
+        hoje = date.today()
+        diferenca = (self.data_vencimento - hoje).days
+        return diferenca
 
-    def __str__(self):
-        return f"Venda {self.cliente} - {self.valor}"
+    @property
+    def restante(self):
+        return self.valor - self.valor_pago
 
     def __str__(self):
-        return f"Venda para {self.cliente} - R$ {self.valor_total}"
+        return f"Venda para {self.cliente} - R$ {self.valor}"
 
 class ParcelaVenda(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)

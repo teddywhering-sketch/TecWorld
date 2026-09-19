@@ -220,19 +220,41 @@
                             <div style="position: relative; height: 180px; width: 100%; display: flex; justify-content: center; align-items: center;">
                                 <canvas id="chartGeral"></canvas>
                                 <!-- Caso não haja dados -->
-                                {% if entradas_mes == 0 and saidas_mes == 0 %}
+                                {% if entradas_mes == 0 and saidas_mes == 0 and a_receber_mes == 0 and a_pagar_mes == 0 %}
                                 <span class="position-absolute text-muted small">Sem dados no mês</span>
                                 {% endif %}
                             </div>
                             
                             <div class="d-flex justify-content-around mt-4 pt-3 border-top border-light">
-                                <div class="text-start">
-                                    <span class="d-block text-muted small fw-semibold"><i class="bi bi-circle-fill text-success me-1" style="font-size: 0.5rem;"></i> Entradas</span>
+                                <div class="text-center w-50 border-end border-light">
+                                    <span class="d-block text-muted small fw-semibold"><i class="bi bi-circle-fill text-success me-1" style="font-size: 0.5rem;"></i> Recebidas (Geral)</span>
                                     <span class="fw-bold text-success fs-5">R$ {{ entradas_mes|floatformat:"2g" }}</span>
                                 </div>
-                                <div class="text-end">
-                                    <span class="d-block text-muted small fw-semibold"><i class="bi bi-circle-fill text-danger me-1" style="font-size: 0.5rem;"></i> Gastos</span>
+                                <div class="text-center w-50">
+                                    <span class="d-block text-muted small fw-semibold"><i class="bi bi-circle-fill text-danger me-1" style="font-size: 0.5rem;"></i> Pagas (Geral)</span>
                                     <span class="fw-bold text-danger fs-5">R$ {{ saidas_mes|floatformat:"2g" }}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-around mt-3 pt-3 border-top border-light">
+                                <div class="text-center w-50 border-end border-light">
+                                    <span class="d-block text-muted small fw-semibold text-info"><i class="bi bi-check-circle-fill me-1" style="font-size: 0.7rem;"></i> Recebido no Mês</span>
+                                    <span class="fw-bold text-info fs-6">R$ {{ recebido_mes|floatformat:"2g" }}</span>
+                                </div>
+                                <div class="text-center w-50">
+                                    <span class="d-block text-muted small fw-semibold text-info"><i class="bi bi-clock-history me-1" style="font-size: 0.7rem;"></i> A Receber no Mês</span>
+                                    <span class="fw-bold text-info fs-6">R$ {{ a_receber_mes|floatformat:"2g" }}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-around mt-3 pt-3 border-top border-light">
+                                <div class="text-center w-50 border-end border-light">
+                                    <span class="d-block text-muted small fw-semibold text-warning"><i class="bi bi-check-circle-fill me-1" style="font-size: 0.7rem;"></i> Pago no Mês</span>
+                                    <span class="fw-bold text-warning" style="font-size: 1.1rem;">R$ {{ pago_mes|floatformat:"2g" }}</span>
+                                </div>
+                                <div class="text-center w-50">
+                                    <span class="d-block text-muted small fw-semibold text-warning"><i class="bi bi-clock-history me-1" style="font-size: 0.7rem;"></i> A Pagar no Mês</span>
+                                    <span class="fw-bold text-warning" style="font-size: 1.1rem;">R$ {{ a_pagar_mes|floatformat:"2g" }}</span>
                                 </div>
                             </div>
                         </div>
@@ -285,7 +307,7 @@
                     <!-- Jogo da Velha Multiplayer -->
                     <div class="card border-0 shadow-sm mt-4" style="border-radius: 16px; background: linear-gradient(145deg, #f0f4f8, #e0e7f1);">
                         <div class="card-body p-4 text-center">
-                            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-controller me-2"></i>Hora do Jogo! (Online)</h6>
+                            <h6 class="fw-bold text-info mb-3"><i class="bi bi-controller me-2"></i>Hora do Jogo! (Online)</h6>
                             
                             <div id="game-ranking" class="d-flex justify-content-center gap-2 mb-3 flex-wrap">
                                 <!-- Preenchido via JS -->
@@ -304,7 +326,7 @@
 
                             <div id="game-board-container" style="display: none;">
                                 <div class="d-flex justify-content-between align-items-center mb-2 px-3">
-                                    <span class="fw-bold text-primary fs-5" id="game-p1-label">P1</span>
+                                    <span class="fw-bold text-info fs-5" id="game-p1-label">P1</span>
                                     <span class="fw-bold text-dark" id="game-status-text">Iniciando...</span>
                                     <span class="fw-bold text-danger fs-5" id="game-p2-label">P2</span>
                                 </div>
@@ -961,23 +983,39 @@
             <!-- Vendas à Vista (Sem Parcelamento) -->
             <div class="card summary-card mb-4 border-success" style="border-left: 5px solid #198754 !important;">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center border-0 pt-3">
-                    <h6 class="text-success mb-0"><i class="bi bi-cart-check"></i> Vendas à Vista</h6>
+                    <h6 class="text-success mb-0"><i class="bi bi-cart-check"></i> Vendas</h6>
                     <button class="btn btn-success text-white rounded-pill fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalVendaVista">+ Venda</button>
                 </div>
                 <ul class="list-group list-group-flush">
                     {% for v in vendas_vista %}
-                    <li class="list-group-item px-3 py-3 d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>{{ v.cliente }}</strong><br>
-                            <small class="text-muted">{{ v.descricao }} - {{ v.data_venda|date:"d/m/Y" }}</small>
+                    <li class="list-group-item px-3 py-3 d-flex justify-content-between align-items-center flex-wrap">
+                        <div class="w-100 d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <strong>{{ v.cliente }}</strong><br>
+                                <small class="text-muted">{{ v.descricao }} - {{ v.data_venda|date:"d/m/Y" }}</small><br>
+                                <small class="text-info">Vencimento: {{ v.data_vencimento|date:"d/m/Y" }}</small>
+                            </div>
+                            <div class="text-end">
+                                <strong class="text-success">R$ {{ v.valor|floatformat:"2g" }}</strong><br>
+                                {% if v.status == 'PAGO' %}
+                                <span class="badge bg-success mt-1">Pago</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark mt-1">Pendente</span><br>
+                                <small class="text-muted">Recebido: R$ {{ v.valor_pago|floatformat:"2g" }}</small>
+                                {% endif %}
+                            </div>
                         </div>
-                        <div class="text-end">
-                            <strong class="text-success">R$ {{ v.valor|floatformat:"2g" }}</strong><br>
-                            <!-- Removed banco display -->
+                        <div class="w-100 text-end">
+                            {% if v.valor_pago > 0 %}
+                            <a href="{% url 'teddyfinanca:recibo_venda_unica' v.id %}" target="_blank" class="btn btn-outline-dark btn-sm me-1" style="font-size: 0.7rem;"><i class="bi bi-receipt"></i> Recibo</a>
+                            {% endif %}
+                            {% if v.status == 'PENDENTE' %}
+                            <a href="javascript:void(0);" onclick="openVendaUnicaModal({{ v.id }}, '{{ v.restante|unlocalize }}')" class="btn btn-success btn-sm btn-pagamento-venda" style="font-size: 0.7rem;">Receber</a>
+                            {% endif %}
                         </div>
                     </li>
                     {% empty %}
-                    <li class="list-group-item text-center text-muted py-4">Nenhuma venda à vista registrada.</li>
+                    <li class="list-group-item text-center text-muted py-4">Nenhuma venda registrada.</li>
                     {% endfor %}
                 </ul>
             </div>
@@ -1170,7 +1208,7 @@
 
 <div class="modal fade" id="modalVendaVista" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0" style="border-radius:15px;">
-      <div class="modal-header bg-success text-white border-0" style="border-radius:15px 15px 0 0;"><h5 class="modal-title">Nova Venda à Vista</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+      <div class="modal-header bg-success text-white border-0" style="border-radius:15px 15px 0 0;"><h5 class="modal-title">Nova Venda</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
       <div class="modal-body">
         <form method="POST">
             {% csrf_token %}
@@ -1207,18 +1245,25 @@
 <script>
 
 
-    // Guardar a aba ativa no localStorage para a bottom nav
+    // Guardar a aba ativa no localStorage para a bottom nav (mas resetar no login ou nova sessão)
     document.addEventListener("DOMContentLoaded", function() {
-        var triggerTabList = [].slice.call(document.querySelectorAll('.bottom-nav a[data-bs-toggle="pill"]'))
+        var triggerTabList = [].slice.call(document.querySelectorAll('.bottom-nav a[data-bs-toggle="pill"]'));
         
         triggerTabList.forEach(function (triggerEl) {
             triggerEl.addEventListener('shown.bs.tab', function (event) {
-                localStorage.setItem('activeTabApp', event.target.getAttribute('href'));
-            })
+                sessionStorage.setItem('activeTabApp', event.target.getAttribute('href'));
+                localStorage.removeItem('activeTabApp'); // limpar o antigo
+            });
         });
 
-        var activeTab = localStorage.getItem('activeTabApp');
-        if(activeTab){
+        // Usar sessionStorage em vez de localStorage para que ao fechar e abrir o navegador, volte para Início
+        // E verificar referrer para caso venha da tela de login
+        var activeTab = sessionStorage.getItem('activeTabApp');
+        var referrer = document.referrer || '';
+        if (referrer.includes('login') || !activeTab) {
+            sessionStorage.removeItem('activeTabApp');
+            // Por padrão o HTML já deixa o Início ativo
+        } else if(activeTab){
             var tab = new bootstrap.Tab(document.querySelector('.bottom-nav a[href="' + activeTab + '"]'));
             tab.show();
         }
@@ -1329,15 +1374,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const ctx = canvas.getContext('2d');
         const entradas = {{ entradas_mes|stringformat:"f" }};
         const saidas = {{ saidas_mes|stringformat:"f" }};
+        const a_receber = {{ a_receber_mes|stringformat:"f" }};
+        const a_pagar = {{ a_pagar_mes|stringformat:"f" }};
         
-        if (entradas > 0 || saidas > 0) {
+        if (entradas > 0 || saidas > 0 || a_receber > 0 || a_pagar > 0) {
             new Chart(ctx, {
                 type: 'pie',
                 data: {
-                    labels: ['Entradas', 'Gastos'],
+                    labels: ['Recebidas', 'Pagas', 'A Receber', 'A Pagar'],
                     datasets: [{
-                        data: [entradas, saidas],
-                        backgroundColor: ['#198754', '#dc3545'],
+                        data: [entradas, saidas, a_receber, a_pagar],
+                        backgroundColor: ['#198754', '#dc3545', '#0dcaf0', '#ffc107'],
                         borderWidth: 2,
                         borderColor: '#ffffff',
                         hoverOffset: 4
@@ -1739,7 +1786,7 @@ function renderChat(boxId, msgs) {
         box.dataset.lastMsg = newLastMsg;
         let html = '';
         msgs.forEach(m => {
-            const cor = m.me ? 'text-primary' : 'text-dark fw-bold';
+            const cor = m.me ? 'text-info' : 'text-dark fw-bold';
             const nome = m.me ? 'Você' : m.user;
             html += `<div class="mb-1"><span class="${cor}">${nome}:</span> <span class="text-secondary">${m.msg}</span></div>`;
         });
@@ -1755,7 +1802,7 @@ document.querySelectorAll('.board-cell').forEach(btn => {
         
         const pos = this.dataset.pos;
         this.innerText = minhaPeca;
-        this.classList.add(minhaPeca === 'X' ? 'text-primary' : 'text-danger');
+        this.classList.add(minhaPeca === 'X' ? 'text-info' : 'text-danger');
         meuTurno = false;
         document.getElementById('game-status-text').innerText = 'Aguarde...';
         
@@ -1888,7 +1935,7 @@ function fetchGameState() {
             document.querySelectorAll('.board-cell').forEach((btn, i) => {
                 btn.innerText = board[i] === ' ' ? '' : board[i];
                 btn.className = 'btn btn-white shadow-sm fw-bold fs-3 m-1 board-cell'; // reset
-                if (board[i] === 'X') btn.classList.add('text-primary');
+                if (board[i] === 'X') btn.classList.add('text-info');
                 if (board[i] === 'O') btn.classList.add('text-danger');
             });
         }
@@ -1899,6 +1946,43 @@ setInterval(fetchGameState, 3000);
 // Run once immediately
 fetchGameState();
 
+</script>
+
+
+<!-- Modal de Pagamento Venda Unica -->
+<div class="modal fade" id="modalPagamentoVendaUnica" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0" style="border-radius:15px;">
+      <div class="modal-header bg-success text-white border-0" style="border-radius:15px 15px 0 0;">
+        <h5 class="modal-title">Registrar Pagamento de Venda</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form method="POST" id="formPagamentoVendaUnica" action="">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label text-muted small mb-1">Qual valor você recebeu agora?</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-0">R$</span>
+                    <input type="text" name="valor" id="valorPagamentoVendaUnicaInput" class="form-control bg-light border-0 money-mask" required>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success text-white w-100 rounded-pill py-2">Confirmar Recebimento</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+function openVendaUnicaModal(id, restante) {
+    const form = document.getElementById('formPagamentoVendaUnica');
+    form.action = `/financeiro/venda_unica/${id}/receber/`;
+    document.getElementById('valorPagamentoVendaUnicaInput').value = restante.replace('.', ',');
+    var myModal = new bootstrap.Modal(document.getElementById('modalPagamentoVendaUnica'));
+    myModal.show();
+}
 </script>
 
 </body>

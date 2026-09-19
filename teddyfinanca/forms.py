@@ -63,9 +63,10 @@ class DividaForm(LocalizedModelForm):
 class VendaForm(LocalizedModelForm):
     class Meta:
         model = Venda
-        fields = ['cliente', 'descricao', 'valor', 'data_venda']
+        fields = ['cliente', 'descricao', 'valor', 'data_venda', 'data_vencimento']
         widgets = {
             'data_venda': forms.DateInput(attrs={'type': 'date'}),
+            'data_vencimento': forms.DateInput(attrs={'type': 'date'}),
         }
 
 class EmprestimoForm(LocalizedModelForm):

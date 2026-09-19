@@ -323,8 +323,23 @@ def dashboard(request):
     parcelas_atrasadas = parcelas_pendentes.filter(data_vencimento__lt=hoje).order_by('data_vencimento')
 
     # Dados para os Gráficos
-    entradas_mes = Transacao.objects.filter(usuario=request.user, tipo='ENTRADA').aggregate(total=Sum('valor'))['total'] or 0
-    saidas_mes = Transacao.objects.filter(usuario=request.user, tipo='SAIDA').aggregate(total=Sum('valor'))['total'] or 0
+    entradas_mes = Transacao.objects.filter(usuario=request.user, tipo='ENTRADA', data__month=hoje.month, data__year=hoje.year).aggregate(total=Sum('valor'))['total'] or 0
+    saidas_mes = Transacao.objects.filter(usuario=request.user, tipo='SAIDA', data__month=hoje.month, data__year=hoje.year).aggregate(total=Sum('valor'))['total'] or 0
+
+    from django.db.models import F
+    a_receber_venda_unica = Venda.objects.filter(usuario=request.user, status='PENDENTE', data_vencimento__month=hoje.month, data_vencimento__year=hoje.year).annotate(faltante=F('valor') - F('valor_pago')).aggregate(total=Sum('faltante'))['total'] or 0
+    a_receber_parcelas = ParcelaVenda.objects.filter(venda__usuario=request.user, status='PENDENTE', data_vencimento__month=hoje.month, data_vencimento__year=hoje.year).annotate(faltante=F('valor') - F('valor_pago')).aggregate(total=Sum('faltante'))['total'] or 0
+    a_receber_emprestimos = Emprestimo.objects.filter(usuario=request.user, status='PENDENTE', data_devolucao__month=hoje.month, data_devolucao__year=hoje.year).annotate(faltante=F('valor') - F('valor_pago')).aggregate(total=Sum('faltante'))['total'] or 0
+    a_receber_mes = a_receber_venda_unica + a_receber_parcelas + a_receber_emprestimos
+
+    a_pagar_mes = Divida.objects.filter(usuario=request.user, status='PENDENTE', data_vencimento__month=hoje.month, data_vencimento__year=hoje.year).annotate(faltante=F('valor') - F('valor_pago')).aggregate(total=Sum('faltante'))['total'] or 0
+
+    recebido_venda_unica = Venda.objects.filter(usuario=request.user, data_vencimento__month=hoje.month, data_vencimento__year=hoje.year).aggregate(total=Sum('valor_pago'))['total'] or 0
+    recebido_parcelas = ParcelaVenda.objects.filter(venda__usuario=request.user, data_vencimento__month=hoje.month, data_vencimento__year=hoje.year).aggregate(total=Sum('valor_pago'))['total'] or 0
+    recebido_emprestimos = Emprestimo.objects.filter(usuario=request.user, data_devolucao__month=hoje.month, data_devolucao__year=hoje.year).aggregate(total=Sum('valor_pago'))['total'] or 0
+    recebido_mes = recebido_venda_unica + recebido_parcelas + recebido_emprestimos
+
+    pago_mes = Divida.objects.filter(usuario=request.user, data_vencimento__month=hoje.month, data_vencimento__year=hoje.year).aggregate(total=Sum('valor_pago'))['total'] or 0
     
     # Agrupamento para gráfico de pizza de categorias
     import json
@@ -409,6 +424,10 @@ def dashboard(request):
         'saldo_liquido': saldo_liquido,
         'entradas_mes': entradas_mes,
         'saidas_mes': saidas_mes,
+        'a_receber_mes': a_receber_mes,
+        'a_pagar_mes': a_pagar_mes,
+        'recebido_mes': recebido_mes,
+        'pago_mes': pago_mes,
         'categorias_labels_json': categorias_labels_json,
         'categorias_valores_json': categorias_valores_json,
         'categorias_list': categorias_list,
@@ -1043,3 +1062,47 @@ def limpar_pluggy_vps(request):
         return HttpResponse("<h1>Limpeza Concluída!</h1><p>Todos os bancos e transações do Pluggy foram removidos do seu banco de dados na VPS.</p><a href='/financeiro/painel/'>Voltar ao Painel</a>")
     except Exception as e:
         return HttpResponse(f"<h1>Erro</h1><p>{str(e)}</p>")
+
+@login_required(login_url='teddyfinanca:login')
+@check_assinatura
+def receber_venda_unica(request, id):
+    from .models import Venda
+    from django.shortcuts import get_object_or_404, redirect
+    from django.contrib import messages
+    from decimal import Decimal
+    
+    venda = get_object_or_404(Venda, id=id, usuario=request.user)
+    
+    if request.method == 'POST':
+        valor_recebido = request.POST.get('valor', 0)
+        
+        try:
+            valor = Decimal(str(valor_recebido).replace(',', '.'))
+            if valor > 0:
+                venda.valor_pago += valor
+                
+                if venda.valor_pago >= venda.valor:
+                    venda.status = 'PAGO'
+                    venda.valor_pago = venda.valor
+                    messages.success(request, f"Venda de {venda.cliente} recebida com sucesso!")
+                else:
+                    messages.success(request, f"Recebimento parcial da venda de {venda.cliente} registrado!")
+                
+                venda.save()
+        except Exception as e:
+            messages.error(request, f"Erro ao processar recebimento: {e}")
+    else:
+        venda.status = 'PAGO'
+        venda.valor_pago = venda.valor
+        venda.save()
+        messages.success(request, f"Venda de {venda.cliente} recebida com sucesso!")
+            
+    return redirect('teddyfinanca:dashboard')
+
+@login_required(login_url='teddyfinanca:login')
+@check_assinatura
+def recibo_venda_unica(request, id):
+    from .models import Venda
+    from django.shortcuts import get_object_or_404, render
+    venda = get_object_or_404(Venda, id=id, usuario=request.user)
+    return render(request, 'teddyfinanca/recibo.html', {'tipo': 'venda_unica', 'obj': venda})
