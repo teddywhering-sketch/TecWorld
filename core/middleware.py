@@ -31,3 +31,20 @@ class BlockFinancaClientsMiddleware:
                         return HttpResponseForbidden("<h1>Acesso Negado</h1><p>Sua conta pertence ao sistema Financeiro e não possui permissão para acessar o painel TecWorld.</p><p><a href='/financeiro/'>Acessar meu Financeiro</a> | <a href='/logout/'>Sair</a></p>")
                         
         return self.get_response(request)
+
+import traceback
+import datetime
+from django.conf import settings
+
+class ErrorLogMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        return self.get_response(request)
+
+    def process_exception(self, request, exception):
+        with open(settings.BASE_DIR / 'error_log.txt', 'a') as f:
+            f.write(f"\n[{datetime.datetime.now()}] {request.method} {request.path}\n")
+            f.write("".join(traceback.format_exception(type(exception), exception, exception.__traceback__)))
+        return None

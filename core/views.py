@@ -993,3 +993,13 @@ class ReciboPixView(LoginRequiredMixin, View):
                 raise PermissionDenied
                 
         return render(request, "core/recibo_pix.html", {"object": os_obj})
+
+def ler_erro(request):
+    import os
+    from django.conf import settings
+    from django.http import HttpResponse
+    try:
+        with open(settings.BASE_DIR / 'error_log.txt', 'r') as log_file:
+            return HttpResponse(f"<pre>{log_file.read()}</pre>")
+    except Exception as e:
+        return HttpResponse(f"Erro ao ler log: {e}")
