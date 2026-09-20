@@ -193,7 +193,7 @@ class UsuarioForm(UserCreationForm):
         self.fields["cliente_vinculado"].widget.attrs["class"] = "form-select"
     def _post_clean(self):
         # Desabilita a validação estrita do modelo para o username (permite espaços legados)
-        exclude = self._get_validation_exclusions()
+        exclude = list(self._get_validation_exclusions())
         if 'username' not in exclude:
             exclude.append('username')
         try:
@@ -273,7 +273,7 @@ class UsuarioUpdateForm(forms.ModelForm):
                 
     def _post_clean(self):
         # Desabilita a validação estrita do modelo para o username (permite espaços legados)
-        exclude = self._get_validation_exclusions()
+        exclude = list(self._get_validation_exclusions())
         if 'username' not in exclude:
             exclude.append('username')
         try:
