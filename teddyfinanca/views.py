@@ -64,6 +64,9 @@ def financeiro_cadastro(request):
             messages.error(request, 'Usuário já existe.')
         else:
             user = User.objects.create_user(username=usuario, password=senha)
+            from django.contrib.auth.models import Group
+            financa_group, _ = Group.objects.get_or_create(name='Finança')
+            user.groups.add(financa_group)
             from teddyfinanca.models import Perfil
             Perfil.objects.get_or_create(usuario=user)
             messages.success(request, 'Conta criada com sucesso! Faça login.')
