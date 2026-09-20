@@ -191,6 +191,24 @@ class UsuarioForm(UserCreationForm):
             field.widget.attrs["class"] = "form-control"
         self.fields["papel"].widget.attrs["class"] = "form-select"
         self.fields["cliente_vinculado"].widget.attrs["class"] = "form-select"
+    def _post_clean(self):
+        # Desabilita a validação estrita do modelo para o username (permite espaços legados)
+        exclude = self._get_validation_exclusions()
+        if 'username' not in exclude:
+            exclude.append('username')
+        try:
+            self.instance.full_clean(exclude=exclude, validate_unique=False)
+        except Exception as e:
+            from django.core.exceptions import ValidationError
+            if isinstance(e, ValidationError):
+                self._update_errors(e)
+        try:
+            self.validate_unique()
+        except Exception as e:
+            from django.core.exceptions import ValidationError
+            if isinstance(e, ValidationError):
+                self._update_errors(e)
+
     def save(self, commit=True):
         user = super().save(commit=False)
         papel = self.cleaned_data["papel"]
@@ -241,6 +259,10 @@ class UsuarioUpdateForm(forms.ModelForm):
             if cliente:
                 self.initial["cliente_vinculado"] = cliente
                 
+        # Remove validação estrita de caracteres do username para permitir edição de legados com espaço
+        if 'username' in self.fields:
+            self.fields['username'].validators = []
+            
         for name, field in self.fields.items():
             if type(field.widget) == forms.CheckboxInput:
                 field.widget.attrs["class"] = "form-check-input"
@@ -249,6 +271,24 @@ class UsuarioUpdateForm(forms.ModelForm):
             else:
                 field.widget.attrs["class"] = "form-control"
                 
+    def _post_clean(self):
+        # Desabilita a validação estrita do modelo para o username (permite espaços legados)
+        exclude = self._get_validation_exclusions()
+        if 'username' not in exclude:
+            exclude.append('username')
+        try:
+            self.instance.full_clean(exclude=exclude, validate_unique=False)
+        except Exception as e:
+            from django.core.exceptions import ValidationError
+            if isinstance(e, ValidationError):
+                self._update_errors(e)
+        try:
+            self.validate_unique()
+        except Exception as e:
+            from django.core.exceptions import ValidationError
+            if isinstance(e, ValidationError):
+                self._update_errors(e)
+
     def save(self, commit=True):
         user = super().save(commit=False)
         papel = self.cleaned_data.get("papel")
