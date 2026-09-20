@@ -104,7 +104,15 @@
     </div>
     <div class="col-lg-4">
         <div class="card p-4">
-            <p><b>Status</b><br><span class="badge {% if object.status == 'CONCLUIDA' %}text-bg-success{% else %}text-bg-primary{% endif %}">{{ object.get_status_display }}</span></p>
+            <p><b>Status</b><br>
+                {% if object.status == 'CONCLUIDA' and not object.comprovante_pagamento %}
+                    <span class="badge text-bg-info text-white"><i class="bi bi-lightning-charge-fill me-1"></i>Pago via PIX</span>
+                {% elif object.status == 'CONCLUIDA' %}
+                    <span class="badge text-bg-success"><i class="bi bi-check-circle-fill me-1"></i>Confirmada e paga</span>
+                {% else %}
+                    <span class="badge text-bg-primary">{{ object.get_status_display }}</span>
+                {% endif %}
+            </p>
             
             {% if object.plus_code %}
             <p><b>Localização</b><br>

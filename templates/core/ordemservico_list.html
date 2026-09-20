@@ -100,13 +100,13 @@
                     <td>
                         {% if os.status == 'CONCLUIDA' and os.comprovante_pagamento %}
                             <span class="badge text-bg-success"><i class="bi bi-check-circle-fill me-1"></i>Confirmada e paga</span>
+                        {% elif os.status == 'CONCLUIDA' and not os.comprovante_pagamento %}
+                            <span class="badge text-bg-info text-white"><i class="bi bi-lightning-charge-fill me-1"></i>Pago via PIX</span>
                         {% else %}
                             {% if os.status == 'ABERTA' or os.status == 'AGENDADA' %}
                                 <span class="badge text-bg-light border text-secondary">{{ os.get_status_display }}</span>
                             {% elif os.status == 'EM_ANDAMENTO' or os.status == 'AGUARDANDO_CONFIRMACAO' %}
                                 <span class="badge text-bg-warning">{{ os.get_status_display }}</span>
-                            {% elif os.status == 'CONCLUIDA' %}
-                                <span class="badge text-bg-success">{{ os.get_status_display }}</span>
                             {% else %}
                                 <span class="badge text-bg-secondary">{{ os.get_status_display }}</span>
                             {% endif %}
