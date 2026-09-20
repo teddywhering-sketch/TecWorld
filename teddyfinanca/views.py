@@ -60,7 +60,10 @@ def financeiro_cadastro(request):
     if request.method == 'POST':
         usuario = request.POST.get('usuario', '').strip()
         senha = request.POST.get('senha')
-        if User.objects.filter(username__iexact=usuario).exists():
+        import re
+        if not re.match(r'^[\w.@+-]+$', usuario):
+            messages.error(request, 'O usuário (login) não pode conter espaços. Use apenas letras, números e @/./+/-/_')
+        elif User.objects.filter(username__iexact=usuario).exists():
             messages.error(request, 'Usuário já existe.')
         else:
             user = User.objects.create_user(username=usuario, password=senha)
