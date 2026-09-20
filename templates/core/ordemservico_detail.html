@@ -131,7 +131,9 @@
                     <a class="btn btn-outline-primary w-100 mb-2" href="{% url 'ordem-baixa-material' object.pk %}"><i class="bi bi-box-seam me-1"></i>Registrar Material Gasto</a>
                     <a class="btn btn-success w-100" href="{% url 'ordem-finalizar' object.pk %}"><i class="bi bi-check2-circle me-1"></i>Finalizar atendimento</a>
                 {% endif %}
-            {% elif (is_operacional or is_provedor) and object.status == 'AGUARDANDO_CONFIRMACAO' %}
+            {% elif is_operacional and object.status == 'AGUARDANDO_CONFIRMACAO' %}
+                <a class="btn btn-success w-100" href="{% url 'ordem-confirmar' object.pk %}"><i class="bi bi-cash-coin me-1"></i>Confirmar pagamento</a>
+            {% elif is_provedor and object.status == 'AGUARDANDO_CONFIRMACAO' %}
                 <a class="btn btn-success w-100" href="{% url 'ordem-confirmar' object.pk %}"><i class="bi bi-cash-coin me-1"></i>Confirmar pagamento</a>
             {% endif %}
         </div>
