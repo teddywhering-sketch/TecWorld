@@ -72,9 +72,6 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     const btnGerar = document.getElementById("btn-gerar-pix");
@@ -123,6 +120,7 @@ document.addEventListener("DOMContentLoaded", function() {
             
             pollingInterval = setInterval(() => checkStatus(data.payment_id), 3000);
         }).catch(err => {
+            console.error(err);
             document.getElementById("pix-loading").classList.add("d-none");
             document.getElementById("pix-error").classList.remove("d-none");
         });
@@ -138,3 +136,4 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 </script>
 {% endblock %}
+
