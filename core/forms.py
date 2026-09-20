@@ -209,3 +209,63 @@ class UsuarioForm(UserCreationForm):
                     cliente.usuario = user
                     cliente.save()
         return user
+
+class UsuarioUpdateForm(forms.ModelForm):
+    PAPEL = [("TECNICO", "Técnico"), ("SECRETARIA", "Secretaria"), ("ADMIN", "Administrador"), ("PROVEDOR", "Provedor (Cliente)")]
+    papel = forms.ChoiceField(choices=PAPEL, label="Perfil")
+    cliente_vinculado = forms.ModelChoiceField(queryset=Cliente.objects.all(), required=False, label="Vincular a qual Provedor? (Apenas se o perfil for Provedor)")
+    
+    class Meta:
+        model = User
+        fields = ["username", "first_name", "last_name", "email", "is_active"]
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        user = self.instance
+        if user.pk:
+            if user.is_staff:
+                self.initial["papel"] = "ADMIN"
+            elif user.groups.filter(name="Secretaria").exists():
+                self.initial["papel"] = "SECRETARIA"
+            elif user.groups.filter(name="Provedor").exists():
+                self.initial["papel"] = "PROVEDOR"
+            else:
+                self.initial["papel"] = "TECNICO"
+                
+            cliente = getattr(user, "cliente_provedor", None)
+            if cliente:
+                self.initial["cliente_vinculado"] = cliente
+                
+        for name, field in self.fields.items():
+            if type(field.widget) == forms.CheckboxInput:
+                field.widget.attrs["class"] = "form-check-input"
+            elif name in ["papel", "cliente_vinculado"]:
+                field.widget.attrs["class"] = "form-select"
+            else:
+                field.widget.attrs["class"] = "form-control"
+                
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        papel = self.cleaned_data.get("papel")
+        user.is_staff = papel == "ADMIN"
+        if commit:
+            user.save()
+            secretaria, _ = Group.objects.get_or_create(name="Secretaria")
+            provedor_group, _ = Group.objects.get_or_create(name="Provedor")
+            user.groups.remove(secretaria)
+            user.groups.remove(provedor_group)
+            
+            # Desvincular de provedor anterior
+            cliente = getattr(user, "cliente_provedor", None)
+            if cliente and (papel != "PROVEDOR" or cliente != self.cleaned_data.get("cliente_vinculado")):
+                cliente.usuario = None
+                cliente.save(update_fields=['usuario'])
+
+            if papel == "SECRETARIA": user.groups.add(secretaria)
+            if papel == "PROVEDOR": 
+                user.groups.add(provedor_group)
+                cliente_vinculado = self.cleaned_data.get("cliente_vinculado")
+                if cliente_vinculado:
+                    cliente_vinculado.usuario = user
+                    cliente_vinculado.save(update_fields=['usuario'])
+        return user

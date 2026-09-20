@@ -13,7 +13,7 @@ from django.utils import timezone
 from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, TemplateView, UpdateView, DeleteView
 
-from .forms import ClienteForm, CombustivelForm, ConfirmarOSForm, FinalizarOSForm, LancamentoForm, OrcamentoForm, OrcamentoItemFormSet, OrdemServicoForm, ItemOSFormSet, TipoServicoForm, UsuarioForm, ProdutoForm, TransferenciaEstoqueForm, ProdutoOSForm, ClienteFinalForm
+from .forms import ClienteForm, UsuarioUpdateForm, CombustivelForm, ConfirmarOSForm, FinalizarOSForm, LancamentoForm, OrcamentoForm, OrcamentoItemFormSet, OrdemServicoForm, ItemOSFormSet, TipoServicoForm, UsuarioForm, ProdutoForm, TransferenciaEstoqueForm, ProdutoOSForm, ClienteFinalForm
 from .models import Cliente, FechamentoCaixa, Lancamento, Orcamento, OrdemServico, TipoServico, Produto, EstoqueTecnico, ProdutoOS, ClienteFinal, LogTransacao
 
 
@@ -815,6 +815,19 @@ class BaixaMaterialOSView(LoginRequiredMixin, View):
 
 class MinhaSenhaView(LoginRequiredMixin, PasswordChangeView):
     template_name = "core/senha_form.html"; form_class = PasswordChangeForm; success_url = reverse_lazy("dashboard")
+
+
+class UsuarioUpdateView(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
+    model = User
+    form_class = UsuarioUpdateForm
+    template_name = "core/usuario_form.html"
+    success_url = reverse_lazy("usuario-list")
+    
+    def get_context_data(self, **kwargs):
+        c = super().get_context_data(**kwargs)
+        c['title'] = 'Editar Perfil do Usuário'
+        return c
+
 
 class UsuarioSenhaView(LoginRequiredMixin, AdminRequiredMixin, View):
     def get(self, request, pk):
