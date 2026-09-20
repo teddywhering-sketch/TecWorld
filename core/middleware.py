@@ -62,9 +62,7 @@ class ErrorLogMiddleware:
     def log_error(self, request, exception):
         try:
             with open('/tmp/error_log.txt', 'a') as f:
-                f.write(f"
-[{datetime.datetime.now()}] {request.method} {request.path}
-")
+                f.write(f"\n[{datetime.datetime.now()}] {request.method} {request.path}\n")
                 f.write("".join(traceback.format_exception(type(exception), exception, exception.__traceback__)))
         except:
             pass
