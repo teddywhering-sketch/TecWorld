@@ -711,8 +711,14 @@ class RelatorioView(LoginRequiredMixin, OperacionalRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         c = super().get_context_data(**kwargs); c["status"] = [{"nome": label, "total": OrdemServico.objects.filter(status=value).count()} for value, label in OrdemServico.Status.choices]; c["tecnicos"] = OrdemServico.objects.values("tecnico__username").annotate(total=Count("id")).order_by("-total"); return c
 
-class UsuarioListView(LoginRequiredMixin, AdminRequiredMixin, ListView): model = User; template_name = "core/usuario_list.html"; paginate_by = 10
-    def get_queryset(self): return User.objects.exclude(cliente_provedor__isnull=False).exclude(perfil__isnull=False).order_by("username")
+class UsuarioListView(LoginRequiredMixin, AdminRequiredMixin, ListView):
+    model = User
+    template_name = "core/usuario_list.html"
+    paginate_by = 10
+
+    def get_queryset(self):
+        return User.objects.exclude(cliente_provedor__isnull=False).exclude(perfil__isnull=False).order_by("username")
+
 class UsuarioCreateView(LoginRequiredMixin, AdminRequiredMixin, CreateView): model = User; form_class = UsuarioForm; template_name = "core/usuario_form.html"; success_url = reverse_lazy("usuario-list")
 
 class ProdutoListView(LoginRequiredMixin, OperacionalRequiredMixin, ListView): model = Produto; paginate_by = 10
