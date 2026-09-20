@@ -477,11 +477,18 @@ class FinalizarOSView(LoginRequiredMixin, View):
         messages.success(request, f"{os} enviada para confirmação do administrador.")
         return redirect("ordem-detail", pk=os.pk)
 
-class ConfirmarOSView(LoginRequiredMixin, OperacionalRequiredMixin, View):
+class ConfirmarOSView(LoginRequiredMixin, ProvedorOrOperacionalRequiredMixin, View):
     def get_object(self, pk):
         os = OrdemServico.objects.filter(pk=pk, status=OrdemServico.Status.AGUARDANDO_CONFIRMACAO).first()
         if not os:
             raise PermissionDenied
+            
+        user = self.request.user
+        if not (user.is_staff or user.groups.filter(name="Secretaria").exists()):
+            cliente = getattr(user, 'cliente_provedor', None)
+            if not cliente or os.cliente != cliente:
+                raise PermissionDenied
+                
         return os
     def get(self, request, pk):
         os = self.get_object(pk)
@@ -850,6 +857,12 @@ class GerarPixOSView(LoginRequiredMixin, View):
         os_obj = OrdemServico.objects.filter(pk=pk, status=OrdemServico.Status.AGUARDANDO_CONFIRMACAO).first()
         if not os_obj:
             return JsonResponse({"error": "OS não encontrada ou não está aguardando"}, status=400)
+            
+        user = request.user
+        if not (user.is_staff or user.groups.filter(name="Secretaria").exists()):
+            cliente = getattr(user, 'cliente_provedor', None)
+            if not cliente or os_obj.cliente != cliente:
+                return JsonResponse({"error": "Acesso negado"}, status=403)
         
         if os_obj.valor <= 0:
             return JsonResponse({"error": "O valor da OS deve ser maior que zero para gerar o PIX."}, status=400)
@@ -900,6 +913,12 @@ class ChecarPagamentoPixView(LoginRequiredMixin, View):
         os_obj = OrdemServico.objects.filter(pk=pk, status=OrdemServico.Status.AGUARDANDO_CONFIRMACAO).first()
         if not os_obj:
             return JsonResponse({"status": "already_paid"})
+            
+        user = request.user
+        if not (user.is_staff or user.groups.filter(name="Secretaria").exists()):
+            cliente = getattr(user, 'cliente_provedor', None)
+            if not cliente or os_obj.cliente != cliente:
+                return JsonResponse({"error": "Acesso negado"}, status=403)
             
         url = f"https://api.mercadopago.com/v1/payments/{payment_id}"
         req = urllib.request.Request(url, headers={

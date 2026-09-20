@@ -113,6 +113,9 @@
                         {% endif %}
                     </td>
                     <td class="pe-3 text-end">
+                        {% if (is_operacional or is_provedor) and os.status == 'AGUARDANDO_CONFIRMACAO' %}
+                            <a href="{% url 'ordem-confirmar' os.pk %}" class="btn btn-sm btn-success"><i class="bi bi-cash-coin me-1"></i>Pagar/Confirmar</a>
+                        {% endif %}
                         <a href="{% url 'ordem-detail' os.pk %}" class="btn btn-sm btn-light">Ver</a>
                         {% if not is_operacional and os.comprovante_pagamento %}
                             <a href="{{ os.comprovante_pagamento.url }}" target="_blank" class="btn btn-sm btn-success ms-1" title="Abrir comprovante"><i class="bi bi-receipt"></i></a>
