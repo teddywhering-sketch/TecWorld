@@ -1,1 +1,140 @@
-{% extends 'base.html' %}{% block content %}<div class="row justify-content-center"><div class="col-lg-7"><div class="mb-4"><span class="text-secondary">{{ object }}</span><h2 class="page-title mb-1">Confirmar pagamento da OS</h2><p class="text-secondary mb-0">Anexe o comprovante para concluir a OS e lançar o valor no financeiro.</p></div><div class="card p-4"><div class="alert alert-info"><b>Valor da OS:</b> R$ {{ object.valor|floatformat:2 }}</div><form method="post" enctype="multipart/form-data">{% csrf_token %}<div class="mb-4"><label class="form-label fw-semibold" for="{{ form.comprovante_pagamento.id_for_label }}">{{ form.comprovante_pagamento.label }}</label>{{ form.comprovante_pagamento }}{% if form.comprovante_pagamento.errors %}<div class="text-danger small mt-1">{{ form.comprovante_pagamento.errors|striptags }}</div>{% endif %}<small class="text-secondary d-block mt-1">Aceita PDF, JPG, PNG e WEBP.</small></div><button class="btn btn-success"><i class="bi bi-check2-circle me-1"></i>Confirmar e lançar no financeiro</button><a href="{% url 'ordem-detail' object.pk %}" class="btn btn-light ms-2">Cancelar</a></form></div></div></div>{% endblock %}
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="mb-4">
+            <span class="text-secondary">{{ object }}</span>
+            <h2 class="page-title mb-1">Confirmar pagamento da OS</h2>
+            <p class="text-secondary mb-0">Anexe o comprovante ou pague via PIX para concluir a OS e lançar no financeiro.</p>
+        </div>
+        <div class="card p-4">
+            <div class="alert alert-info"><b>Valor da OS:</b> R$ {{ object.valor|floatformat:2 }}</div>
+            
+            <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="comprovante-tab" data-bs-toggle="tab" data-bs-target="#comprovante-tab-pane" type="button" role="tab">Enviar Comprovante</button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link text-success fw-bold" id="pix-tab" data-bs-toggle="tab" data-bs-target="#pix-tab-pane" type="button" role="tab"><i class="bi bi-lightning-charge-fill me-1"></i> Pagar via PIX</button>
+              </li>
+            </ul>
+            
+            <div class="tab-content" id="myTabContent">
+              <div class="tab-pane fade show active" id="comprovante-tab-pane" role="tabpanel" tabindex="0">
+                  <form method="post" enctype="multipart/form-data">
+                      {% csrf_token %}
+                      <div class="mb-4">
+                          <label class="form-label fw-semibold" for="{{ form.comprovante_pagamento.id_for_label }}">{{ form.comprovante_pagamento.label }}</label>
+                          {{ form.comprovante_pagamento }}
+                          {% if form.comprovante_pagamento.errors %}
+                          <div class="text-danger small mt-1">{{ form.comprovante_pagamento.errors|striptags }}</div>
+                          {% endif %}
+                          <small class="text-secondary d-block mt-1">Aceita PDF, JPG, PNG e WEBP.</small>
+                      </div>
+                      <button class="btn btn-success"><i class="bi bi-check2-circle me-1"></i>Confirmar e lançar no financeiro</button>
+                      <a href="{% url 'ordem-detail' object.pk %}" class="btn btn-light ms-2">Cancelar</a>
+                  </form>
+              </div>
+              
+              <div class="tab-pane fade" id="pix-tab-pane" role="tabpanel" tabindex="0">
+                  <div class="text-center py-4" id="pix-setup">
+                      <p class="mb-4 text-secondary">Gere um QR Code ou a chave Copia e Cola para realizar o pagamento instantâneo pelo Mercado Pago.</p>
+                      <button id="btn-gerar-pix" class="btn btn-success px-4 py-2 rounded-pill"><i class="bi bi-qr-code me-1"></i> Gerar PIX Agora</button>
+                  </div>
+                  <div id="pix-result" class="d-none text-center">
+                      <div class="spinner-border text-success d-none mb-3 mt-4" id="pix-loading" role="status"><span class="visually-hidden">Carregando...</span></div>
+                      
+                      <div id="pix-data" class="d-none">
+                          <h5 class="mb-3 text-success mt-2"><i class="bi bi-check-circle-fill me-1"></i> PIX Gerado</h5>
+                          <img id="pix-qr" src="" alt="QR Code PIX" class="img-fluid border rounded p-2 mb-3" style="max-width: 200px;">
+                          
+                          <div class="mb-4 text-start">
+                              <label class="form-label d-block fw-semibold">Pix Copia e Cola:</label>
+                              <div class="input-group">
+                                  <input type="text" id="pix-copia-cola" class="form-control" readonly>
+                                  <button class="btn btn-outline-secondary" type="button" id="btn-copy-pix"><i class="bi bi-clipboard"></i> Copiar</button>
+                              </div>
+                          </div>
+                          
+                          <div class="alert alert-warning text-center mt-3 d-flex align-items-center justify-content-center">
+                              <div class="spinner-grow spinner-grow-sm text-warning" role="status"></div>
+                              <span class="ms-2 fw-semibold">Aguardando pagamento...</span>
+                          </div>
+                      </div>
+                      
+                      <div id="pix-error" class="alert alert-danger d-none mt-3">
+                          Erro ao gerar PIX. Tente novamente mais tarde.
+                      </div>
+                  </div>
+              </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const btnGerar = document.getElementById("btn-gerar-pix");
+    const btnCopy = document.getElementById("btn-copy-pix");
+    let pollingInterval = null;
+    
+    function checkStatus(paymentId) {
+        fetch("{% url 'ordem-checar-pix' object.pk 0 %}".replace('/0/', '/' + paymentId + '/'))
+            .then(r => r.json())
+            .then(data => {
+                if(data.status === 'approved') {
+                    clearInterval(pollingInterval);
+                    window.location.href = data.redirect_url;
+                } else if(data.status === 'already_paid') {
+                    clearInterval(pollingInterval);
+                    window.location.href = "{% url 'ordem-detail' object.pk %}";
+                }
+            }).catch(e => console.error(e));
+    }
+    
+    btnGerar.addEventListener("click", function() {
+        document.getElementById("pix-setup").classList.add("d-none");
+        document.getElementById("pix-result").classList.remove("d-none");
+        document.getElementById("pix-loading").classList.remove("d-none");
+        
+        const csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        fetch("{% url 'ordem-gerar-pix' object.pk %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrf,
+                'Content-Type': 'application/json'
+            }
+        }).then(r => r.json())
+        .then(data => {
+            document.getElementById("pix-loading").classList.add("d-none");
+            if(data.error) {
+                document.getElementById("pix-error").classList.remove("d-none");
+                document.getElementById("pix-error").innerText = data.error;
+                return;
+            }
+            
+            document.getElementById("pix-data").classList.remove("d-none");
+            document.getElementById("pix-qr").src = "data:image/jpeg;base64," + data.qr_code_base64;
+            document.getElementById("pix-copia-cola").value = data.qr_code;
+            
+            pollingInterval = setInterval(() => checkStatus(data.payment_id), 3000);
+        }).catch(err => {
+            document.getElementById("pix-loading").classList.add("d-none");
+            document.getElementById("pix-error").classList.remove("d-none");
+        });
+    });
+    
+    btnCopy.addEventListener("click", function() {
+        const input = document.getElementById("pix-copia-cola");
+        input.select();
+        document.execCommand("copy");
+        btnCopy.innerHTML = '<i class="bi bi-check2"></i> Copiado!';
+        setTimeout(() => btnCopy.innerHTML = '<i class="bi bi-clipboard"></i> Copiar', 2000);
+    });
+});
+</script>
+{% endblock %}

@@ -6,3 +6,4 @@ Pillow>=10.4
 pluggy-sdk
 google-genai
 python-dateutil
+requests>=2.32

@@ -815,3 +815,79 @@ class PuxarOSView(LoginRequiredMixin, View):
         os.save(update_fields=["tecnico", "atualizado_em"])
         messages.success(request, f"Você assumiu a OS {os}.")
         return redirect("ordem-detail", pk=os.pk)
+
+
+import requests
+import uuid
+from django.http import JsonResponse
+
+# Mercado Pago Credentials
+MP_ACCESS_TOKEN = "APP_USR-4901390288086880-012601-fc16165e58a0d001a52e10f323750653-164058327"
+
+class GerarPixOSView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        os_obj = OrdemServico.objects.filter(pk=pk, status=OrdemServico.Status.AGUARDANDO_CONFIRMACAO).first()
+        if not os_obj:
+            return JsonResponse({"error": "OS não encontrada ou não está aguardando"}, status=400)
+        
+        url = "https://api.mercadopago.com/v1/payments"
+        headers = {
+            "Authorization": f"Bearer {MP_ACCESS_TOKEN}",
+            "X-Idempotency-Key": str(uuid.uuid4())
+        }
+        
+        email = "cliente@example.com"
+        if os_obj.cliente and os_obj.cliente.usuario and os_obj.cliente.usuario.email:
+            email = os_obj.cliente.usuario.email
+            
+        payload = {
+            "transaction_amount": float(os_obj.valor),
+            "description": f"OS-{os_obj.numero:05d}",
+            "payment_method_id": "pix",
+            "payer": {
+                "email": email
+            }
+        }
+        
+        resp = requests.post(url, json=payload, headers=headers)
+        if resp.status_code == 201:
+            data = resp.json()
+            return JsonResponse({
+                "payment_id": data["id"],
+                "qr_code_base64": data["point_of_interaction"]["transaction_data"]["qr_code_base64"],
+                "qr_code": data["point_of_interaction"]["transaction_data"]["qr_code"]
+            })
+        else:
+            return JsonResponse({"error": "Erro ao gerar PIX", "details": resp.text}, status=400)
+
+
+class ChecarPagamentoPixView(LoginRequiredMixin, View):
+    def get(self, request, pk, payment_id):
+        os_obj = OrdemServico.objects.filter(pk=pk, status=OrdemServico.Status.AGUARDANDO_CONFIRMACAO).first()
+        if not os_obj:
+            return JsonResponse({"status": "already_paid"})
+            
+        url = f"https://api.mercadopago.com/v1/payments/{payment_id}"
+        headers = {"Authorization": f"Bearer {MP_ACCESS_TOKEN}"}
+        
+        resp = requests.get(url, headers=headers)
+        if resp.status_code == 200:
+            data = resp.json()
+            if data["status"] == "approved":
+                os_obj.status = OrdemServico.Status.CONCLUIDA
+                os_obj.save(update_fields=["status", "atualizado_em"])
+                
+                Lancamento.objects.get_or_create(
+                    ordem_servico=os_obj, 
+                    defaults={
+                        "descricao": f"Recebimento da {os_obj} via PIX", 
+                        "tipo": Lancamento.Tipo.ENTRADA, 
+                        "categoria": "Prestação de serviço", 
+                        "valor": os_obj.valor, 
+                        "tecnico": os_obj.tecnico
+                    }
+                )
+                messages.success(request, f"{os_obj} confirmada via PIX e lançada no financeiro.")
+                return JsonResponse({"status": "approved", "redirect_url": f"/ordens/{os_obj.pk}/"})
+            return JsonResponse({"status": data["status"]})
+        return JsonResponse({"error": "Failed to check status"}, status=400)
