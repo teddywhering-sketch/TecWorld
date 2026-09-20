@@ -6,7 +6,7 @@ from django.urls import include, path
 from django.views.generic import TemplateView
 
 urlpatterns = [
-    path("admin/", admin.site.urls), 
+    path("portal-secreto/", admin.site.urls), 
     path("financeiro/", include("teddyfinanca.urls")),
     path("", include("core.urls")),
     path("sw.js", TemplateView.as_view(template_name="sw.js", content_type="application/javascript"), name="sw.js"),
