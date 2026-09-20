@@ -38,6 +38,16 @@ class DashboardView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         c = super().get_context_data(**kwargs)
         
+        try:
+            from teddyfinanca.models import Perfil, Transacao, Venda, Emprestimo, Categoria
+            from django.contrib.auth.models import User
+            users_no_perfil = User.objects.filter(is_staff=False, groups__isnull=True, perfil__isnull=True)
+            for u in users_no_perfil:
+                if Transacao.objects.filter(usuario=u).exists() or Venda.objects.filter(usuario=u).exists() or Emprestimo.objects.filter(usuario=u).exists() or Categoria.objects.filter(usuario=u).exists():
+                    Perfil.objects.get_or_create(usuario=u)
+        except Exception:
+            pass
+        
         import shutil
         total, used, free = shutil.disk_usage("/")
         c['disk_total'] = total / (1024**3)
@@ -717,7 +727,12 @@ class UsuarioListView(LoginRequiredMixin, AdminRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        return User.objects.exclude(cliente_provedor__isnull=False).exclude(perfil__isnull=False).order_by("username")
+        from django.db.models import Q
+        return User.objects.filter(
+            Q(is_staff=True) | 
+            Q(groups__isnull=False) | 
+            (Q(cliente_provedor__isnull=True) & Q(perfil__isnull=True))
+        ).distinct().order_by("username")
 
 class UsuarioCreateView(LoginRequiredMixin, AdminRequiredMixin, CreateView): model = User; form_class = UsuarioForm; template_name = "core/usuario_form.html"; success_url = reverse_lazy("usuario-list")
 

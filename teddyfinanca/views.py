@@ -49,6 +49,8 @@ def financeiro_login(request):
         user = authenticate(request, username=usuario, password=senha)
         if user is not None:
             auth_login(request, user)
+            from teddyfinanca.models import Perfil
+            Perfil.objects.get_or_create(usuario=user)
             return redirect('teddyfinanca:dashboard')
         else:
             messages.error(request, 'Usuário ou senha inválidos.')
@@ -62,6 +64,8 @@ def financeiro_cadastro(request):
             messages.error(request, 'Usuário já existe.')
         else:
             user = User.objects.create_user(username=usuario, password=senha)
+            from teddyfinanca.models import Perfil
+            Perfil.objects.get_or_create(usuario=user)
             messages.success(request, 'Conta criada com sucesso! Faça login.')
             return redirect('teddyfinanca:login')
     return render(request, 'teddyfinanca/cadastro.html')
