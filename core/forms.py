@@ -178,7 +178,7 @@ class ConfirmarOSForm(BaseForm):
         self.fields["comprovante_pagamento"].required = True
 
 class UsuarioForm(UserCreationForm):
-    PAPEL = [("TECNICO", "Técnico"), ("SECRETARIA", "Secretaria"), ("ADMIN", "Administrador"), ("PROVEDOR", "Provedor (Cliente)")]
+    PAPEL = [("TECNICO", "Técnico"), ("SECRETARIA", "Secretaria"), ("ADMIN", "Administrador"), ("PROVEDOR", "Provedor (Cliente)"), ("FINANCA", "Cliente Finança (TeddyFinança)")]
     papel = forms.ChoiceField(choices=PAPEL, label="Perfil")
     cliente_vinculado = forms.ModelChoiceField(queryset=Cliente.objects.all(), required=False, label="Vincular a qual Provedor? (Apenas se o perfil for Provedor)")
     
@@ -199,9 +199,12 @@ class UsuarioForm(UserCreationForm):
             user.save()
             secretaria, _ = Group.objects.get_or_create(name="Secretaria")
             provedor_group, _ = Group.objects.get_or_create(name="Provedor")
+            financa_group, _ = Group.objects.get_or_create(name="Finança")
             user.groups.remove(secretaria)
             user.groups.remove(provedor_group)
+            user.groups.remove(financa_group)
             if papel == "SECRETARIA": user.groups.add(secretaria)
+            if papel == "FINANCA": user.groups.add(financa_group)
             if papel == "PROVEDOR": 
                 user.groups.add(provedor_group)
                 cliente = self.cleaned_data.get("cliente_vinculado")
@@ -211,7 +214,7 @@ class UsuarioForm(UserCreationForm):
         return user
 
 class UsuarioUpdateForm(forms.ModelForm):
-    PAPEL = [("TECNICO", "Técnico"), ("SECRETARIA", "Secretaria"), ("ADMIN", "Administrador"), ("PROVEDOR", "Provedor (Cliente)")]
+    PAPEL = [("TECNICO", "Técnico"), ("SECRETARIA", "Secretaria"), ("ADMIN", "Administrador"), ("PROVEDOR", "Provedor (Cliente)"), ("FINANCA", "Cliente Finança (TeddyFinança)")]
     papel = forms.ChoiceField(choices=PAPEL, label="Perfil")
     cliente_vinculado = forms.ModelChoiceField(queryset=Cliente.objects.all(), required=False, label="Vincular a qual Provedor? (Apenas se o perfil for Provedor)")
     
@@ -229,6 +232,8 @@ class UsuarioUpdateForm(forms.ModelForm):
                 self.initial["papel"] = "SECRETARIA"
             elif user.groups.filter(name="Provedor").exists():
                 self.initial["papel"] = "PROVEDOR"
+            elif user.groups.filter(name="Finança").exists():
+                self.initial["papel"] = "FINANCA"
             else:
                 self.initial["papel"] = "TECNICO"
                 
@@ -252,8 +257,10 @@ class UsuarioUpdateForm(forms.ModelForm):
             user.save()
             secretaria, _ = Group.objects.get_or_create(name="Secretaria")
             provedor_group, _ = Group.objects.get_or_create(name="Provedor")
+            financa_group, _ = Group.objects.get_or_create(name="Finança")
             user.groups.remove(secretaria)
             user.groups.remove(provedor_group)
+            user.groups.remove(financa_group)
             
             # Desvincular de provedor anterior
             cliente = getattr(user, "cliente_provedor", None)
@@ -262,6 +269,7 @@ class UsuarioUpdateForm(forms.ModelForm):
                 cliente.save(update_fields=['usuario'])
 
             if papel == "SECRETARIA": user.groups.add(secretaria)
+            if papel == "FINANCA": user.groups.add(financa_group)
             if papel == "PROVEDOR": 
                 user.groups.add(provedor_group)
                 cliente_vinculado = self.cleaned_data.get("cliente_vinculado")
