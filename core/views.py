@@ -961,3 +961,22 @@ class ChecarPagamentoPixView(LoginRequiredMixin, View):
                 return JsonResponse({"error": "Failed to check status"}, status=400)
         except Exception as e:
             return JsonResponse({"error": f"Error: {str(e)}"}, status=400)
+
+class ReciboPixView(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        os_obj = OrdemServico.objects.filter(pk=pk, status=OrdemServico.Status.CONCLUIDA).first()
+        if not os_obj:
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied
+            
+        user = request.user
+        if not (user.is_staff or user.groups.filter(name="Secretaria").exists()):
+            is_provedor = user.groups.filter(name="Provedor").exists()
+            if is_provedor:
+                cliente = getattr(user, 'cliente_provedor', None)
+                if not cliente or os_obj.cliente != cliente:
+                    raise PermissionDenied
+            elif os_obj.tecnico != user:
+                raise PermissionDenied
+                
+        return render(request, "core/recibo_pix.html", {"object": os_obj})

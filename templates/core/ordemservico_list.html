@@ -119,8 +119,12 @@
                             <a href="{% url 'ordem-confirmar' os.pk %}" class="btn btn-sm btn-success"><i class="bi bi-cash-coin me-1"></i>Pagar/Confirmar</a>
                         {% endif %}
                         <a href="{% url 'ordem-detail' os.pk %}" class="btn btn-sm btn-light">Ver</a>
-                        {% if not is_operacional and os.comprovante_pagamento %}
-                            <a href="{{ os.comprovante_pagamento.url }}" target="_blank" class="btn btn-sm btn-success ms-1" title="Abrir comprovante"><i class="bi bi-receipt"></i></a>
+                        {% if not is_operacional and os.status == 'CONCLUIDA' %}
+                            {% if os.comprovante_pagamento %}
+                                <a href="{{ os.comprovante_pagamento.url }}" target="_blank" class="btn btn-sm btn-success ms-1" title="Abrir comprovante"><i class="bi bi-receipt"></i></a>
+                            {% else %}
+                                <a href="{% url 'ordem-recibo' os.pk %}" target="_blank" class="btn btn-sm btn-info text-white ms-1" title="Comprovante PIX"><i class="bi bi-receipt"></i></a>
+                            {% endif %}
                         {% endif %}
                     </td>
                 </tr>

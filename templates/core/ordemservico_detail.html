@@ -26,14 +26,18 @@
     {% endif %}
 </div>
 
-{% if object.status == 'CONCLUIDA' and object.comprovante_pagamento %}
+{% if object.status == 'CONCLUIDA' %}
 <div class="alert alert-success d-flex justify-content-between align-items-center">
     <div>
         <i class="bi bi-check-circle-fill fs-3 me-2"></i>
         <b>OS confirmada e paga</b><br>
-        <span>O pagamento e o atendimento foram confirmados pela equipe.</span>
+        <span>O pagamento e o atendimento foram confirmados.</span>
     </div>
-    <a href="{{ object.comprovante_pagamento.url }}" target="_blank" class="btn btn-success"><i class="bi bi-receipt me-1"></i>Ver comprovante</a>
+    {% if object.comprovante_pagamento %}
+        <a href="{{ object.comprovante_pagamento.url }}" target="_blank" class="btn btn-success"><i class="bi bi-receipt me-1"></i>Ver comprovante</a>
+    {% else %}
+        <a href="{% url 'ordem-recibo' object.pk %}" target="_blank" class="btn btn-info text-white"><i class="bi bi-receipt me-1"></i>Comprovante PIX</a>
+    {% endif %}
 </div>
 {% endif %}
 
