@@ -38,8 +38,9 @@
     <form method="POST">
         {% csrf_token %}
         <div class="mb-3">
-            <label class="form-label">Usuário</label>
+            <label class="form-label">Usuário (Login)</label>
             <input type="text" name="usuario" class="form-control" required>
+            <small class="text-muted d-block mt-1" style="font-size: 0.8em;">* Não utilize espaços (Ex: carlos.silva)</small>
         </div>
         <div class="mb-3">
             <label class="form-label">Senha</label>
