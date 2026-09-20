@@ -377,10 +377,13 @@ class OrdemUpdateView(LoginRequiredMixin, ProvedorOrOperacionalRequiredMixin, Up
     
     def get_queryset(self):
         qs = super().get_queryset()
+        is_operacional = self.request.user.is_staff or self.request.user.groups.filter(name="Secretaria").exists()
         is_provedor = self.request.user.groups.filter(name="Provedor").exists()
-        if is_provedor:
+        if is_provedor and not is_operacional:
             cliente = getattr(self.request.user, 'cliente_provedor', None)
-            return qs.filter(cliente=cliente) if cliente else qs.none()
+            if cliente:
+                return qs.filter(cliente=cliente, status=OrdemServico.Status.ABERTA, tecnico__isnull=True)
+            return qs.none()
         return qs
 
 
@@ -429,15 +432,18 @@ class OrdemDeleteView(LoginRequiredMixin, ProvedorOrOperacionalRequiredMixin, De
 
     def get_queryset(self):
         qs = super().get_queryset()
+        is_operacional = self.request.user.is_staff or self.request.user.groups.filter(name="Secretaria").exists()
+        is_provedor = self.request.user.groups.filter(name="Provedor").exists()
+        
         if self.request.user.is_staff:
             qs = qs.filter(status__in=["ABERTA", "AGUARDANDO_CONFIRMACAO"])
-        else:
+        elif is_operacional:
             qs = qs.filter(status="ABERTA")
-        is_provedor = self.request.user.groups.filter(name="Provedor").exists()
-        if is_provedor:
+            
+        if is_provedor and not is_operacional:
             cliente = getattr(self.request.user, 'cliente_provedor', None)
             if cliente:
-                qs = qs.filter(cliente=cliente)
+                qs = qs.filter(cliente=cliente, status=OrdemServico.Status.ABERTA, tecnico__isnull=True)
             else:
                 qs = qs.none()
         return qs
@@ -567,10 +573,13 @@ class OrcamentoUpdateView(LoginRequiredMixin, ProvedorOrOperacionalRequiredMixin
 
     def get_queryset(self):
         qs = super().get_queryset()
+        is_operacional = self.request.user.is_staff or self.request.user.groups.filter(name="Secretaria").exists()
         is_provedor = self.request.user.groups.filter(name="Provedor").exists()
-        if is_provedor:
+        if is_provedor and not is_operacional:
             cliente = getattr(self.request.user, 'cliente_provedor', None)
-            return qs.filter(cliente=cliente) if cliente else qs.none()
+            if cliente:
+                return qs.filter(cliente=cliente, status=OrdemServico.Status.ABERTA, tecnico__isnull=True)
+            return qs.none()
         return qs
 
     def get_context_data(self, **kwargs):
@@ -633,10 +642,13 @@ class OrcamentoPrintView(LoginRequiredMixin, ProvedorOrOperacionalRequiredMixin,
     
     def get_queryset(self):
         qs = super().get_queryset()
+        is_operacional = self.request.user.is_staff or self.request.user.groups.filter(name="Secretaria").exists()
         is_provedor = self.request.user.groups.filter(name="Provedor").exists()
-        if is_provedor:
+        if is_provedor and not is_operacional:
             cliente = getattr(self.request.user, 'cliente_provedor', None)
-            return qs.filter(cliente=cliente) if cliente else qs.none()
+            if cliente:
+                return qs.filter(cliente=cliente, status=OrdemServico.Status.ABERTA, tecnico__isnull=True)
+            return qs.none()
         return qs
 
 class FinanceiroView(LoginRequiredMixin, OperacionalRequiredMixin, ListView):

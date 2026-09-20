@@ -7,11 +7,20 @@
     </div>
     {% if is_operacional or is_provedor %}
     <div>
-        <a class="btn btn-primary" href="{% url 'ordem-update' object.pk %}"><i class="bi bi-pencil me-1"></i>Editar OS</a>
+        {% if is_operacional %}
+            <a class="btn btn-primary" href="{% url 'ordem-update' object.pk %}"><i class="bi bi-pencil me-1"></i>Editar OS</a>
+        {% elif is_provedor and object.status == 'ABERTA' and not object.tecnico %}
+            <a class="btn btn-primary" href="{% url 'ordem-update' object.pk %}"><i class="bi bi-pencil me-1"></i>Editar OS</a>
+        {% endif %}
+        
         {% if object.status == 'ABERTA' %}
-        <a class="btn btn-outline-danger ms-2" href="{% url 'ordem-delete' object.pk %}" onclick="return confirm('Tem certeza que deseja excluir esta OS?');"><i class="bi bi-trash text-danger me-1"></i>Excluir OS</a>
+            {% if is_operacional %}
+                <a class="btn btn-outline-danger ms-2" href="{% url 'ordem-delete' object.pk %}" onclick="return confirm('Tem certeza que deseja excluir esta OS?');"><i class="bi bi-trash text-danger me-1"></i>Excluir OS</a>
+            {% elif is_provedor and not object.tecnico %}
+                <a class="btn btn-outline-danger ms-2" href="{% url 'ordem-delete' object.pk %}" onclick="return confirm('Tem certeza que deseja excluir esta OS?');"><i class="bi bi-trash text-danger me-1"></i>Excluir OS</a>
+            {% endif %}
         {% elif object.status == 'AGUARDANDO_CONFIRMACAO' and user.is_staff %}
-        <a class="btn btn-outline-danger ms-2" href="{% url 'ordem-delete' object.pk %}" onclick="return confirm('Tem certeza que deseja excluir esta OS?');"><i class="bi bi-trash text-danger me-1"></i>Excluir OS (Admin)</a>
+            <a class="btn btn-outline-danger ms-2" href="{% url 'ordem-delete' object.pk %}" onclick="return confirm('Tem certeza que deseja excluir esta OS?');"><i class="bi bi-trash text-danger me-1"></i>Excluir OS (Admin)</a>
         {% endif %}
     </div>
     {% endif %}
