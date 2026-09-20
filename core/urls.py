@@ -24,7 +24,7 @@ urlpatterns = [
  path("ordens/<int:pk>/baixa-material/", views.BaixaMaterialOSView.as_view(), name="ordem-baixa-material"),
 
  path("usuarios/", views.UsuarioListView.as_view(), name="usuario-list"), path("usuarios/novo/", views.UsuarioCreateView.as_view(), name="usuario-create"),
- path("senha/", views.MinhaSenhaView.as_view(), name="minha-senha"), path("usuarios/<int:pk>/senha/", views.UsuarioSenhaView.as_view(), name="usuario-senha"),
+ path("senha/", views.MinhaSenhaView.as_view(), name="minha-senha"), path("usuarios/<int:pk>/senha/", views.UsuarioSenhaView.as_view(), name="usuario-senha"), path("usuarios/<int:pk>/editar/", views.UsuarioUpdateView.as_view(), name="usuario-update"),
  path("configuracoes/", views.ConfiguracaoSistemaUpdateView.as_view(), name="configuracao-sistema"),
  path("logs/", views.LogTransacaoListView.as_view(), name="log-transacao-list"),
 ]
