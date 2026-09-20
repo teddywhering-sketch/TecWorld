@@ -44,7 +44,7 @@ def bloqueado(request):
 
 def financeiro_login(request):
     if request.method == 'POST':
-        usuario = request.POST.get('usuario')
+        usuario = request.POST.get('usuario', '').strip()
         senha = request.POST.get('senha')
         user = authenticate(request, username=usuario, password=senha)
         if user is not None:
@@ -58,9 +58,9 @@ def financeiro_login(request):
 
 def financeiro_cadastro(request):
     if request.method == 'POST':
-        usuario = request.POST.get('usuario')
+        usuario = request.POST.get('usuario', '').strip()
         senha = request.POST.get('senha')
-        if User.objects.filter(username=usuario).exists():
+        if User.objects.filter(username__iexact=usuario).exists():
             messages.error(request, 'Usuário já existe.')
         else:
             user = User.objects.create_user(username=usuario, password=senha)
