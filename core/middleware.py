@@ -36,15 +36,39 @@ import traceback
 import datetime
 from django.conf import settings
 
+
+import traceback
+import datetime
+from django.conf import settings
+
 class ErrorLogMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        return self.get_response(request)
+        try:
+            response = self.get_response(request)
+            if hasattr(response, 'render') and callable(response.render):
+                try:
+                    response.render()
+                except Exception as e:
+                    self.log_error(request, e)
+                    raise
+            return response
+        except Exception as e:
+            self.log_error(request, e)
+            raise
+
+    def log_error(self, request, exception):
+        try:
+            with open('/tmp/error_log.txt', 'a') as f:
+                f.write(f"
+[{datetime.datetime.now()}] {request.method} {request.path}
+")
+                f.write("".join(traceback.format_exception(type(exception), exception, exception.__traceback__)))
+        except:
+            pass
 
     def process_exception(self, request, exception):
-        with open(settings.BASE_DIR / 'error_log.txt', 'a') as f:
-            f.write(f"\n[{datetime.datetime.now()}] {request.method} {request.path}\n")
-            f.write("".join(traceback.format_exception(type(exception), exception, exception.__traceback__)))
+        self.log_error(request, exception)
         return None

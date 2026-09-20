@@ -999,7 +999,7 @@ def ler_erro(request):
     from django.conf import settings
     from django.http import HttpResponse
     try:
-        with open(settings.BASE_DIR / 'error_log.txt', 'r') as log_file:
+        with open('/tmp/error_log.txt', 'r') as log_file:
             return HttpResponse(f"<pre>{log_file.read()}</pre>")
     except Exception as e:
         return HttpResponse(f"Erro ao ler log: {e}")
