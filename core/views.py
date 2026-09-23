@@ -748,7 +748,7 @@ class UsuarioListView(LoginRequiredMixin, AdminRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        return User.objects.exclude(groups__name="Finança").exclude(cliente_provedor__isnull=False).distinct().order_by("username")
+        return User.objects.exclude(groups__name="Finança").distinct().order_by("username")
 
 class UsuarioCreateView(LoginRequiredMixin, AdminRequiredMixin, CreateView): model = User; form_class = UsuarioForm; template_name = "core/usuario_form.html"; success_url = reverse_lazy("usuario-list")
 
