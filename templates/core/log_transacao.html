@@ -26,7 +26,13 @@
                 {% for log in object_list %}
                 <tr>
                     <td class="text-nowrap text-secondary">{{ log.data|date:"d/m/Y H:i" }}</td>
-                    <td class="fw-semibold">{{ log.usuario.get_full_name|default:log.usuario.username|default:"Sistema" }}</td>
+                    <td class="fw-semibold">
+                        {% if log.usuario %}
+                            {{ log.usuario.get_full_name|default:log.usuario.username }}
+                        {% else %}
+                            Sistema
+                        {% endif %}
+                    </td>
                     <td>
                         {% if log.acao == 'CRIADO' %}
                             <span class="badge bg-success-subtle text-success border border-success-subtle">CRIADO</span>
