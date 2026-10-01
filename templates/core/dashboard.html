@@ -1,5 +1,11 @@
 {% extends 'base.html' %}
-{% block title %}Dashboard | TecWorld{% endblock %}
+{% block title %}Dashboard | TecWorld
+<style>
+.price-card { transition: all 0.3s ease; border: 1px solid rgba(67, 97, 238, 0.1) !important; }
+.price-card:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 15px 35px rgba(67, 97, 238, 0.1) !important; border-color: rgba(67, 97, 238, 0.3) !important; }
+</style>
+
+{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -252,9 +258,15 @@
                 datasets: [{
                     label: 'Quantidade de OS',
                     data: weekData.data,
-                    backgroundColor: '#4154f1',
+                    backgroundColor: (context) => {
+                        const ctx = context.chart.ctx;
+                        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                        gradient.addColorStop(0, '#4cc9f0');
+                        gradient.addColorStop(1, '#4361ee');
+                        return gradient;
+                    },
                     borderRadius: 6,
-                    barPercentage: 0.6
+                    barPercentage: 0.5
                 }]
             },
             options: {
@@ -285,14 +297,14 @@
                     data: typeData.data,
                     backgroundColor: ['#4154f1', '#2eca6a', '#ff771d', '#0dcaf0', '#ffc107', '#dc3545', '#6c757d'],
                     borderWidth: 2,
-                    borderColor: '#ffffff',
+                    borderColor: 'transparent',
                     hoverOffset: 4
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                cutout: '70%',
+                cutout: '75%',
                 plugins: {
                     legend: {
                         position: 'right',
@@ -307,5 +319,11 @@
         });
     });
 </script>
+
+
+<style>
+.price-card { transition: all 0.3s ease; border: 1px solid rgba(67, 97, 238, 0.1) !important; }
+.price-card:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 15px 35px rgba(67, 97, 238, 0.1) !important; border-color: rgba(67, 97, 238, 0.3) !important; }
+</style>
 
 {% endblock %}

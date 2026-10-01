@@ -19,7 +19,7 @@ body::after {
     border-radius: 50%; z-index: -1; pointer-events: none;
 }
 .sidebar {
-    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
+    background: linear-gradient(180deg, #020617 0%, #1e1b4b 50%, #312e81 100%) !important;
     border-right: 1px solid rgba(255,255,255,0.05);
 }
 .sidebar{width:280px;background:var(--sidebar-bg);min-height:100vh;box-shadow:4px 0 24px rgba(0,0,0,0.05);transition:all 0.3s ease;z-index:100;}.brand{color:#fff;font-weight:800;font-size:1.8rem;letter-spacing:-0.03em;display:flex;align-items:center;justify-content:flex-start;padding:1rem 1.5rem;}.brand span{background:linear-gradient(135deg,#4361ee,#4cc9f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}.sidebar .nav-link{color:var(--sidebar-text);border-radius:12px;margin:6px 16px;padding:12px 18px;font-weight:500;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);position:relative;overflow:hidden;}.sidebar .nav-link:hover{color:#fff;background:var(--sidebar-hover);transform:translateX(5px);}.sidebar .nav-link.active{color:#fff;background:linear-gradient(135deg,rgba(67,97,238,0.2),rgba(76,201,240,0.1));box-shadow:inset 3px 0 0 var(--sidebar-active);}.sidebar .nav-link i{font-size:1.1rem;transition:transform 0.3s ease;}.sidebar .nav-link:hover i{transform:scale(1.15);}.content{min-width:0;background:var(--bg);}.card{border:0;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,0.03);background:var(--card-bg);backdrop-filter:blur(10px);transition:transform 0.3s ease,box-shadow 0.3s ease;}.card:hover{box-shadow:0 15px 35px rgba(0,0,0,0.06);transform:translateY(-2px);}.table>:not(caption)>*>*{padding:1.25rem 1rem;vertical-align:middle;}.table th{font-weight:600;text-transform:uppercase;font-size:0.75rem;letter-spacing:0.05em;color:#64748b;}.page-title{font-weight:800;letter-spacing:-0.02em;}.btn{border-radius:10px;font-weight:600;padding:0.6rem 1.2rem;transition:all 0.3s ease;}.btn-primary{background:linear-gradient(135deg,var(--brand),#4cc9f0);border:none;box-shadow:0 4px 15px rgba(67,97,238,0.3);}.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(67,97,238,0.4);background:linear-gradient(135deg,var(--brand-hover),#4361ee);}.alert{border-radius:16px;border:none;}header{backdrop-filter:blur(12px);background:var(--header-bg)!important;}
@@ -154,6 +154,19 @@ body::after {
     border-radius: 8px;
     font-weight: 600;
     letter-spacing: 0.5px;
+}
+
+
+/* Ultrawide Monitor Fix */
+@media(min-width: 1600px) {
+    .content {
+        max-width: 1600px;
+        margin: 0 auto;
+        border-left: 1px solid rgba(0,0,0,0.05);
+        border-right: 1px solid rgba(0,0,0,0.05);
+        background: #fff;
+        box-shadow: 0 0 50px rgba(0,0,0,0.02);
+    }
 }
 
 </style></head><body>
