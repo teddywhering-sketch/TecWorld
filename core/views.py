@@ -100,8 +100,8 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             combustivel = lanc_tecnico.filter(tipo=Lancamento.Tipo.SAIDA, categoria__icontains="combust").aggregate(v=Sum('valor'))['v'] or Decimal('0.00')
             saidas = lanc_tecnico.filter(tipo=Lancamento.Tipo.SAIDA).exclude(categoria__icontains="combust").aggregate(v=Sum('valor'))['v'] or Decimal('0.00')
             
-            ganho_os = float(entradas)
-            desc_combustivel = float(combustivel)
+            ganho_os = float(entradas) * 0.5
+            desc_combustivel = float(combustivel) * 0.5
             desc_saidas = float(saidas)
             saldo = ganho_os - desc_combustivel - desc_saidas
             
@@ -109,7 +109,13 @@ class DashboardView(LoginRequiredMixin, TemplateView):
                 'ganho_os': ganho_os,
                 'desc_combustivel': desc_combustivel,
                 'desc_saidas': desc_saidas,
+                'total_os_100': float(entradas),
+                'total_combustivel_100': float(combustivel),
+                'qtd_os_concluidas': atuais.filter(status=OrdemServico.Status.CONCLUIDA).count(),
             })
+            entradas = ganho_os
+            combustivel = desc_combustivel
+            saidas = desc_saidas
             qs_listas = atuais.filter(Q(tecnico=self.request.user) | Q(tecnico__isnull=True))
         else:
             ultimo_fechamento = FechamentoCaixa.objects.first()
@@ -293,8 +299,8 @@ class OrdemListView(LoginRequiredMixin, ListView):
                 
                 combustivel_t = qs_lanc.filter(tecnico=t, tipo="SAIDA", categoria__icontains="combust").aggregate(v=Sum("valor"))["v"] or Decimal("0.00")
                 
-                ganho_os = float(valor_ordens)
-                custo_combustivel = float(combustivel_t)
+                ganho_os = float(valor_ordens) * 0.5
+                custo_combustivel = float(combustivel_t) * 0.5
                 saldo_tecnico = ganho_os - custo_combustivel
                 
                 resumo_tecnicos_os.append({
@@ -669,8 +675,8 @@ class FinanceiroView(LoginRequiredMixin, OperacionalRequiredMixin, ListView):
             saidas_t = qs_t.filter(tipo="SAIDA").exclude(categoria__icontains="combust").aggregate(v=Sum("valor"))["v"] or 0
             combustivel_t = qs_t.filter(tipo="SAIDA", categoria__icontains="combust").aggregate(v=Sum("valor"))["v"] or 0
             
-            ganho = float(entradas_t)
-            desconto_combustivel = float(combustivel_t)
+            ganho = float(entradas_t) * 0.5
+            desconto_combustivel = float(combustivel_t) * 0.5
             descontos_outros = float(saidas_t)
             saldo_receber = ganho - desconto_combustivel - descontos_outros
             
@@ -816,6 +822,12 @@ class BaixaMaterialOSView(LoginRequiredMixin, View):
 class MinhaSenhaView(LoginRequiredMixin, PasswordChangeView):
     template_name = "core/senha_form.html"; form_class = PasswordChangeForm; success_url = reverse_lazy("dashboard")
 
+
+
+class UsuarioDeleteView(LoginRequiredMixin, AdminRequiredMixin, DeleteView):
+    model = User
+    success_url = reverse_lazy("usuario-list")
+    template_name = "core/usuario_confirm_delete.html"
 
 class UsuarioUpdateView(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
     model = User

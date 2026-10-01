@@ -2,7 +2,30 @@
 <script>const savedTheme = localStorage.getItem('theme') || 'light'; document.documentElement.setAttribute('data-bs-theme', savedTheme);</script>
 <style>:root{--brand:#4361ee;--brand-hover:#3a0ca3;--ink:#1e293b;--bg:#f8fafc;--sidebar-bg:#0f172a;--sidebar-hover:#1e293b;--sidebar-text:#cbd5e1;--sidebar-active:#38bdf8;--card-bg:rgba(255,255,255,0.95);--header-bg:rgba(255,255,255,0.8);}[data-bs-theme="dark"]{--bg:#0f172a;--ink:#f8fafc;--sidebar-bg:#020617;--sidebar-hover:#0f172a;--card-bg:rgba(30,41,59,0.95);--header-bg:rgba(15,23,42,0.8);}body{background:var(--bg);color:var(--ink);font-family:'Outfit',sans-serif;letter-spacing:-0.01em;}.sidebar{width:280px;background:var(--sidebar-bg);min-height:100vh;box-shadow:4px 0 24px rgba(0,0,0,0.05);transition:all 0.3s ease;z-index:100;}.brand{color:#fff;font-weight:800;font-size:1.8rem;letter-spacing:-0.03em;display:flex;align-items:center;justify-content:flex-start;padding:1rem 1.5rem;}.brand span{background:linear-gradient(135deg,#4361ee,#4cc9f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}.sidebar .nav-link{color:var(--sidebar-text);border-radius:12px;margin:6px 16px;padding:12px 18px;font-weight:500;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);position:relative;overflow:hidden;}.sidebar .nav-link:hover{color:#fff;background:var(--sidebar-hover);transform:translateX(5px);}.sidebar .nav-link.active{color:#fff;background:linear-gradient(135deg,rgba(67,97,238,0.2),rgba(76,201,240,0.1));box-shadow:inset 3px 0 0 var(--sidebar-active);}.sidebar .nav-link i{font-size:1.1rem;transition:transform 0.3s ease;}.sidebar .nav-link:hover i{transform:scale(1.15);}.content{min-width:0;background:var(--bg);}.card{border:0;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,0.03);background:var(--card-bg);backdrop-filter:blur(10px);transition:transform 0.3s ease,box-shadow 0.3s ease;}.card:hover{box-shadow:0 15px 35px rgba(0,0,0,0.06);transform:translateY(-2px);}.table>:not(caption)>*>*{padding:1.25rem 1rem;vertical-align:middle;}.table th{font-weight:600;text-transform:uppercase;font-size:0.75rem;letter-spacing:0.05em;color:#64748b;}.page-title{font-weight:800;letter-spacing:-0.02em;}.btn{border-radius:10px;font-weight:600;padding:0.6rem 1.2rem;transition:all 0.3s ease;}.btn-primary{background:linear-gradient(135deg,var(--brand),#4cc9f0);border:none;box-shadow:0 4px 15px rgba(67,97,238,0.3);}.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(67,97,238,0.4);background:linear-gradient(135deg,var(--brand-hover),#4361ee);}.alert{border-radius:16px;border:none;}header{backdrop-filter:blur(12px);background:var(--header-bg)!important;}
 #global-loader{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(255,255,255,0.6);backdrop-filter:blur(4px);z-index:9999;display:none;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;}[data-bs-theme="dark"] #global-loader{background:rgba(15,23,42,0.6);}#global-loader.show{display:flex;opacity:1;}.loader-spinner{width:3rem;height:3rem;border:0.25rem solid rgba(67,97,238,0.2);border-top-color:#4361ee;border-radius:50%;animation:spin 1s linear infinite;}@keyframes spin{to{transform:rotate(360deg);}}
-@media(max-width:767px){.sidebar{min-height:auto;width:100%}.app{display:block!important}}</style></head><body>
+@media(max-width:767px){
+    .sidebar{position:fixed;left:-100%;top:0;bottom:0;width:280px;z-index:1050;box-shadow:4px 0 24px rgba(0,0,0,0.2);}
+    .sidebar.show{left:0;}
+    .sidebar-backdrop{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(3px);z-index:1040;opacity:0;transition:opacity 0.3s;}
+    .sidebar-backdrop.show{display:block;opacity:1;}
+    .app{display:flex!important;flex-direction:column;}
+    .content{padding-bottom:80px;width:100%;}
+    .mobile-nav{display:flex!important;position:fixed;bottom:0;left:0;right:0;background:var(--card-bg);backdrop-filter:blur(15px);border-top:1px solid rgba(255,255,255,0.1);z-index:1030;height:70px;box-shadow:0 -4px 20px rgba(0,0,0,0.05);justify-content:space-around;align-items:center;padding-bottom:env(safe-area-inset-bottom);}
+    .mobile-nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;color:#64748b;text-decoration:none;font-size:0.7rem;font-weight:600;transition:all 0.3s;height:100%;flex:1;}
+    [data-bs-theme="dark"] .mobile-nav-item{color:#cbd5e1;}
+    .mobile-nav-item i{font-size:1.4rem;margin-bottom:2px;transition:transform 0.3s;}
+    .mobile-nav-item.active{color:var(--brand);}
+    .mobile-nav-item:hover i, .mobile-nav-item.active i{transform:translateY(-3px) scale(1.1);}
+    
+    header.sticky-top{padding:1rem!important;}
+    .page-title{font-size:1.5rem;}
+    .card{border-radius:16px;}.hover-lift { transition: transform 0.2s ease, box-shadow 0.2s ease; } .hover-lift:hover { transform: translateY(-4px); box-shadow: 0 10px 25px rgba(0,0,0,0.08) !important; }
+}
+.mobile-nav{display:none;}
+/* Floating button */
+.fab{position:fixed;bottom:90px;right:20px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--brand),#4cc9f0);color:white;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(67,97,238,0.4);font-size:1.5rem;z-index:1020;transition:all 0.3s;}
+.fab:hover{transform:scale(1.1) rotate(5deg);color:white;}
+</style></head><body>
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 <div id="global-loader"><div class="text-center"><div class="loader-spinner mb-3 mx-auto"></div><div class="fw-bold text-primary" style="letter-spacing: 1px;">CARREGANDO...</div></div></div>
 {% if user.is_authenticated %}<div class="app d-flex"><aside class="sidebar py-4 d-flex flex-column"><a class="brand text-decoration-none mb-4">
 {% if config_logo_url %}
@@ -175,4 +198,35 @@ document.addEventListener("DOMContentLoaded", function() {
 </div>
 
 <script>if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').then(reg => console.log('SW Registered!', reg)).catch(err => console.log('SW failed', err)); }); }</script>
+
+<nav class="mobile-nav">
+    <a href="{% url 'dashboard' %}" class="mobile-nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        <i class="bi bi-grid"></i><span>Início</span>
+    </a>
+    <a href="{% url 'ordem-list' %}" class="mobile-nav-item {% if request.resolver_match.url_name == 'ordem-list' %}active{% endif %}">
+        <i class="bi bi-tools"></i><span>OS</span>
+    </a>
+    <a href="#" class="mobile-nav-item" id="mobileMenuToggle">
+        <i class="bi bi-list"></i><span>Menu</span>
+    </a>
+</nav>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+    const sidebar = document.querySelector('.sidebar');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    
+    if(mobileMenuToggle && sidebar && backdrop) {
+        mobileMenuToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            sidebar.classList.add('show');
+            backdrop.classList.add('show');
+        });
+        backdrop.addEventListener('click', () => {
+            sidebar.classList.remove('show');
+            backdrop.classList.remove('show');
+        });
+    }
+});
+</script>
 </body></html>

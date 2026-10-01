@@ -159,4 +159,11 @@
     </div>
     {% endif %}
 </div>
+
+{% if is_operacional %}
+<a href="{% url 'ordem-create' %}" class="fab d-md-none" title="Nova OS">
+    <i class="bi bi-plus-lg"></i>
+</a>
+{% endif %}
+
 {% endblock %}

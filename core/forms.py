@@ -192,8 +192,17 @@ class UsuarioForm(UserCreationForm):
         self.fields["papel"].widget.attrs["class"] = "form-select"
         self.fields["cliente_vinculado"].widget.attrs["class"] = "form-select"
     def _post_clean(self):
-        # Desabilita a validação estrita do modelo para o username (permite espaços legados)
+        from django.forms.models import construct_instance
+        opts = self._meta
         exclude = list(self._get_validation_exclusions())
+
+        try:
+            self.instance = construct_instance(self, self.instance, opts.fields, opts.exclude)
+        except Exception as e:
+            from django.core.exceptions import ValidationError
+            if isinstance(e, ValidationError):
+                self._update_errors(e)
+
         if 'username' not in exclude:
             exclude.append('username')
         try:
@@ -272,8 +281,17 @@ class UsuarioUpdateForm(forms.ModelForm):
                 field.widget.attrs["class"] = "form-control"
                 
     def _post_clean(self):
-        # Desabilita a validação estrita do modelo para o username (permite espaços legados)
+        from django.forms.models import construct_instance
+        opts = self._meta
         exclude = list(self._get_validation_exclusions())
+
+        try:
+            self.instance = construct_instance(self, self.instance, opts.fields, opts.exclude)
+        except Exception as e:
+            from django.core.exceptions import ValidationError
+            if isinstance(e, ValidationError):
+                self._update_errors(e)
+
         if 'username' not in exclude:
             exclude.append('username')
         try:
