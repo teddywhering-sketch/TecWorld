@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}Dashboard | TecWorld
 <style>
-.price-card { transition: all 0.3s ease; border: 1px solid rgba(67, 97, 238, 0.1) !important; }
+.price-card { transition: all 0.3s ease; border: 1px solid rgba(67, 97, 238, 0.1) !important; background: var(--card-bg); }
 .price-card:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 15px 35px rgba(67, 97, 238, 0.1) !important; border-color: rgba(67, 97, 238, 0.3) !important; }
 </style>
 
@@ -11,7 +11,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h2 class="page-title mb-1" style="font-weight: 800;">Olá, {{ user.first_name|default:user.username }}!</h2>
-        <p class="text-secondary mb-0">{% if is_operacional %}Visão geral da sua operação.{% else %}Suas ordens de serviço atribuídas.{% endif %}</p>
+        <p class="text-body-secondary mb-0">{% if is_operacional %}Visão geral da sua operação.{% else %}Suas ordens de serviço atribuídas.{% endif %}</p>
     </div>
     {% if is_operacional %}
     <a class="btn btn-primary shadow-sm rounded-pill px-4" href="{% url 'ordem-create' %}"><i class="bi bi-plus-lg me-1"></i>Nova OS</a>
@@ -62,42 +62,42 @@
 <div class="row g-4 mb-5">
     <!-- Linha 1: Métricas Principais & Saldo -->
     <div class="col-md-6 col-xl-3">
-        <div class="card stat-card p-4 h-100 bg-white shadow-sm hover-lift">
+        <div class="card stat-card p-4 h-100 shadow-sm hover-lift">
             <div class="d-flex align-items-center">
                 <div class="icon-box bg-primary bg-opacity-10 text-primary rounded-circle">
                     <i class="bi bi-tools fs-4"></i>
                 </div>
                 <div class="ms-3">
-                    <div class="stat-title text-secondary fw-semibold" style="font-size:0.85rem;">OS em aberto</div>
-                    <div class="stat-value text-dark fw-bold fs-4">{{ os_abertas }}</div>
+                    <div class="stat-title text-body-secondary fw-semibold" style="font-size:0.85rem;">OS em aberto</div>
+                    <div class="stat-value text-body fw-bold fs-4">{{ os_abertas }}</div>
                 </div>
             </div>
         </div>
     </div>
     
     <div class="col-md-6 col-xl-3">
-        <div class="card stat-card p-4 h-100 bg-white shadow-sm hover-lift">
+        <div class="card stat-card p-4 h-100 shadow-sm hover-lift">
             <div class="d-flex align-items-center">
                 <div class="icon-box bg-info bg-opacity-10 text-info rounded-circle">
                     <i class="bi bi-calendar-event fs-4"></i>
                 </div>
                 <div class="ms-3">
-                    <div class="stat-title text-secondary fw-semibold" style="font-size:0.85rem;">Agendadas hoje</div>
-                    <div class="stat-value text-dark fw-bold fs-4">{{ os_hoje }}</div>
+                    <div class="stat-title text-body-secondary fw-semibold" style="font-size:0.85rem;">Agendadas hoje</div>
+                    <div class="stat-value text-body fw-bold fs-4">{{ os_hoje }}</div>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="col-md-6 col-xl-3">
-        <div class="card stat-card p-4 h-100 bg-white shadow-sm hover-lift">
+        <div class="card stat-card p-4 h-100 shadow-sm hover-lift">
             <div class="d-flex align-items-center">
                 <div class="icon-box bg-warning bg-opacity-10 text-warning rounded-circle">
                     <i class="bi bi-hourglass-split fs-4"></i>
                 </div>
                 <div class="ms-3">
-                    <div class="stat-title text-secondary fw-semibold" style="font-size:0.85rem;">Aguardando</div>
-                    <div class="stat-value text-dark fw-bold fs-4">{{ aguardando_confirmacao }}</div>
+                    <div class="stat-title text-body-secondary fw-semibold" style="font-size:0.85rem;">Aguardando</div>
+                    <div class="stat-value text-body fw-bold fs-4">{{ aguardando_confirmacao }}</div>
                 </div>
             </div>
         </div>
@@ -107,7 +107,7 @@
     <div class="col-md-6 col-xl-3">
         <div class="card stat-card p-4 h-100 border-0 shadow-lg" style="background: linear-gradient(135deg, #1e293b, #0f172a); transform: scale(1.02);">
             <div class="d-flex align-items-center mb-2">
-                <div class="icon-box bg-white text-dark shadow-sm rounded-circle" style="width:48px;height:48px;">
+                <div class="icon-box bg-white text-body shadow-sm rounded-circle" style="width:48px;height:48px;">
                     <i class="bi bi-wallet2 fs-5"></i>
                 </div>
                 <div class="ms-3">
@@ -130,14 +130,14 @@
 
     <!-- Linha 2: Financeiro Detalhado -->
     <div class="col-md-{% if is_operacional %}4{% else %}6{% endif %} col-xl-{% if is_operacional %}4{% else %}6{% endif %}">
-        <div class="card stat-card p-4 h-100 bg-white shadow-sm hover-lift border-start border-4 border-success">
+        <div class="card stat-card p-4 h-100 shadow-sm hover-lift border-start border-4 border-success">
             <div class="d-flex align-items-center">
                 <div class="icon-box bg-success bg-opacity-10 text-success rounded-circle">
                     <i class="bi bi-cash-stack fs-4"></i>
                 </div>
                 <div class="ms-3">
-                    <div class="stat-title text-secondary fw-semibold" style="font-size:0.85rem;">{% if is_operacional %}Faturamento{% else %}OS Concluídas (50%){% endif %}</div>
-                    <div class="stat-value text-dark fw-bold fs-4"><span class="fs-6 text-muted fw-normal me-1">R$</span>{{ entradas|floatformat:2 }}</div>
+                    <div class="stat-title text-body-secondary fw-semibold" style="font-size:0.85rem;">{% if is_operacional %}Faturamento{% else %}OS Concluídas (50%){% endif %}</div>
+                    <div class="stat-value text-body fw-bold fs-4"><span class="fs-6 text-muted fw-normal me-1">R$</span>{{ entradas|floatformat:2 }}</div>
                 </div>
             </div>
         </div>
@@ -145,14 +145,14 @@
 
     {% if is_operacional %}
     <div class="col-md-4 col-xl-4">
-        <div class="card stat-card p-4 h-100 bg-white shadow-sm hover-lift border-start border-4 border-danger">
+        <div class="card stat-card p-4 h-100 shadow-sm hover-lift border-start border-4 border-danger">
             <div class="d-flex align-items-center">
                 <div class="icon-box bg-danger bg-opacity-10 text-danger rounded-circle">
                     <i class="bi bi-graph-down-arrow fs-4"></i>
                 </div>
                 <div class="ms-3">
-                    <div class="stat-title text-secondary fw-semibold" style="font-size:0.85rem;">Saídas (Gastos)</div>
-                    <div class="stat-value text-dark fw-bold fs-4"><span class="fs-6 text-muted fw-normal me-1">R$</span>{{ saidas|floatformat:2 }}</div>
+                    <div class="stat-title text-body-secondary fw-semibold" style="font-size:0.85rem;">Saídas (Gastos)</div>
+                    <div class="stat-value text-body fw-bold fs-4"><span class="fs-6 text-muted fw-normal me-1">R$</span>{{ saidas|floatformat:2 }}</div>
                 </div>
             </div>
         </div>
@@ -160,14 +160,14 @@
     {% endif %}
 
     <div class="col-md-{% if is_operacional %}4{% else %}6{% endif %} col-xl-{% if is_operacional %}4{% else %}6{% endif %}">
-        <div class="card stat-card p-4 h-100 bg-white shadow-sm hover-lift border-start border-4 border-warning">
+        <div class="card stat-card p-4 h-100 shadow-sm hover-lift border-start border-4 border-warning">
             <div class="d-flex align-items-center">
                 <div class="icon-box bg-warning bg-opacity-10 text-warning rounded-circle">
                     <i class="bi bi-fuel-pump fs-4"></i>
                 </div>
                 <div class="ms-3">
-                    <div class="stat-title text-secondary fw-semibold" style="font-size:0.85rem;">{% if is_operacional %}Combustível{% else %}Combustível (50%){% endif %}</div>
-                    <div class="stat-value text-dark fw-bold fs-4"><span class="fs-6 text-muted fw-normal me-1">R$</span>{{ combustivel|floatformat:2 }}</div>
+                    <div class="stat-title text-body-secondary fw-semibold" style="font-size:0.85rem;">{% if is_operacional %}Combustível{% else %}Combustível (50%){% endif %}</div>
+                    <div class="stat-value text-body fw-bold fs-4"><span class="fs-6 text-muted fw-normal me-1">R$</span>{{ combustivel|floatformat:2 }}</div>
                 </div>
             </div>
         </div>
@@ -178,7 +178,7 @@
     <div class="col-lg-7">
         <div class="card border-0 shadow-sm h-100" style="border-radius: 20px;">
             <div class="card-body p-4">
-                <h5 class="fw-bold mb-4" style="color: #172033;">Volume de OS por Dia da Semana</h5>
+                <h5 class="fw-bold mb-4" >Volume de OS por Dia da Semana</h5>
                 <div style="position: relative; height: 250px; width: 100%;">
                     <canvas id="weeklyChart"></canvas>
                 </div>
@@ -188,7 +188,7 @@
     <div class="col-lg-5">
         <div class="card border-0 shadow-sm h-100" style="border-radius: 20px;">
             <div class="card-body p-4">
-                <h5 class="fw-bold mb-4" style="color: #172033;">Tipos de Serviço</h5>
+                <h5 class="fw-bold mb-4" >Tipos de Serviço</h5>
                 <div style="position: relative; height: 250px; width: 100%; display: flex; justify-content: center;">
                     <canvas id="typeChart"></canvas>
                 </div>
@@ -202,7 +202,7 @@
         <div class="card border-0 shadow-sm" style="border-radius: 20px;">
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="fw-bold mb-0" style="color: #172033;"><i class="bi bi-tags me-2 text-primary"></i>Tabela de Preços (Serviços)</h5>
+                    <h5 class="fw-bold mb-0" ><i class="bi bi-tags me-2 text-primary"></i>Tabela de Preços (Serviços)</h5>
                     {% if is_staff %}
                     <a href="{% url 'tipo-servico-list' %}" class="btn btn-sm btn-outline-primary">Editar Tabela</a>
                     {% endif %}
@@ -211,7 +211,7 @@
                 <div class="row g-4">
                     {% for item in tabela_precos %}
                     <div class="col-md-6 col-lg-4 col-xl-3">
-                        <div class="card h-100 border border-light bg-white position-relative overflow-hidden shadow-sm" style="border-radius: 16px;">
+                        <div class="card h-100 border-0 position-relative overflow-hidden shadow-sm" style="border-radius: 16px;">
                             <div class="position-absolute top-0 end-0 p-3" style="opacity: 0.04; transform: rotate(-15deg) scale(2.5) translate(10px, -10px);">
                                 <i class="bi bi-clipboard2-check-fill fs-1 text-primary"></i>
                             </div>
@@ -220,10 +220,10 @@
                                     <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 46px; height: 46px;">
                                         <i class="bi bi-stars fs-5"></i>
                                     </div>
-                                    <h6 class="text-dark fw-bold mb-0 mt-1" style="line-height: 1.4;">{{ item.nome }}</h6>
+                                    <h6 class="text-body fw-bold mb-0 mt-1" style="line-height: 1.4;">{{ item.nome }}</h6>
                                 </div>
                                 <div class="mt-2 pt-3 border-top border-light border-opacity-50">
-                                    <div class="text-secondary fw-medium text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.08em;">Preço Base</div>
+                                    <div class="text-body-secondary fw-medium text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.08em;">Preço Base</div>
                                     <div class="fs-4 fw-bolder text-primary" style="letter-spacing: -0.03em;">
                                         <span class="fs-6 text-primary opacity-75 fw-normal me-1">R$</span>{{ item.valor_padrao|floatformat:2 }}
                                     </div>
@@ -232,7 +232,7 @@
                         </div>
                     </div>
                     {% empty %}
-                    <div class="col-12 text-center text-secondary py-5">
+                    <div class="col-12 text-center text-body-secondary py-5">
                         <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50"></i>
                         Nenhum serviço ou preço cadastrado ainda.
                     </div>
@@ -322,7 +322,7 @@
 
 
 <style>
-.price-card { transition: all 0.3s ease; border: 1px solid rgba(67, 97, 238, 0.1) !important; }
+.price-card { transition: all 0.3s ease; border: 1px solid rgba(67, 97, 238, 0.1) !important; background: var(--card-bg); }
 .price-card:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 15px 35px rgba(67, 97, 238, 0.1) !important; border-color: rgba(67, 97, 238, 0.3) !important; }
 </style>
 
