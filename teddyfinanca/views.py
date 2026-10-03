@@ -514,7 +514,10 @@ def pagar_divida(request, id):
         divida = Divida.objects.get(id=id, usuario=request.user)
         
         if request.method == 'POST':
-            valor = Decimal(str(request.POST.get('valor_pagamento', 0)).replace('.', '').replace(',', '.'))
+            valor_str = str(request.POST.get('valor_pagamento', 0)).strip()
+            if ',' in valor_str:
+                valor_str = valor_str.replace('.', '').replace(',', '.')
+            valor = Decimal(valor_str)
             divida.valor_pago += valor
             divida.data_pagamento = date.today()
             if divida.restante <= 0:
@@ -539,7 +542,10 @@ def receber_emprestimo(request, id):
     try:
         emp = Emprestimo.objects.get(id=id, usuario=request.user)
         if request.method == 'POST':
-            valor = Decimal(str(request.POST.get('valor_pagamento', 0)).replace('.', '').replace(',', '.'))
+            valor_str = str(request.POST.get('valor_pagamento', 0)).strip()
+            if ',' in valor_str:
+                valor_str = valor_str.replace('.', '').replace(',', '.')
+            valor = Decimal(valor_str)
             emp.valor_pago += valor
             emp.data_pagamento = date.today()
             if emp.restante <= 0:
@@ -564,7 +570,10 @@ def receber_parcela(request, id):
     try:
         parcela = ParcelaVenda.objects.get(id=id, usuario=request.user)
         if request.method == 'POST':
-            valor = Decimal(str(request.POST.get('valor_pagamento', 0)).replace('.', '').replace(',', '.'))
+            valor_str = str(request.POST.get('valor_pagamento', 0)).strip()
+            if ',' in valor_str:
+                valor_str = valor_str.replace('.', '').replace(',', '.')
+            valor = Decimal(valor_str)
             parcela.valor_pago += valor
             parcela.data_pagamento = date.today()
             if parcela.restante <= 0:
@@ -1142,7 +1151,10 @@ def receber_venda_unica(request, id):
         valor_recebido = request.POST.get('valor', 0)
         
         try:
-            valor = Decimal(str(valor_recebido).replace('.', '').replace(',', '.'))
+            valor_str = str(valor_recebido).strip()
+            if ',' in valor_str:
+                valor_str = valor_str.replace('.', '').replace(',', '.')
+            valor = Decimal(valor_str)
             if valor > 0:
                 venda.valor_pago += valor
                 venda.data_pagamento = date.today()
