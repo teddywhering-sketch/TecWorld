@@ -38,7 +38,7 @@ def bloqueado(request):
     assinatura, _ = Assinatura.objects.get_or_create(usuario=request.user)
     dias_uso = (date.today() - request.user.date_joined.date()).days
     if assinatura.ativa or dias_uso <= 99999:
-        return redirect('teddyfinanca:dashboard')
+        return redirect(request.META.get('HTTP_REFERER', 'teddyfinanca:dashboard'))
     
     return render(request, 'teddyfinanca/bloqueado.html')
 
@@ -51,7 +51,7 @@ def financeiro_login(request):
             auth_login(request, user)
             from teddyfinanca.models import Perfil
             Perfil.objects.get_or_create(usuario=user)
-            return redirect('teddyfinanca:dashboard')
+            return redirect(request.META.get('HTTP_REFERER', 'teddyfinanca:dashboard'))
         else:
             messages.error(request, 'Usuário ou senha inválidos.')
     return render(request, 'teddyfinanca/login.html')
@@ -165,7 +165,7 @@ def dashboard(request):
                     transacao.banco.save()
 
                 messages.success(request, "Transação adicionada com sucesso!")
-                return redirect('teddyfinanca:dashboard')
+                return redirect(request.META.get('HTTP_REFERER', 'teddyfinanca:dashboard'))
         elif 'btn_divida' in request.POST:
             form = DividaForm(request.POST)
             if form.is_valid():
@@ -208,7 +208,7 @@ def dashboard(request):
                     divida.tipo_recorrencia = 'RECORRENTE' if tipo == 'RECORRENTE' else 'UNICA'
                     divida.save()
                     messages.success(request, f"Dívida adicionada com sucesso! Lembre-se de lançar a entrada no fluxo diário se houver.")
-                return redirect('teddyfinanca:dashboard')
+                return redirect(request.META.get('HTTP_REFERER', 'teddyfinanca:dashboard'))
         elif 'btn_emprestimo' in request.POST:
             form = EmprestimoForm(request.POST)
             if form.is_valid():
@@ -263,7 +263,7 @@ def dashboard(request):
                     emp.save()
                     
                 messages.success(request, "Empréstimo adicionado com sucesso!")
-                return redirect('teddyfinanca:dashboard')
+                return redirect(request.META.get('HTTP_REFERER', 'teddyfinanca:dashboard'))
         elif 'btn_venda_vista' in request.POST:
             form = VendaForm(request.POST)
             if form.is_valid():
@@ -271,7 +271,7 @@ def dashboard(request):
                 venda.usuario = request.user
                 venda.save()
                 messages.success(request, "Venda adicionada com sucesso!")
-                return redirect('teddyfinanca:dashboard')
+                return redirect(request.META.get('HTTP_REFERER', 'teddyfinanca:dashboard'))
         elif 'btn_categoria' in request.POST:
             form = CategoriaForm(request.POST)
             if form.is_valid():
@@ -279,7 +279,7 @@ def dashboard(request):
                 categoria.usuario = request.user
                 categoria.save()
                 messages.success(request, "Categoria criada com sucesso!")
-                return redirect('teddyfinanca:dashboard')
+                return redirect(request.META.get('HTTP_REFERER', 'teddyfinanca:dashboard'))
         elif 'btn_banco' in request.POST:
             form = BancoForm(request.POST)
             if form.is_valid():
@@ -287,7 +287,7 @@ def dashboard(request):
                 banco.usuario = request.user
                 banco.save()
                 messages.success(request, "Banco adicionado com sucesso!")
-                return redirect('teddyfinanca:dashboard')
+                return redirect(request.META.get('HTTP_REFERER', 'teddyfinanca:dashboard'))
         elif 'btn_venda' in request.POST:
             form = VendaParceladaForm(request.POST)
             if form.is_valid():
@@ -322,7 +322,7 @@ def dashboard(request):
                     )
 
                 messages.success(request, "Venda Parcelada adicionada com sucesso e parcelas geradas!")
-                return redirect('teddyfinanca:dashboard')
+                return redirect(request.META.get('HTTP_REFERER', 'teddyfinanca:dashboard'))
         elif 'btn_trocar_senha' in request.POST:
             nova_senha = request.POST.get('nova_senha')
             if nova_senha:
@@ -530,7 +530,7 @@ def pagar_divida(request, id):
             
     except Divida.DoesNotExist:
         messages.error(request, "Dívida não encontrada.")
-    return redirect('teddyfinanca:dashboard')
+    return redirect(request.META.get('HTTP_REFERER', 'teddyfinanca:dashboard'))
 
 @login_required(login_url='teddyfinanca:login')
 @check_assinatura
@@ -554,7 +554,7 @@ def receber_emprestimo(request, id):
             messages.success(request, f"Empréstimo de '{emp.nome_pessoa}' totalmente recebido!")
     except Emprestimo.DoesNotExist:
         messages.error(request, "Empréstimo não encontrado.")
-    return redirect('teddyfinanca:dashboard')
+    return redirect(request.META.get('HTTP_REFERER', 'teddyfinanca:dashboard'))
 
 @login_required(login_url='teddyfinanca:login')
 @check_assinatura
@@ -579,7 +579,7 @@ def receber_parcela(request, id):
             messages.success(request, f"Parcela {parcela.numero} de '{parcela.venda.cliente}' quitada!")
     except ParcelaVenda.DoesNotExist:
         messages.error(request, "Parcela não encontrada.")
-    return redirect('teddyfinanca:dashboard')
+    return redirect(request.META.get('HTTP_REFERER', 'teddyfinanca:dashboard'))
 
 @login_required(login_url='teddyfinanca:login')
 @check_assinatura
@@ -590,7 +590,7 @@ def deletar_venda(request, id):
         messages.success(request, "Venda parcelada e todas as suas faturas foram apagadas com sucesso!")
     except VendaParcelada.DoesNotExist:
         messages.error(request, "Venda não encontrada.")
-    return redirect('teddyfinanca:dashboard')
+    return redirect(request.META.get('HTTP_REFERER', 'teddyfinanca:dashboard'))
 
 @login_required(login_url='teddyfinanca:login')
 @check_assinatura
@@ -602,7 +602,7 @@ def arquivar_venda(request, id):
         messages.success(request, "Venda arquivada com sucesso!")
     except VendaParcelada.DoesNotExist:
         messages.error(request, "Venda não encontrada.")
-    return redirect('teddyfinanca:dashboard')
+    return redirect(request.META.get('HTTP_REFERER', 'teddyfinanca:dashboard'))
 
 @login_required(login_url='teddyfinanca:login')
 @check_assinatura
@@ -614,7 +614,7 @@ def arquivar_emprestimo(request, id):
         messages.success(request, "Empréstimo arquivado com sucesso!")
     except Emprestimo.DoesNotExist:
         messages.error(request, "Empréstimo não encontrado.")
-    return redirect('teddyfinanca:dashboard')
+    return redirect(request.META.get('HTTP_REFERER', 'teddyfinanca:dashboard'))
 
 @login_required(login_url='teddyfinanca:login')
 @check_assinatura
@@ -626,7 +626,7 @@ def arquivar_divida(request, id):
         messages.success(request, "Dívida arquivada com sucesso!")
     except Divida.DoesNotExist:
         messages.error(request, "Dívida não encontrada.")
-    return redirect('teddyfinanca:dashboard')
+    return redirect(request.META.get('HTTP_REFERER', 'teddyfinanca:dashboard'))
 @login_required(login_url='teddyfinanca:login')
 @check_assinatura
 def deletar_divida(request, id):
@@ -636,7 +636,7 @@ def deletar_divida(request, id):
         messages.success(request, f"Dívida '{divida.descricao}' deletada com sucesso!")
     except Divida.DoesNotExist:
         messages.error(request, "Dívida não encontrada.")
-    return redirect('teddyfinanca:dashboard')
+    return redirect(request.META.get('HTTP_REFERER', 'teddyfinanca:dashboard'))
 
 @login_required(login_url='teddyfinanca:login')
 @check_assinatura
@@ -647,7 +647,7 @@ def deletar_emprestimo(request, id):
         messages.success(request, f"Empréstimo '{emp.nome_pessoa}' deletado com sucesso!")
     except Emprestimo.DoesNotExist:
         messages.error(request, "Empréstimo não encontrado.")
-    return redirect('teddyfinanca:dashboard')
+    return redirect(request.META.get('HTTP_REFERER', 'teddyfinanca:dashboard'))
 @login_required(login_url='teddyfinanca:login')
 @check_assinatura
 def deletar_categoria(request, id):
@@ -657,7 +657,7 @@ def deletar_categoria(request, id):
         messages.success(request, f"Categoria '{categoria.nome}' deletada!")
     except Categoria.DoesNotExist:
         messages.error(request, "Categoria não encontrada.")
-    return redirect('teddyfinanca:dashboard')
+    return redirect(request.META.get('HTTP_REFERER', 'teddyfinanca:dashboard'))
 
 @login_required(login_url='teddyfinanca:login')
 @check_assinatura
@@ -670,7 +670,7 @@ def deletar_banco(request, id):
         messages.success(request, f"Banco '{banco.nome}' e seus lançamentos foram deletados!")
     except Banco.DoesNotExist:
         messages.error(request, "Banco não encontrado.")
-    return redirect('teddyfinanca:dashboard')
+    return redirect(request.META.get('HTTP_REFERER', 'teddyfinanca:dashboard'))
 
 @login_required(login_url='teddyfinanca:login')
 @check_assinatura
@@ -684,10 +684,10 @@ def editar_banco(request, id):
             banco.limite_credito = request.POST.get('limite_credito')
             banco.save()
             messages.success(request, f"Banco '{banco.nome}' atualizado!")
-            return redirect('teddyfinanca:dashboard')
+            return redirect(request.META.get('HTTP_REFERER', 'teddyfinanca:dashboard'))
     except Banco.DoesNotExist:
         messages.error(request, "Banco não encontrado.")
-    return redirect('teddyfinanca:dashboard')
+    return redirect(request.META.get('HTTP_REFERER', 'teddyfinanca:dashboard'))
 
 from django.http import JsonResponse
 
@@ -751,7 +751,7 @@ def bloqueado(request):
     assinatura, _ = Assinatura.objects.get_or_create(usuario=request.user)
     dias_uso = (date.today() - request.user.date_joined.date()).days
     if assinatura.ativa or dias_uso <= 99999:
-        return redirect('teddyfinanca:dashboard')
+        return redirect(request.META.get('HTTP_REFERER', 'teddyfinanca:dashboard'))
     
     return render(request, 'teddyfinanca/bloqueado.html')
 
@@ -764,7 +764,7 @@ def deletar_compra(request, id):
         messages.success(request, f"Compra '{compra.descricao}' e todas as suas parcelas foram deletadas!")
     except CompraParcelada.DoesNotExist:
         messages.error(request, "Compra não encontrada.")
-    return redirect('teddyfinanca:dashboard')
+    return redirect(request.META.get('HTTP_REFERER', 'teddyfinanca:dashboard'))
 
 @login_required(login_url='teddyfinanca:login')
 @check_assinatura
@@ -777,7 +777,7 @@ def arquivar_compra(request, id):
         messages.success(request, f"Compra '{compra.descricao}' arquivada!")
     except CompraParcelada.DoesNotExist:
         messages.error(request, "Compra não encontrada.")
-    return redirect('teddyfinanca:dashboard')
+    return redirect(request.META.get('HTTP_REFERER', 'teddyfinanca:dashboard'))
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -1104,7 +1104,7 @@ def salvar_perfil(request):
         perfil.endereco = request.POST.get('endereco', '')
         perfil.save()
         messages.success(request, "Cadastro atualizado com sucesso!")
-    return redirect('teddyfinanca:dashboard')
+    return redirect(request.META.get('HTTP_REFERER', 'teddyfinanca:dashboard'))
 
 from django.http import HttpResponse
 
@@ -1165,7 +1165,7 @@ def receber_venda_unica(request, id):
         venda.save()
         messages.success(request, f"Venda de {venda.cliente} recebida com sucesso!")
             
-    return redirect('teddyfinanca:dashboard')
+    return redirect(request.META.get('HTTP_REFERER', 'teddyfinanca:dashboard'))
 
 @login_required(login_url='teddyfinanca:login')
 @check_assinatura

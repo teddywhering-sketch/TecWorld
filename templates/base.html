@@ -9,7 +9,7 @@
     --header-bg: rgba(15,23,42,0.8);
     --border-color: rgba(255,255,255,0.05);
 }
-[data-bs-theme="dark"] body {
+[data-bs-theme="dark"] body { background: var(--bg) !important; 
     background: var(--bg);
 }
 
@@ -171,7 +171,7 @@ body::after {
 
 /* Ultrawide Monitor Fix */
 @media(min-width: 1600px) {
-    .content {
+    .content-inner {
         max-width: 1600px;
         margin: 0 auto;
         border-left: 1px solid var(--border-color, rgba(0,0,0,0.05));
@@ -225,7 +225,7 @@ body::after {
     </button>
     <span class="badge bg-white text-secondary border px-3 py-2 rounded-pill shadow-sm"><i class="bi bi-calendar-event me-2"></i>{% now "d/m/Y" %}</span>
 </div>
-</header><div class="p-4 p-md-5">{% if messages %}{% for message in messages %}<div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags %}{{ message.tags }}{% else %}info{% endif %} shadow-sm d-flex align-items-center"><i class="bi bi-info-circle-fill me-3 fs-5"></i><div>{{ message }}</div></div>{% endfor %}{% endif %}{% block content %}{% endblock %}</div></main></div>{% else %}{% block guest_content %}{% endblock %}{% endif %}<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</header><div class="p-4 p-md-5 content-inner">{% if messages %}{% for message in messages %}<div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags %}{{ message.tags }}{% else %}info{% endif %} shadow-sm d-flex align-items-center"><i class="bi bi-info-circle-fill me-3 fs-5"></i><div>{{ message }}</div></div>{% endfor %}{% endif %}{% block content %}{% endblock %}</div></main></div>{% else %}{% block guest_content %}{% endblock %}{% endif %}<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const toggleBtn = document.getElementById('theme-toggle');

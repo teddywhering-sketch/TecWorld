@@ -1996,6 +1996,32 @@ function openVendaUnicaModal(id, restante) {
 }
 </script>
 
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var accordions = document.querySelectorAll('.accordion-collapse');
+        accordions.forEach(function(acc) {
+            acc.addEventListener('shown.bs.collapse', function (e) {
+                sessionStorage.setItem('activeAccordion', e.target.id);
+            });
+            acc.addEventListener('hidden.bs.collapse', function (e) {
+                if(sessionStorage.getItem('activeAccordion') === e.target.id) {
+                    sessionStorage.removeItem('activeAccordion');
+                }
+            });
+        });
+
+        var activeAcc = sessionStorage.getItem('activeAccordion');
+        if(activeAcc) {
+            var el = document.getElementById(activeAcc);
+            if(el) {
+                var bsCollapse = new bootstrap.Collapse(el, {toggle: false});
+                bsCollapse.show();
+            }
+        }
+    });
+</script>
 </body>
+
 
 </html>
