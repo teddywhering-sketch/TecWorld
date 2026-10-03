@@ -378,7 +378,26 @@ def dashboard(request):
     emprestimos_atrasados = emprestimos_pendentes.filter(data_devolucao__lt=hoje).order_by('data_devolucao')
     parcelas_atrasadas = parcelas_pendentes.filter(data_vencimento__lt=hoje).order_by('data_vencimento')
 
+
+    # --- AUTO-HEAL: Corrigir valores inflados no banco de dados automaticamente ---
+    from .models import ParcelaVenda, Emprestimo, Divida, Venda
+    from django.db.models import F
+    for p in ParcelaVenda.objects.filter(venda__usuario=request.user, valor_pago__gte=F('valor') * 10):
+        p.valor_pago = p.valor_pago / 100
+        p.save()
+    for p in Emprestimo.objects.filter(usuario=request.user, valor_pago__gte=F('valor') * 10):
+        p.valor_pago = p.valor_pago / 100
+        p.save()
+    for p in Divida.objects.filter(usuario=request.user, valor_pago__gte=F('valor') * 10):
+        p.valor_pago = p.valor_pago / 100
+        p.save()
+    for p in Venda.objects.filter(usuario=request.user, valor_pago__gte=F('valor') * 10):
+        p.valor_pago = p.valor_pago / 100
+        p.save()
+    # -----------------------------------------------------------------------------
+
     # Dados para os Gráficos
+
     entradas_mes = Transacao.objects.filter(usuario=request.user, tipo='ENTRADA', data__month=hoje.month, data__year=hoje.year).aggregate(total=Sum('valor'))['total'] or 0
     saidas_mes = Transacao.objects.filter(usuario=request.user, tipo='SAIDA', data__month=hoje.month, data__year=hoje.year).aggregate(total=Sum('valor'))['total'] or 0
 
