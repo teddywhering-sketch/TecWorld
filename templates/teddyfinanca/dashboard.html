@@ -2017,11 +2017,33 @@ function openVendaUnicaModal(id, restante) {
             if(el) {
                 var bsCollapse = new bootstrap.Collapse(el, {toggle: false});
                 bsCollapse.show();
+                setTimeout(function() {
+                    el.scrollIntoView({ behavior: 'auto', block: 'center' });
+                }, 150);
             }
         }
     });
 </script>
+
+<script>
+    // Save scroll position before unload
+    window.addEventListener('beforeunload', function() {
+        sessionStorage.setItem('scrollPos_' + window.location.pathname, window.scrollY);
+    });
+
+    // Restore scroll position after a short delay (to let tabs/accordions render)
+    document.addEventListener("DOMContentLoaded", function() {
+        var scrollPos = sessionStorage.getItem('scrollPos_' + window.location.pathname);
+        if(scrollPos) {
+            setTimeout(function() {
+                window.scrollTo(0, parseInt(scrollPos));
+                sessionStorage.removeItem('scrollPos_' + window.location.pathname);
+            }, 200);
+        }
+    });
+</script>
 </body>
+
 
 
 </html>
