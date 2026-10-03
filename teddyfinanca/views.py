@@ -344,7 +344,7 @@ def dashboard(request):
     # Filtra tudo pelo usuário logado
     bancos = Banco.objects.filter(usuario=request.user)
     vendas = VendaParcelada.objects.filter(usuario=request.user)
-    vendas_vista = Venda.objects.filter(usuario=request.user).order_by('-data_venda')
+    vendas_vista = Venda.objects.filter(usuario=request.user).order_by('-data_venda', '-id')
 
     # Cálculos dos mini-cards
     total_saldo_atual = bancos.aggregate(total=Sum('saldo_atual'))['total'] or 0
@@ -415,19 +415,19 @@ def dashboard(request):
     categorias_list = [{'nome': lbl, 'valor': val} for lbl, val in zip(categorias_labels, categorias_valores)]
     
     # Dívidas Simples com paginação (5 por página) - Mostra todas não arquivadas e que NÃO estão vinculadas a uma compra parcelada
-    dividas_list = Divida.objects.filter(usuario=request.user, arquivado=False, compra_vinculada__isnull=True).order_by('data_vencimento')
+    dividas_list = Divida.objects.filter(usuario=request.user, arquivado=False, compra_vinculada__isnull=True).order_by('data_vencimento', 'id')
     paginator_dividas = Paginator(dividas_list, 5)
     page_divida = request.GET.get('page_divida')
     dividas = paginator_dividas.get_page(page_divida)
     
     # Compras Parceladas (Agrupadas)
-    compras_list = CompraParcelada.objects.filter(usuario=request.user, arquivado=False).order_by('-data_compra')
+    compras_list = CompraParcelada.objects.filter(usuario=request.user, arquivado=False).order_by('-data_compra', '-id')
     paginator_compras = Paginator(compras_list, 5)
     page_compra = request.GET.get('page_compra')
     compras = paginator_compras.get_page(page_compra)
     
     # Empréstimos Agrupados por Pessoa
-    emprestimos_list_raw = Emprestimo.objects.filter(usuario=request.user, arquivado=False).order_by('nome_pessoa', 'data_devolucao')
+    emprestimos_list_raw = Emprestimo.objects.filter(usuario=request.user, arquivado=False).order_by('nome_pessoa', 'data_devolucao', 'id')
     emprestimos_agrupados = {}
     
     for emp in emprestimos_list_raw:
@@ -455,7 +455,7 @@ def dashboard(request):
     emprestimos = paginator_emprestimos.get_page(page_emprestimo)
     
     # Vendas Parceladas com paginação (5 por página) - Mostra todas não arquivadas
-    vendas_list = VendaParcelada.objects.filter(usuario=request.user, arquivado=False).order_by('-data_venda')
+    vendas_list = VendaParcelada.objects.filter(usuario=request.user, arquivado=False).order_by('-data_venda', '-id')
     paginator_vendas = Paginator(vendas_list, 5)
     page_venda = request.GET.get('page_venda')
     vendas = paginator_vendas.get_page(page_venda)

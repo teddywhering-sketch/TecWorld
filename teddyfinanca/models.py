@@ -148,7 +148,7 @@ class ParcelaVenda(models.Model):
     status = models.CharField(max_length=10, choices=(('PENDENTE', 'Pendente'), ('PAGO', 'Pago')), default='PENDENTE')
 
     class Meta:
-        ordering = ['data_vencimento']
+        ordering = ['data_vencimento', 'numero', 'id']
 
     @property
     def dias_para_vencer(self):
@@ -184,6 +184,7 @@ class Emprestimo(models.Model):
 
     class Meta:
         verbose_name_plural = "Empréstimos"
+        ordering = ['data_devolucao', 'id']
 
     @property
     def dias_para_receber(self):
@@ -262,6 +263,7 @@ class Divida(models.Model):
     class Meta:
         verbose_name = "Dívida"
         verbose_name_plural = "Dívidas"
+        ordering = ['data_vencimento', 'id']
 
     @property
     def dias_para_vencer(self):
