@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Sum
-from .models import Banco, Transacao, Divida, Emprestimo, VendaParcelada, Venda, Categoria, CompraParcelada
+from .models import Banco, Transacao, Divida, Emprestimo, VendaParcelada, Venda, Categoria, CompraParcelada, ParcelaVenda
 from .forms import TransacaoForm, DividaForm, EmprestimoForm, BancoForm, VendaParceladaForm, VendaForm, CategoriaForm
 
 from django.contrib.auth.models import User
@@ -380,7 +380,7 @@ def dashboard(request):
 
 
     # --- AUTO-HEAL: Corrigir valores inflados no banco de dados automaticamente ---
-    from .models import ParcelaVenda, Emprestimo, Divida, Venda
+    # from .models import ParcelaVenda, Emprestimo, Divida, Venda
     from django.db.models import F
     for p in ParcelaVenda.objects.filter(venda__usuario=request.user, valor_pago__gte=F('valor') * 10):
         p.valor_pago = p.valor_pago / 100
