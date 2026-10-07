@@ -43,6 +43,9 @@ def bloqueado(request):
     return render(request, 'teddyfinanca/bloqueado.html')
 
 def financeiro_login(request):
+    if request.user.is_authenticated:
+        return redirect('teddyfinanca:dashboard')
+        
     if request.method == 'POST':
         usuario = request.POST.get('usuario', '').strip()
         senha = request.POST.get('senha')
@@ -51,7 +54,11 @@ def financeiro_login(request):
             auth_login(request, user)
             from teddyfinanca.models import Perfil
             Perfil.objects.get_or_create(usuario=user)
-            return redirect(request.META.get('HTTP_REFERER', 'teddyfinanca:dashboard'))
+            # Check for 'next' parameter, fallback to dashboard
+            next_url = request.GET.get('next') or request.POST.get('next')
+            if next_url:
+                return redirect(next_url)
+            return redirect('teddyfinanca:dashboard')
         else:
             messages.error(request, 'Usuário ou senha inválidos.')
     return render(request, 'teddyfinanca/login.html')
